@@ -1,4 +1,4 @@
-FROM python:3.10-slim
+FROM python:3.11-slim
 WORKDIR /app
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
@@ -17,3 +17,4 @@ ENV PYTHONUNBUFFERED=1
 
 
 CMD ["gunicorn", "-b", "0.0.0.0:7860", "--timeout", "120", "app:app"]
+
