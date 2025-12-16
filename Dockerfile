@@ -10,11 +10,10 @@ RUN mkdir -p instance data && \
     chmod -R 777 data && \
     chmod -R 777 .
 
-EXPOSE 7860
+EXPOSE 8080
 
 ENV FLASK_APP=app.py
 ENV PYTHONUNBUFFERED=1
 
 
-CMD ["gunicorn", "-b", "0.0.0.0:7860", "--timeout", "120", "app:app"]
-
+CMD ["gunicorn", "-b", "0.0.0.0:8080", "--timeout", "120", "app:app"]
