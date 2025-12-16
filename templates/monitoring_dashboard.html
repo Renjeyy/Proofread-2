@@ -1,0 +1,1441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Visualisasi Data Monitoring Audit</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <style>
+        * { box-sizing: border-box; outline: none; }
+        body { 
+            background-color: #f0f2f5; 
+            font-family: 'Poppins', sans-serif; 
+            margin: 0; padding: 0; color: #333;
+            overflow-x: hidden;
+        }
+
+        .navbar {
+            padding: 0.8rem 2rem; width: 100%; display: flex;
+            justify-content: space-between; align-items: center;
+            background: #ffffff; 
+            box-shadow: 0 2px 10px rgba(0,0,0,0.03);
+            position: sticky; top: 0; z-index: 100;
+        }
+        .nav-logo img { height: 40px; }
+        .nav-links { list-style: none; display: flex; gap: 30px; margin: 0; padding: 0; }
+        .nav-links a { 
+            text-decoration: none; color: #555; font-weight: 500; font-size: 0.95rem;
+            transition: color 0.2s;
+        }
+        .nav-links a:hover { color: #C62828; }
+        .nav-extra { font-weight: 600; color: #333; font-size: 0.95rem; }
+
+        .dashboard-container { padding: 30px 40px; width: 100%; max-width: 1600px; margin: 0 auto; }
+        
+        .dashboard-title { margin-bottom: 25px; border-left: 5px solid #C62828; padding-left: 20px; }
+        .dashboard-title h1 { font-size: 1.6rem; margin: 0; color: #1a1a1a; letter-spacing: -0.5px; }
+        .dashboard-title p { font-size: 0.95rem; margin: 5px 0 0 0; color: #666; }
+
+        .filter-bar {
+            background: #ffffff; padding: 20px 25px; border-radius: 16px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); 
+            display: grid; 
+            grid-template-columns: 1fr 1fr 1fr auto; 
+            gap: 20px;
+            align-items: end; 
+            margin-bottom: 30px; 
+        }
+
+        .filter-group { display: flex; flex-direction: column; gap: 8px; position: relative; }
+        .filter-group label { 
+            font-weight: 600; color: #444; font-size: 0.85rem; 
+            text-align: center; width: 100%;
+        }
+
+        .custom-dropdown { position: relative; width: 100%; }
+        .dropdown-btn {
+            width: 100%; padding: 12px 15px;
+            background: #f8f9fa; border: 1px solid #e0e0e0;
+            border-radius: 10px; cursor: pointer;
+            font-size: 0.9rem; font-weight: 500; color: #333;
+            display: flex; justify-content: center; align-items: center;
+            transition: all 0.2s;
+        }
+        .dropdown-btn:hover { background: #fff; border-color: #bbb; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .dropdown-btn::after { content: '▼'; font-size: 0.65rem; margin-left: 10px; color: #888; }
+
+        .dropdown-content {
+            display: none; position: absolute; top: 115%; left: 50%; transform: translateX(-50%);
+            width: 100%; min-width: 220px; background: white;
+            border-radius: 12px; box-shadow: 0 10px 30px rgba(0,0,0,0.15);
+            z-index: 1000; max-height: 350px; overflow-y: auto;
+            border: 1px solid #f0f0f0; animation: fadeIn 0.2s ease-out forwards;
+        }
+        .dropdown-content.show { display: block; }
+        .dropdown-item {
+            padding: 12px 15px; cursor: pointer; font-size: 0.9rem; color: #555;
+            text-align: center; border-bottom: 1px solid #f9f9f9; transition: all 0.1s;
+        }
+        .dropdown-item:last-child { border-bottom: none; }
+        .dropdown-item:hover { background-color: #fff5f5; color: #C62828; font-weight: 600; }
+        .dropdown-item.selected { background-color: #ffebee; color: #C62828; font-weight: 600; }
+        .dropdown-divider {
+            background: #f8f9fa; color: #999; font-size: 0.75rem;
+            font-weight: 700; padding: 8px; text-align: center; letter-spacing: 1px;
+        }
+
+        .refresh-btn {
+            padding: 0 25px; height: 46px;
+            background: #333; color: white;
+            border: none; border-radius: 10px;
+            cursor: pointer; font-weight: 600; font-size: 0.9rem; 
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1); transition: all 0.2s;
+        }
+        .refresh-btn:hover { background: #000; transform: translateY(-2px); }
+
+        .chart-row { display: flex; gap: 25px; margin-bottom: 25px; width: 100%; }
+        
+        .chart-card {
+            background: #ffffff; border-radius: 16px; padding: 25px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.03); border: 1px solid rgba(0,0,0,0.02);
+            display: flex; flex-direction: column; flex: 1; min-width: 0;
+            position: relative;
+        }
+        .chart-card h3 { 
+            margin: 0 0 25px 0; 
+            color: #1a1a1a; font-size: 1.05rem; 
+            font-weight: 600; text-align: center; letter-spacing: -0.3px;
+        }
+        
+        .canvas-wrapper { 
+            position: relative; width: 100%; flex-grow: 1; 
+            display: flex; justify-content: center; align-items: center;
+            min-height: 300px;
+        }
+        canvas { max-width: 100%; max-height: 100%; }
+
+        .chart-card-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 5px; flex-wrap: wrap; gap: 10px;
+        }
+        .chart-controls {
+            display: flex; gap: 8px; align-items: center; background: #f8f9fa;
+            padding: 4px 10px; border-radius: 8px; border: 1px solid #eee;
+        }
+        .chart-select {
+            padding: 4px 8px; border: 1px solid #ddd; border-radius: 6px;
+            font-size: 0.8rem; cursor: pointer; background: #fff; outline: none;
+        }
+
+        .stat-header {
+            display: flex; justify-content: space-between; align-items: center;
+            margin-bottom: 15px; background: #f8f9fa; padding: 8px 12px;
+            border-radius: 8px; border: 1px solid #eee;
+        }
+        .stat-period-display { font-size: 0.85rem; font-weight: 600; color: #333; }
+        .btn-change-period {
+            background: #fff; border: 1px solid #ccc; color: #333;
+            padding: 4px 10px; border-radius: 6px; cursor: pointer; font-size: 0.75rem; 
+            transition: all 0.2s;
+        }
+        .btn-change-period:hover { background: #e9ecef; }
+
+        .live-insight-box {
+            background: #e3f2fd; 
+            border-left: 5px solid #2196F3;
+            border-radius: 12px; 
+            padding: 20px; 
+            margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(33, 150, 243, 0.05);
+            width: 100%;
+        }
+        .live-insight-header {
+            color: #1976D2;
+            font-weight: 700;
+            margin-bottom: 8px;
+            display: flex; align-items: center; gap: 8px;
+            font-size: 0.85rem;
+        }
+        .live-insight-content {
+            color: #333;
+            font-size: 0.9rem;
+            line-height: 1.5;
+        }
+
+        .stat-item {
+            padding: 12px 0; border-bottom: 1px solid #f0f0f0;
+            display: flex; justify-content: space-between; align-items: center;
+        }
+        .stat-item:last-child { border-bottom: none; }
+        .stat-label { font-weight: 600; color: #555; font-size: 0.9rem; }
+        
+        .stat-value-group { 
+            text-align: right; 
+            display: flex; 
+            flex-direction: row;
+            align-items: center;
+            gap: 12px;
+        }
+        .stat-value { font-size: 0.95rem; font-weight: 700; color: #333; }
+        
+        .stat-change { 
+            font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; 
+            display: inline-block; font-weight: 600; 
+        }
+        .change-up-good { color: #155724; background: #d4edda; } 
+        .change-down-good { color: #155724; background: #d4edda; } 
+        .change-up-bad { color: #721c24; background: #f8d7da; } 
+        .change-down-bad { color: #721c24; background: #f8d7da; } 
+        .change-up-warn { color: #856404; background: #fffd30; border: 1px solid #ffeeba; }
+        .change-neutral { color: #383d41; background: #e2e3e5; }
+
+        .stat-verdict-box {
+            margin-top: 15px; padding: 12px; border-radius: 8px; font-size: 0.85rem;
+            display: flex; align-items: flex-start; gap: 10px; line-height: 1.4;
+        }
+        .verdict-positive { background-color: #e8f5e9; color: #1b5e20; border: 1px solid #c8e6c9; }
+        .verdict-negative { background-color: #ffebee; color: #b71c1c; border: 1px solid #ffcdd2; }
+        .verdict-neutral { background-color: #f5f5f5; color: #616161; border: 1px solid #e0e0e0; }
+
+        .ai-insight-box {
+            background: linear-gradient(135deg, #ffffff 0%, #f8faff 100%);
+            border: 1px solid #dbeafe; border-left: 5px solid #2563eb;
+            border-radius: 12px; padding: 20px; margin-bottom: 25px;
+            box-shadow: 0 4px 15px rgba(37, 99, 235, 0.05); width: 100%;
+        }
+        .ai-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px; }
+        .ai-title { font-size: 1.1rem; font-weight: 700; color: #2563eb; display: flex; align-items: center; gap: 10px; }
+        .btn-ai {
+            background: linear-gradient(135deg, #4f46e5 0%, #3b82f6 100%);
+            color: white; border: none; padding: 8px 20px; border-radius: 30px;
+            cursor: pointer; font-weight: 600; box-shadow: 0 4px 10px rgba(59, 130, 246, 0.2);
+            transition: all 0.2s; font-size: 0.85rem;
+        }
+        .btn-ai:hover { transform: translateY(-2px); box-shadow: 0 6px 15px rgba(59, 130, 246, 0.3); }
+        .ai-content { color: #4b5563; line-height: 1.6; font-size: 0.95rem; }
+
+        .radar-controls-wrapper {
+            display: flex; justify-content: center; align-items: center; gap: 10px;
+            margin-bottom: 30px; 
+            width: 100%;
+        }
+        .radar-controls-wrapper .custom-dropdown { max-width: 220px; }
+        .btn-show-all-radar {
+            padding: 10px 16px; background-color: #2196F3; color: white;
+            border: none; border-radius: 8px; cursor: pointer; font-weight: 600; font-size: 0.85rem;
+            transition: background 0.2s; box-shadow: 0 2px 5px rgba(33, 150, 243, 0.2);
+        }
+        .btn-show-all-radar:hover { background-color: #1976D2; }
+
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: white; padding: 25px; border-radius: 16px; width: 400px; max-width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-box.large { width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; }
+        
+        /* Grid Layout */
+        .radar-grid {
+            display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 10px;
+        }
+        .radar-item {
+            border: 1px solid #eee; border-radius: 12px; padding: 15px; background: #fff;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.03); transition: transform 0.2s;
+            display: flex; flex-direction: column; justify-content: space-between; 
+        }
+        .radar-item:hover { transform: translateY(-3px); box-shadow: 0 5px 15px rgba(0,0,0,0.08); }
+        .radar-item h4 { text-align: center; margin: 0 0 10px; color: #444; font-size: 0.95rem; }
+
+        .radar-feedback-box {
+            margin-top: 25px;
+            padding: 15px;
+            border-radius: 10px;
+            font-size: 0.85rem;
+            line-height: 1.5;
+            display: flex;
+            flex-direction: column;
+            gap: 5px;
+            text-align: justify; 
+        }
+        .fb-title { font-weight: 700; font-size: 0.9rem; display: flex; align-items: center; gap: 8px; }
+        
+        .fb-good { background: #e8f5e9; border: 1px solid #81c784; color: #1b5e20; }
+        .fb-good .fb-title { color: #2e7d32; }
+        
+        .fb-warn { background: #fff8e1; border: 1px solid #ffcc80; color: #e65100; }
+        .fb-warn .fb-title { color: #f57f17; }
+        
+        .fb-bad { background: #ffebee; border: 1px solid #ef9a9a; color: #b71c1c; }
+        .fb-bad .fb-title { color: #c62828; }
+
+        @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
+        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } 80%, 100% { content: ''; } }
+        .loading-dots:after { content: '.'; animation: dots 1.5s steps(5, end) infinite; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo"></a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('monitoring_ams_page') }}">Kembali ke Input Data</a></li>
+        </ul>
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.fullname }}</span>
+        </div>
+    </nav>
+
+    <div class="dashboard-container">
+        <div class="dashboard-title">
+            <h1>Dashboard Visual Monitoring Audit</h1>
+            <p>Analisis tren dan komposisi temuan audit lintas periode.</p>
+        </div>
+        
+        <div class="filter-bar">
+            <div class="filter-group">
+                <label>Pilih Jenis Audit</label>
+                <div class="custom-dropdown" id="dropdown-type">
+                    <div class="dropdown-btn" id="btn-audit-type" data-value="">Memuat...</div>
+                    <div class="dropdown-content" id="list-audit-type"></div>
+                </div>
+            </div>
+            
+            <div class="filter-group">
+                <label>Filter Periode</label>
+                <div class="custom-dropdown" id="dropdown-period">
+                    <div class="dropdown-btn" id="btn-period" data-value="all">Semua Waktu</div>
+                    <div class="dropdown-content" id="list-period">
+                        <div class="dropdown-item selected" onclick="selectOption('btn-period', 'list-period', 'all', 'Semua Waktu', false)">Semua Waktu</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="filter-group">
+                <label>Filter Auditee</label>
+                <div class="custom-dropdown" id="dropdown-auditee">
+                    <div class="dropdown-btn" id="btn-auditee" data-value="all">Semua Auditee</div>
+                    <div class="dropdown-content" id="list-auditee">
+                        <div class="dropdown-item selected" onclick="selectOption('btn-auditee', 'list-auditee', 'all', 'Semua Auditee', false)">Semua Auditee</div>
+                    </div>
+                </div>
+            </div>
+            
+            <button class="refresh-btn" onclick="window.location.reload()">Refresh Data</button>
+        </div>
+
+        <div class="chart-row">
+            <div class="chart-card" style="flex: 2;">
+                <div class="chart-card-header">
+                    <h3>Tren Penyelesaian Tindak Lanjut</h3>
+                    <div class="chart-controls">
+                        <select id="trend-range-start" class="chart-select" title="Mulai Periode"></select>
+                        <span class="range-separator">s/d</span>
+                        <select id="trend-range-end" class="chart-select" title="Akhir Periode"></select>
+                    </div>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="trendLineChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card" style="flex: 1; max-width: 400px;">
+                <h3>Analisis Perubahan</h3>
+                <div id="live-insight-box" class="live-insight-box">
+                    <div class="live-insight-header">Keterangan Bulan Ini</div>
+                    <div id="live-insight-content" class="live-insight-content">Memuat data terkini...</div>
+                </div>
+                <div class="stat-header">
+                    <div id="stat-period-text" class="stat-period-display">Memuat...</div>
+                    <button class="btn-change-period" onclick="openStatModal()">Ganti Periode</button>
+                </div>
+                <div id="comparison-stats-container">
+                    <p style="text-align: center; color: #888; margin-top: 20px;">Memuat data...</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="ai-insight-box" id="ai-container">
+            <div class="ai-header">
+                <div class="ai-title">Interpretasi AI</div>
+                <button class="btn-ai" onclick="generateAIInsight()" id="btn-generate-ai"><span>Analisis Data</span></button>
+            </div>
+            <div class="ai-content" id="ai-result">
+                <p style="color: #666; font-style: italic;">Klik tombol Analisis Data untuk mendapatkan interpretasi naratif mendalam.</p>
+            </div>
+        </div>
+
+        <div class="chart-row">
+            <div class="chart-card" style="flex: 7;">
+                <h3>Persentase Perubahan (Analisis)</h3>
+                <div class="canvas-wrapper">
+                    <canvas id="divergingChart"></canvas>
+                </div>
+            </div>
+
+            <div class="chart-card" style="flex: 3;">
+                <h3>Profil Kinerja Auditee</h3>
+                <div id="radar-controls" class="radar-controls-wrapper">
+                    <div class="custom-dropdown" id="dropdown-radar-auditee" style="width: 200px;">
+                        <div class="dropdown-btn" id="btn-radar-auditee" data-value="">Pilih Auditee...</div>
+                        <div class="dropdown-content" id="list-radar-auditee"></div>
+                    </div>
+                    <button class="btn-show-all-radar" onclick="openRadarModal()">Lihat Semua</button>
+                </div>
+                <div class="canvas-wrapper">
+                    <canvas id="radarChart"></canvas>
+                </div>
+                <div id="radar-main-feedback"></div>
+            </div>
+        </div>
+        
+        <div class="chart-row">
+            <div class="chart-card">
+                <div class="chart-card-header" style="justify-content: center; position: relative; margin-bottom: 20px;">
+                    <h3 style="margin: 0; font-size: 1.1rem; text-align: center;">Performance Auditor Ranking (Selesai: Bulan Lalu vs Bulan Ini)</h3>
+                    <button class="btn-show-all-radar" style="position: absolute; right: 0; padding: 6px 14px; font-size: 0.8rem;" onclick="openPerfModal()">View All</button>
+                </div>
+                <div id="perf-grid-container" class="radar-grid">
+                    <!-- Cards will be injected here -->
+                </div>
+                <div id="perf-interpretation" style="margin-top: 20px; font-size: 0.9rem; color: #444; text-align: justify; background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;">
+                    <p style="margin:0; text-align:center; color:#888;">Memuat interpretasi...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="stat-modal">
+        <div class="modal-box">
+            <div style="font-size:1.1rem; font-weight:700; margin-bottom:15px; text-align:center;">Pilih Periode Perbandingan</div>
+            
+            <div style="margin-bottom:15px;">
+                <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Periode Pembanding (Baseline):</label>
+                <select id="modal-select-baseline" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;"></select>
+            </div>
+
+            <div style="text-align:center; margin:10px 0; color:#888; font-size:0.85rem;">dibandingkan dengan</div>
+            
+            <div style="margin-bottom:20px;">
+                <label style="display:block; margin-bottom:5px; font-weight:600; font-size:0.9rem;">Periode Utama (Current):</label>
+                <select id="modal-select-current" style="width:100%; padding:8px; border-radius:6px; border:1px solid #ddd;"></select>
+            </div>
+
+            <div style="display:flex; justify-content:flex-end; gap:10px;">
+                <button onclick="closeStatModal()" style="padding:8px 16px; background:#eee; border:none; border-radius:6px; cursor:pointer;">Batal</button>
+                <button onclick="applyStatFilter()" style="padding:8px 16px; background:#C62828; color:white; border:none; border-radius:6px; cursor:pointer;">Terapkan</button>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="radar-modal">
+        <div class="modal-box large">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <div style="font-size:1.2rem; font-weight:700;">Profil Semua Auditee (Diurutkan Kinerja Terbaik & Effort)</div>
+                <button onclick="closeRadarModal()" style="padding:6px 12px; background:#eee; border:none; border-radius:6px; cursor:pointer;">Tutup</button>
+            </div>
+            <div class="radar-grid" id="all-radar-container"></div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="perf-modal">
+        <div class="modal-box large" style="max-width: 1200px;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <div style="font-size:1.2rem; font-weight:700;">Ranking Performa Seluruh Auditor</div>
+                <button onclick="closePerfModal()" style="padding:6px 12px; background:#eee; border:none; border-radius:6px; cursor:pointer;">Tutup</button>
+            </div>
+            <div class="radar-grid" id="all-perf-container"></div>
+        </div>
+    </div>
+
+    <script>
+        let allData = [];
+        let globalChartLabels = [], globalDataSelesai = [], globalDataBJT = [], globalDataOut = [], globalDataTDD = [], globalCategory = "";
+        let trendChart = null, divergingChart = null, radarChart = null;
+        let perfCharts = []; 
+        let userSelectedPeriod1 = null, userSelectedPeriod2 = null;
+        let trendStartPeriod = null, trendEndPeriod = null;
+        let radarAuditeeSelected = null;
+        let fullPerfData = []; 
+
+        Chart.register(ChartDataLabels);
+
+        function toggleDropdown(id) {
+            const allDropdowns = document.getElementsByClassName("dropdown-content");
+            for (let i = 0; i < allDropdowns.length; i++) {
+                if (allDropdowns[i].id !== id) allDropdowns[i].classList.remove('show');
+            }
+            document.getElementById(id).classList.toggle('show');
+        }
+
+        window.onclick = function(event) {
+            if (!event.target.matches('.dropdown-btn')) {
+                const dropdowns = document.getElementsByClassName("dropdown-content");
+                for (let i = 0; i < dropdowns.length; i++) {
+                    if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
+                }
+            }
+        }
+
+        function selectOption(btnId, listId, value, text, isTypeFilter) {
+            const btn = document.getElementById(btnId);
+            btn.textContent = text;
+            btn.setAttribute('data-value', value);
+            
+            if(btnId !== 'btn-radar-auditee') localStorage.setItem(btnId, value);
+            
+            const list = document.getElementById(listId);
+            const items = list.getElementsByClassName('dropdown-item');
+            for (let item of items) {
+                item.classList.remove('selected');
+                if (item.textContent === text) item.classList.add('selected');
+            }
+            list.classList.remove('show');
+
+            if (isTypeFilter) {
+                localStorage.removeItem('btn-auditee');
+                localStorage.removeItem('btn-period');
+                localStorage.removeItem('trend_start');
+                localStorage.removeItem('trend_end');
+                populateSecondaryFilters();
+            } else {
+                if (btnId === 'btn-radar-auditee') {
+                    radarAuditeeSelected = value;
+                    updateRadarChart();
+                } else {
+                    updateCharts();
+                }
+            }
+        }
+
+        document.getElementById('btn-audit-type').addEventListener('click', () => toggleDropdown('list-audit-type'));
+        document.getElementById('btn-period').addEventListener('click', () => toggleDropdown('list-period'));
+        document.getElementById('btn-auditee').addEventListener('click', () => toggleDropdown('list-auditee'));
+        document.getElementById('btn-radar-auditee').addEventListener('click', () => toggleDropdown('list-radar-auditee'));
+
+        document.getElementById('trend-range-start').addEventListener('change', (e) => { 
+            trendStartPeriod = e.target.value; 
+            localStorage.setItem('trend_start', trendStartPeriod);
+            updateCharts(true); 
+        });
+        document.getElementById('trend-range-end').addEventListener('change', (e) => { 
+            trendEndPeriod = e.target.value; 
+            localStorage.setItem('trend_end', trendEndPeriod);
+            updateCharts(true); 
+        });
+
+        document.addEventListener('DOMContentLoaded', async () => {
+            const typeBtn = document.getElementById('btn-audit-type');
+            typeBtn.textContent = 'Memuat...';
+
+            try {
+                const response = await fetch('/api/get_dashboard_trend_data');
+                if(!response.ok) throw new Error("Gagal memuat data.");
+                allData = await response.json();
+                
+                if (allData.length === 0) {
+                    typeBtn.textContent = 'Data Kosong';
+                    alert("Belum ada data monitoring audit.");
+                } else {
+                    initDashboard();
+                }
+            } catch(e) {
+                console.error(e);
+                typeBtn.textContent = 'Jenis Audit belum dipilih';
+            }
+        });
+
+        function initDashboard() {
+            const auditTypes = [...new Set(allData.map(d => d.audit_category))].filter(Boolean).sort();
+            const typeList = document.getElementById('list-audit-type');
+            typeList.innerHTML = '';
+            
+            auditTypes.forEach((t) => {
+                const div = document.createElement('div');
+                div.className = 'dropdown-item'; div.textContent = t;
+                div.onclick = () => selectOption('btn-audit-type', 'list-audit-type', t, t, true);
+                typeList.appendChild(div);
+            });
+
+            let savedType = localStorage.getItem('btn-audit-type');
+            let targetType = '';
+
+            if (savedType && auditTypes.includes(savedType)) targetType = savedType;
+            else if (auditTypes.includes('Audit Internal')) targetType = 'Audit Internal';
+            else targetType = auditTypes.length > 0 ? auditTypes[0] : '';
+
+            if (targetType) {
+                const btn = document.getElementById('btn-audit-type');
+                btn.textContent = targetType;
+                btn.setAttribute('data-value', targetType);
+                localStorage.setItem('btn-audit-type', targetType);
+                populateSecondaryFilters(true);
+            } else {
+                document.getElementById('btn-audit-type').textContent = 'Jenis Audit belum dipilih';
+            }
+        }
+
+        function populateSecondaryFilters(isInit = false) {
+            const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
+            const relevantData = allData.filter(d => d.audit_category === selectedType);
+
+            const periodList = document.getElementById('list-period');
+            periodList.innerHTML = '<div class="dropdown-item" onclick="selectOption(\'btn-period\', \'list-period\', \'all\', \'Semua Waktu\', false)">Semua Waktu</div>';
+            
+            const years = [...new Set(relevantData.map(d => d.periode.split('-')[0]))].sort().reverse();
+            if (years.length > 0) {
+                const div = document.createElement('div'); div.className = 'dropdown-divider'; div.textContent = '--- TAHUN ---'; periodList.appendChild(div);
+                years.forEach(y => {
+                    const d = document.createElement('div'); d.className = 'dropdown-item'; d.textContent = y;
+                    d.onclick = () => selectOption('btn-period', 'list-period', y, y, false);
+                    periodList.appendChild(d);
+                });
+            }
+            const months = [...new Set(relevantData.map(d => d.periode))].sort().reverse();
+            if (months.length > 0) {
+                const div = document.createElement('div'); div.className = 'dropdown-divider'; div.textContent = '--- BULAN ---'; periodList.appendChild(div);
+                months.forEach(p => {
+                    const label = relevantData.find(d => d.periode === p)?.periode_label || p;
+                    const d = document.createElement('div'); d.className = 'dropdown-item'; d.textContent = label;
+                    d.onclick = () => selectOption('btn-period', 'list-period', p, label, false);
+                    periodList.appendChild(d);
+                });
+            }
+
+            const auditeeList = document.getElementById('list-auditee');
+            const uniqueAuditees = [...new Set(relevantData.map(d => d.auditee))].sort();
+            auditeeList.innerHTML = '<div class="dropdown-item" onclick="selectOption(\'btn-auditee\', \'list-auditee\', \'all\', \'Semua Auditee\', false)">Semua Auditee</div>';
+            uniqueAuditees.forEach(a => {
+                const d = document.createElement('div'); d.className = 'dropdown-item'; d.textContent = a;
+                d.onclick = () => selectOption('btn-auditee', 'list-auditee', a, a, false);
+                auditeeList.appendChild(d);
+            });
+
+            let savedPeriod = localStorage.getItem('btn-period');
+            let targetPeriod = 'all', targetPeriodText = 'Semua Waktu';
+            if (isInit && savedPeriod && (years.includes(savedPeriod) || months.includes(savedPeriod))) {
+                targetPeriod = savedPeriod;
+                if(savedPeriod.length === 4) targetPeriodText = savedPeriod;
+                else targetPeriodText = relevantData.find(d => d.periode === savedPeriod)?.periode_label || savedPeriod;
+            } else {
+                localStorage.setItem('btn-period', 'all');
+            }
+            const btnP = document.getElementById('btn-period');
+            btnP.textContent = targetPeriodText; btnP.setAttribute('data-value', targetPeriod);
+
+            let savedAuditee = localStorage.getItem('btn-auditee');
+            let targetAuditee = 'all', targetAuditeeText = 'Semua Auditee';
+            if (isInit && savedAuditee && uniqueAuditees.includes(savedAuditee)) {
+                targetAuditee = savedAuditee; targetAuditeeText = savedAuditee;
+            } else {
+                localStorage.setItem('btn-auditee', 'all');
+            }
+            const btnA = document.getElementById('btn-auditee');
+            btnA.textContent = targetAuditeeText; btnA.setAttribute('data-value', targetAuditee);
+
+            updateCharts();
+        }
+
+        function generateRadarFeedback(s, b, o, t) {
+            const total = s + b + o + t;
+            if (total === 0) 
+                return `<div class="radar-feedback-box fb-warn"><span class="fb-title">⚠️ Data Kosong</span>Belum ada data temuan untuk auditee ini.</div>`;
+
+            const completionRate = (s / total) * 100;
+            let badgeClass = '';
+            let title = '';
+            let desc = '';
+
+            if (completionRate >= 80) {
+                badgeClass = 'fb-good';
+                title = '👍 Kinerja Sangat Baik';
+                desc = `Tingkat penyelesaian <b>${completionRate.toFixed(0)}%</b>. Sebagian besar temuan telah ditindaklanjuti. Pertahankan kinerja ini.`;
+            } else if (completionRate >= 50) {
+                badgeClass = 'fb-warn';
+                title = '⚠️ Kinerja Cukup Baik';
+                desc = `Tingkat penyelesaian <b>${completionRate.toFixed(0)}%</b>. Masih terdapat beberapa temuan Outstanding yang perlu dikejar penyelesaiannya.`;
+            } else {
+                badgeClass = 'fb-bad';
+                title = '❗ Perlu Perhatian Khusus';
+                desc = `Tingkat penyelesaian rendah (<b>${completionRate.toFixed(0)}%</b>). Dominasi Outstanding memerlukan prioritas tindakan perbaikan segera.`;
+            }
+
+            return `
+                <div class="radar-feedback-box ${badgeClass}">
+                    <div class="fb-title">${title}</div>
+                    <div>${desc}</div>
+                </div>
+            `;
+        }
+
+        function updateCharts(trendOnly = false) {
+            const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
+            if (!selectedType) return;
+            globalCategory = selectedType;
+
+            const selectedPeriod = document.getElementById('btn-period').getAttribute('data-value');
+            const selectedAuditee = document.getElementById('btn-auditee').getAttribute('data-value');
+
+            let dataBase = allData.filter(d => d.audit_category === selectedType);
+            if (selectedAuditee !== 'all') dataBase = dataBase.filter(d => d.auditee === selectedAuditee);
+
+            const hasBPK = dataBase.some(d => d.type === 'bpk');
+
+            const periods = [...new Set(dataBase.map(d => d.periode))].sort();
+            
+            if (!trendOnly) {
+                const sSel = document.getElementById('trend-range-start');
+                const eSel = document.getElementById('trend-range-end');
+                sSel.innerHTML = ''; eSel.innerHTML = '';
+                const getLabel = (p) => dataBase.find(d => d.periode === p)?.periode_label || p;
+                periods.forEach(p => {
+                    const l = getLabel(p);
+                    sSel.add(new Option(l, p)); eSel.add(new Option(l, p));
+                });
+                
+                let savedStart = localStorage.getItem('trend_start');
+                let savedEnd = localStorage.getItem('trend_end');
+                let s = (savedStart && periods.includes(savedStart)) ? savedStart : periods[0];
+                let e = (savedEnd && periods.includes(savedEnd)) ? savedEnd : periods[periods.length - 1];
+                
+                if (s && e) { sSel.value = s; eSel.value = e; trendStartPeriod = s; trendEndPeriod = e; }
+            }
+
+            const cStart = trendStartPeriod || periods[0];
+            const cEnd = trendEndPeriod || periods[periods.length - 1];
+            const visiblePeriods = periods.filter(p => p >= cStart && p <= cEnd);
+            const labels = visiblePeriods.map(p => dataBase.find(d => d.periode === p)?.periode_label || p);
+
+            let dS = [], dB = [], dO = [], dT = [];
+            visiblePeriods.forEach(p => {
+                const g = dataBase.filter(d => d.periode === p);
+                let s=0, b=0, o=0, t=0;
+                g.forEach(d => {
+                    s += (d.selesai || 0);
+                    if(d.type === 'bpk') { 
+                        b += (d.belum_sesuai || 0); 
+                        o += (d.belum_tl || 0);
+                        t += (d.tdd || 0);
+                    } else { 
+                        b += (d.tidak_selesai || 0); 
+                        o += (d.todo || 0); 
+                    }
+                });
+                dS.push(s); dB.push(b); dO.push(o); dT.push(t);
+            });
+
+            globalChartLabels = labels; globalDataSelesai = dS; globalDataBJT = dB; globalDataOut = dO; globalDataTDD = dT;
+            document.getElementById('ai-result').innerHTML = '<p style="color:#666; font-style:italic;">Klik tombol Analisis Data untuk mendapatkan interpretasi baru.</p>';
+
+            const ctxT = document.getElementById('trendLineChart').getContext('2d');
+            if(trendChart) trendChart.destroy();
+            
+            let barDatasets = [
+                { label: 'Selesai', data: dS, backgroundColor: '#4CAF50', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 },
+                { label: 'Belum Jatuh Tempo', data: dB, backgroundColor: '#EDB100', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 }, 
+                { label: 'Outstanding', data: dO, backgroundColor: '#F44336', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 }
+            ];
+            
+            if(hasBPK) {    
+                barDatasets[1].label = 'Belum Sesuai / BJT'; 
+                barDatasets.push({ label: 'TDD', data: dT, backgroundColor: '#616161', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 });
+            }
+
+            trendChart = new Chart(ctxT, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: barDatasets
+                },
+                options: { 
+                    responsive: true, maintainAspectRatio: false, 
+                    plugins: { 
+                        legend: { 
+                            position: 'bottom',
+                            labels: {
+                                usePointStyle: true,
+                                padding: 20,
+                                font: { size: 11 }
+                            }
+                        }, 
+                        datalabels: { 
+                            display: true,
+                            anchor: 'end',
+                            align: 'end',
+                            offset: -4,
+                            color: '#333',
+                            font: { size: 10, weight: 'bold' },
+                            formatter: (value) => value > 0 ? value : ''
+                        } 
+                    },
+                    scales: { 
+                        y: { 
+                            beginAtZero: true,
+                            grid: {
+                                borderDash: [2, 2],
+                                color: '#f0f0f0'
+                            },
+                            border: { display: false }
+                        },
+                        x: {
+                            grid: { display: false },
+                            border: { display: false }
+                        }
+                    },
+                    layout: {
+                        padding: { top: 20 }
+                    }
+                }
+            });
+
+            if (!trendOnly) {
+                updateModalDropdowns(periods, dataBase);
+                window.recalculateStatsData = dataBase;
+                updateLiveInsight(dataBase, periods);
+                recalculateStats();
+                updatePerformanceChart();
+            }
+            if (trendOnly) return;
+
+            let dataAcc = [...dataBase];
+            if (selectedPeriod !== 'all') {
+                if (selectedPeriod.length === 4) dataAcc = dataAcc.filter(d => d.periode.startsWith(selectedPeriod));
+                else dataAcc = dataAcc.filter(d => d.periode === selectedPeriod);
+            }
+
+            updateRadarChartInternal(dataAcc, selectedAuditee);
+        }
+
+        async function updatePerformanceChart() {
+            const container = document.getElementById('perf-grid-container');
+            const interpretBox = document.getElementById('perf-interpretation');
+            
+            // Clear existing charts
+            container.innerHTML = '';
+            interpretBox.innerHTML = '<p style="text-align:center; color:#888; margin:0;">Memuat data...</p>';
+
+            try {
+                // Fetch data auditor performance
+                const res = await fetch('/api/get_auditor_performance');
+                const data = await res.json(); 
+
+                if (!data || data.length === 0) {
+                    interpretBox.innerHTML = '<p style="text-align:center; color:#888;">Belum ada data kinerja auditor.</p>';
+                    return;
+                }
+
+                // 1. Logic Sorting:
+                // Primary: Current Selesai (Desc)
+                // Secondary: Delta (Desc) [Effort]
+                data.sort((a, b) => {
+                    if (b.current !== a.current) return b.current - a.current;
+                    return b.delta - a.delta;
+                });
+
+                // Save full data for modal
+                fullPerfData = [...data];
+
+                const top4 = data.slice(0, 4); 
+
+                const now = new Date();
+                const mNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+                const currMonthName = mNames[now.getMonth()];
+                let prevMonthIndex = now.getMonth() - 1;
+                if (prevMonthIndex < 0) prevMonthIndex = 11;
+                const prevMonthName = mNames[prevMonthIndex];
+
+                // Render Top 4 Cards
+                top4.forEach((d, i) => {
+                    const box = document.createElement('div');
+                    box.className = 'radar-item';
+                    // Create canvas with unique ID
+                    box.innerHTML = `
+                        <h4 style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:5px;">${d.name}</h4>
+                        <div style="height:180px; position:relative;">
+                            <canvas id="perfChart-${i}"></canvas>
+                        </div>
+                        <div style="margin-top:10px; font-size:0.8rem; text-align:center; color:#666;">
+                             Selesai: <b>${d.current}</b> <span style="color:${d.delta > 0 ? '#2E7D32' : (d.delta < 0 ? '#C62828' : '#666')}">(${d.delta > 0 ? '+' : ''}${d.delta})</span>
+                        </div>
+                    `;
+                    container.appendChild(box);
+
+                    new Chart(document.getElementById(`perfChart-${i}`), {
+                        type: 'bar',
+                        data: {
+                            labels: [prevMonthName, currMonthName],
+                            datasets: [{
+                                label: 'Selesai',
+                                data: [d.prev, d.current],
+                                backgroundColor: ['#BDBDBD', '#4CAF50'],
+                                borderRadius: 4,
+                                barPercentage: 0.6,
+                                categoryPercentage: 0.8
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                datalabels: {
+                                    color: '#333',
+                                    anchor: 'end',
+                                    align: 'top', // Try to put on top
+                                    offset: -5,   // If inside, push down slightly
+                                    clamp: true,  // Keep inside if overflows
+                                    font: { weight: 'bold', size: 11 },
+                                    formatter: (val) => val
+                                }
+                            },
+                            scales: {
+                                y: { beginAtZero: true, grid: { display: false }, ticks: { display: false }, border: {display: false} },
+                                x: { grid: { display: false }, border: {display: false} }
+                            },
+                            layout: {
+                                padding: { top: 20 } // Give space for top labels
+                            }
+                        }
+                    });
+                });
+
+                // Interpretation Logic
+                if (top4.length > 0) {
+                    let text = `<b>Top 4 Auditor Bulan Ini (${currMonthName}):</b><br><ul style="margin:5px 0 0 20px; padding:0;">`;
+                    top4.forEach((d) => {
+                        let trendIcon = d.delta > 0 ? '📈' : (d.delta < 0 ? '📉' : '➖');
+                        let deltaText = d.delta > 0 ? `(+${d.delta})` : (d.delta < 0 ? `(${d.delta})` : '(Stabil)');
+                        text += `<li><b>${d.name}</b>: ${d.current} Selesai ${trendIcon} <span style="font-size:0.85em; color:#666;">${deltaText} dari bulan lalu</span></li>`;
+                    });
+                    text += `</ul>`;
+                    interpretBox.innerHTML = text;
+                } else {
+                    interpretBox.innerHTML = '<p style="text-align:center; color:#888;">Data tidak cukup untuk interpretasi.</p>';
+                }
+
+            } catch (e) {
+                console.error("Gagal memuat chart performance:", e);
+                interpretBox.innerHTML = '<p style="color:red;">Gagal memuat data.</p>';
+            }
+        }
+
+        function openPerfModal() {
+            const modal = document.getElementById('perf-modal');
+            const container = document.getElementById('all-perf-container');
+            container.innerHTML = '';
+            
+            modal.classList.add('active');
+
+            if (!fullPerfData || fullPerfData.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">Tidak ada data.</p>';
+                return;
+            }
+
+            const now = new Date();
+            const mNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+            const currMonthName = mNames[now.getMonth()];
+            let prevMonthIndex = now.getMonth() - 1;
+            if (prevMonthIndex < 0) prevMonthIndex = 11;
+            const prevMonthName = mNames[prevMonthIndex];
+
+            fullPerfData.forEach((d, i) => {
+                const box = document.createElement('div');
+                box.className = 'radar-item';
+                box.innerHTML = `
+                    <h4 style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:5px;">${d.name}</h4>
+                    <div style="height:180px; position:relative;">
+                        <canvas id="perfModalChart-${i}"></canvas>
+                    </div>
+                    <div style="margin-top:10px; font-size:0.8rem; text-align:center; color:#666;">
+                        Selesai: <b>${d.current}</b> <span style="color:${d.delta >= 0 ? '#2E7D32' : '#C62828'}">(${d.delta >= 0 ? '+' : ''}${d.delta})</span>
+                    </div>
+                `;
+                container.appendChild(box);
+
+                new Chart(document.getElementById(`perfModalChart-${i}`), {
+                    type: 'bar',
+                    data: {
+                        labels: [prevMonthName, currMonthName],
+                        datasets: [{
+                            label: 'Selesai',
+                            data: [d.prev, d.current],
+                            backgroundColor: ['#BDBDBD', '#4CAF50'],
+                            borderRadius: 4,
+                            barPercentage: 0.6,
+                            categoryPercentage: 0.8
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        maintainAspectRatio: false,
+                        plugins: {
+                            legend: { display: false },
+                            datalabels: {
+                                color: '#333',
+                                anchor: 'end',
+                                align: 'top',
+                                offset: -5,
+                                clamp: true,
+                                font: { weight: 'bold', size: 10 },
+                                formatter: (val) => val
+                            }
+                        },
+                        scales: {
+                            y: { beginAtZero: true, grid: { display: false }, ticks: { display: false }, border: {display: false} },
+                            x: { grid: { display: false }, border: {display: false} }
+                        },
+                        layout: { padding: { top: 20 } }
+                    }
+                });
+            });
+        }
+
+        function closePerfModal() {
+            document.getElementById('perf-modal').classList.remove('active');
+        }
+
+        // ... (Fungsi-fungsi lain tetap sama)
+        function updateRadarChartInternal(filteredData, mainFilterAuditee) {
+            const controls = document.getElementById('radar-controls');
+            const radarList = document.getElementById('list-radar-auditee');
+            const radarBtn = document.getElementById('btn-radar-auditee');
+            let targetName = "";
+
+            if (mainFilterAuditee !== 'all') {
+                controls.style.display = 'none';
+                targetName = mainFilterAuditee;
+            } else {
+                controls.style.display = 'flex';
+                
+                const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
+                const selectedPeriodVal = document.getElementById('btn-period').getAttribute('data-value');
+
+                const categoryData = allData.filter(d => d.audit_category === selectedType);
+                const sortedPeriods = [...new Set(categoryData.map(d => d.periode))].sort();
+                
+                let isTrendSort = false;
+                let prevPeriod = null;
+                if (selectedPeriodVal !== 'all' && sortedPeriods.includes(selectedPeriodVal)) {
+                    const idx = sortedPeriods.indexOf(selectedPeriodVal);
+                    if (idx > 0) {
+                        prevPeriod = sortedPeriods[idx - 1];
+                        isTrendSort = true;
+                    }
+                }
+
+                const uAuditees = [...new Set(filteredData.map(d => d.auditee))];
+                
+                const auditeeStats = uAuditees.map(aud => {
+                    const currentData = filteredData.filter(d => d.auditee === aud);
+                    let s = 0, total = 0;
+                    currentData.forEach(d => {
+                        s += (d.selesai || 0);
+                        if (d.type === 'bpk') {
+                            total += (d.selesai || 0) + (d.belum_sesuai || 0) + (d.belum_tl || 0) + (d.tdd || 0);
+                        } else {
+                            total += (d.selesai || 0) + (d.tidak_selesai || 0) + (d.todo || 0);
+                        }
+                    });
+                    const currentRate = total > 0 ? (s / total) : 0;
+
+                    let trendScore = 0;
+                    if (isTrendSort) {
+                        const prevData = categoryData.filter(d => d.auditee === aud && d.periode === prevPeriod);
+                        if (prevData.length > 0) {
+                            let sp = 0, tp = 0;
+                            prevData.forEach(d => {
+                                sp += (d.selesai || 0);
+                                if (d.type === 'bpk') {
+                                    tp += (d.selesai || 0) + (d.belum_sesuai || 0) + (d.belum_tl || 0) + (d.tdd || 0);
+                                } else {
+                                    tp += (d.selesai || 0) + (d.tidak_selesai || 0) + (d.todo || 0);
+                                }
+                            });
+                            const prevRate = tp > 0 ? (sp / tp) : 0;
+                            trendScore = currentRate - prevRate;
+                        }
+                    }
+
+                    return { name: aud, rate: currentRate, trend: trendScore };
+                });
+
+                auditeeStats.sort((a, b) => {
+                    if (Math.abs(b.rate - a.rate) > 0.0001) return b.rate - a.rate;
+                    if (Math.abs(b.trend - a.trend) > 0.0001) return b.trend - a.trend;
+                    return a.name.localeCompare(b.name);
+                });
+                
+                const sortedAuditees = auditeeStats.map(a => a.name);
+
+                radarList.innerHTML = '';
+                sortedAuditees.forEach(a => {
+                    const d = document.createElement('div'); d.className = 'dropdown-item'; d.textContent = a;
+                    d.onclick = () => selectOption('btn-radar-auditee', 'list-radar-auditee', a, a, false);
+                    radarList.appendChild(d);
+                });
+
+                if (radarAuditeeSelected && sortedAuditees.includes(radarAuditeeSelected)) targetName = radarAuditeeSelected;
+                else if (sortedAuditees.length > 0) { 
+                    targetName = sortedAuditees[0]; 
+                    radarAuditeeSelected = targetName; 
+                }
+                radarBtn.textContent = targetName || "Tidak ada data";
+            }
+
+            let st = { s:0, b:0, o:0, tdd:0 };
+            let isBPK = false;
+
+            const auditeeData = filteredData.filter(d => d.auditee === targetName);
+            if (auditeeData.length > 0) {
+                if (auditeeData.some(d => d.type === 'bpk')) isBPK = true;
+            }
+            
+            auditeeData.forEach(d => {
+                let s = d.selesai||0;
+                let b = (d.type==='bpk') ? (d.belum_sesuai||0) : (d.tidak_selesai||0);
+                let o = (d.type==='bpk') ? ((d.belum_tl||0)) : (d.todo||0);
+                let t = (d.type==='bpk') ? (d.tdd||0) : 0;
+                st.s+=s; st.b+=b; st.o+=o; st.tdd+=t;
+            });
+
+            const feedbackContainer = document.getElementById('radar-main-feedback');
+            if (targetName) {
+                feedbackContainer.innerHTML = generateRadarFeedback(st.s, st.b, st.o, st.tdd);
+            } else {
+                feedbackContainer.innerHTML = '';
+            }
+
+            const ctxR = document.getElementById('radarChart').getContext('2d');
+            if(radarChart) radarChart.destroy();
+            if (!targetName) return;
+
+            let labels = [], dataPoints = [];
+            if (isBPK) {
+                labels = ['Selesai', 'Belum Sesuai', 'Belum TL', 'TDD'];
+                dataPoints = [st.s, st.b, st.o, st.tdd];
+            } else {
+                labels = ['Selesai', 'Belum Jatuh Tempo', 'Outstanding'];
+                dataPoints = [st.s, st.b, st.o];
+            }
+
+            radarChart = new Chart(ctxR, {
+                type: 'radar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: targetName,
+                        data: dataPoints,
+                        fill: true,
+                        backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                        borderColor: 'rgba(54, 162, 235, 1)',
+                        pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                        pointRadius: 2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: true, position: 'top' },
+                        datalabels: { 
+                            backgroundColor: 'transparent',
+                            color: '#333', 
+                            font: { weight: 'bold', size: 11 },
+                            textStrokeColor: 'white',
+                            textStrokeWidth: 2,
+                            formatter: (val) => val
+                        }
+                    },
+                    scales: { r: { suggestedMin: 0, angleLines: { color: '#eee' }, grid: { color: '#f0f0f0' }, pointLabels: { font: { size: 11, weight: '500' } } } }
+                }
+            });
+        }
+        function closeRadarModal() { document.getElementById('radar-modal').classList.remove('active'); }
+
+        function updateLiveInsight(dataSource, periods) {
+            const now = new Date();
+            const cm = String(now.getMonth() + 1).padStart(2, '0');
+            const cy = now.getFullYear();
+            const sp = `${cy}-${cm}`;
+            const mNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            
+            document.querySelector('.live-insight-header').innerHTML = `Keterangan Bulan Ini (${mNames[now.getMonth()]} ${cy})`;
+            
+            const box = document.getElementById('live-insight-content');
+            const boxContainer = document.getElementById('live-insight-box');
+
+            if (!periods.includes(sp)) { 
+                box.innerHTML = `<span style="color:#777;">Data bulan ini belum tersedia.</span>`; 
+                boxContainer.style.cssText = ""; 
+                return; 
+            }
+
+            const getTotal = (p) => {
+                let sub = dataSource.filter(d => d.periode === p);
+                let total = 0;
+                sub.forEach(d => { 
+                    total += (d.selesai || 0);
+                    if(d.type==='bpk') total += (d.belum_sesuai||0) + (d.belum_tl||0) + (d.tdd||0);
+                    else total += (d.tidak_selesai||0) + (d.todo||0);
+                });
+                return total;
+            };
+
+            const cTotal = getTotal(sp);
+            const prevP = periods[periods.indexOf(sp)-1];
+            
+            if(!prevP) { 
+                box.innerHTML = `Data awal. Total Temuan: <b>${cTotal}</b>.`; 
+                boxContainer.style.cssText = ""; 
+                return; 
+            }
+            
+            const pTotal = getTotal(prevP);
+            const diff = cTotal - pTotal;
+            
+            if(diff > 0) {
+                box.innerHTML = `Total Temuan <span class="trend-up">naik ${diff}</span> item.`;
+                boxContainer.style.cssText = "background:#ffebee; border-left-color:#d32f2f;";
+            } else if(diff < 0) {
+                box.innerHTML = `Total Temuan <span class="trend-down">turun ${Math.abs(diff)}</span> item.`;
+                boxContainer.style.cssText = "background:#e8f5e9; border-left-color:#2e7d32;";
+            } else {
+                box.innerHTML = `Total Temuan stabil.`;
+                boxContainer.style.cssText = "background:#e3f2fd; border-left-color:#2196F3;";
+            }
+        }
+
+        function updateModalDropdowns(periods, filteredData) {
+            const sc = document.getElementById('modal-select-current');
+            const sb = document.getElementById('modal-select-baseline');
+            sc.innerHTML = ''; sb.innerHTML = '';
+            const getL = (p) => filteredData.find(d => d.periode === p)?.periode_label || p;
+            periods.forEach(p => { const o = new Option(getL(p), p); sc.add(o.cloneNode(true)); sb.add(o.cloneNode(true)); });
+            
+            if(periods.length >= 2) { 
+                if(!userSelectedPeriod1) userSelectedPeriod1 = periods[periods.length-1];
+                if(!userSelectedPeriod2) userSelectedPeriod2 = periods[periods.length-2];
+            } else if(periods.length === 1) {
+                if(!userSelectedPeriod1) userSelectedPeriod1 = periods[0];
+                if(!userSelectedPeriod2) userSelectedPeriod2 = periods[0];
+            }
+            if(userSelectedPeriod1 && periods.includes(userSelectedPeriod1)) sc.value = userSelectedPeriod1;
+            if(userSelectedPeriod2 && periods.includes(userSelectedPeriod2)) sb.value = userSelectedPeriod2;
+        }
+
+        function recalculateStats() {
+            const p1 = userSelectedPeriod1; 
+            const p2 = userSelectedPeriod2; 
+            const c = document.getElementById('comparison-stats-container');
+            const txt = document.getElementById('stat-period-text');
+            const dS = window.recalculateStatsData || allData;
+            
+            if(!p1 || !p2) { 
+                c.innerHTML = '<p style="text-align:center;">Data N/A</p>'; 
+                if(divergingChart) divergingChart.destroy();
+                return; 
+            }
+            
+            const l1 = dS.find(d=>d.periode===p1)?.periode_label||p1;
+            const l2 = dS.find(d=>d.periode===p2)?.periode_label||p2;
+            
+            txt.textContent = `${l2} vs ${l1}`; 
+
+            const getS = (p) => {
+                let sub = dS.filter(d=>d.periode===p);
+                let r = {s:0, b:0, o:0, t:0};
+                let isBPK = sub.some(d => d.type === 'bpk');
+                sub.forEach(d=>{
+                    r.s+=d.selesai||0;
+                    if(d.type==='bpk') { 
+                        r.b+=(d.belum_sesuai||0); 
+                        r.o+=(d.belum_tl||0); 
+                        r.t+=(d.tdd||0);
+                    } else { 
+                        r.b+=(d.tidak_selesai||0); 
+                        r.o+=(d.todo||0); 
+                    }
+                });
+                return { r, isBPK };
+            };
+            const res1 = getS(p1); const s1 = res1.r;
+            const res2 = getS(p2); const s2 = res2.r;
+            
+            const badge = (n, o, category) => {
+                const d = n - o; 
+                let pct = "";
+                if(o === 0) pct = (n > 0) ? "100%" : "0%";
+                else pct = Math.abs((d / o) * 100).toFixed(1) + "%";
+
+                if(d===0) return `<span class="stat-change change-neutral">-</span>`;
+                
+                let cls = '';
+                if (category === 'selesai') cls = 'change-up-good';
+                else if (category === 'bjt') cls = 'change-up-warn'; 
+                else if (category === 'outstanding') cls = 'change-up-bad';
+                else cls = 'change-neutral';
+                
+                const sign = d > 0 ? '+' : ''; 
+                return `<span class="stat-change ${cls}">${sign}${d} (${pct})</span>`;
+            };
+
+            const dO = s1.o - s2.o;
+            let v = '';
+            if(dO>0) v = `<div class="stat-verdict-box verdict-negative"><b>(!)</b> Outstanding naik ${dO}.</div>`;
+            else if(dO<0) v = `<div class="stat-verdict-box verdict-positive"><b>(OK)</b> Outstanding turun ${Math.abs(dO)}.</div>`;
+            else v = `<div class="stat-verdict-box verdict-neutral"><b>(i)</b> Stabil.</div>`;
+
+            const hasTDD = (s1.t > 0 || s2.t > 0);
+            let tddRow = '';
+            if(hasTDD) {
+                tddRow = `
+                    <div class="stat-item">
+                        <span class="stat-label">TDD</span>
+                        <div class="stat-value-group">
+                            <span class="stat-value" style="font-size:0.9rem">${s2.t} <span style="color:#bbb; margin:0 3px;">&rarr;</span> ${s1.t}</span>
+                            ${badge(s1.t, s2.t, 'tdd')}
+                        </div>
+                    </div>
+                `;
+            }
+
+            c.innerHTML = `
+                <div>
+                    <div class="stat-item">
+                        <span class="stat-label">Selesai</span>
+                        <div class="stat-value-group">
+                            <span class="stat-value" style="font-size:0.9rem">${s2.s} <span style="color:#bbb; margin:0 3px;">&rarr;</span> ${s1.s}</span>
+                            ${badge(s1.s, s2.s, 'selesai')}
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Belum Jatuh Tempo</span>
+                        <div class="stat-value-group">
+                            <span class="stat-value" style="font-size:0.9rem">${s2.b} <span style="color:#bbb; margin:0 3px;">&rarr;</span> ${s1.b}</span>
+                            ${badge(s1.b, s2.b, 'bjt')}
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <span class="stat-label">Outstanding</span>
+                        <div class="stat-value-group">
+                            <span class="stat-value" style="font-size:0.9rem">${s2.o} <span style="color:#bbb; margin:0 3px;">&rarr;</span> ${s1.o}</span>
+                            ${badge(s1.o, s2.o, 'outstanding')}
+                        </div>
+                    </div>
+                    ${tddRow}
+                </div>
+                ${v}
+            `;
+
+            updateDivergingChart(s1, s2, hasTDD);
+        }
+        window.recalculateStats = recalculateStats;
+
+        function updateDivergingChart(s1, s2, hasTDD) {
+            const ctxD = document.getElementById('divergingChart').getContext('2d');
+            if(divergingChart) divergingChart.destroy();
+
+            const calcPct = (n, o) => {
+                if(o === 0) return n > 0 ? 100 : 0;
+                return ((n - o) / o) * 100;
+            };
+
+            let labels = ['Selesai', 'Belum Jatuh Tempo', 'Outstanding'];
+            let dataArr = [
+                calcPct(s1.s, s2.s),
+                calcPct(s1.b, s2.b),
+                calcPct(s1.o, s2.o)
+            ];
+            let bgColors = ['#4CAF50', '#FFC107', '#F44336']; 
+
+            if(hasTDD) {
+                labels.push('TDD');
+                dataArr.push(calcPct(s1.t, s2.t));
+                bgColors.push('#616161');
+            }
+
+            divergingChart = new Chart(ctxD, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '% Perubahan',
+                        data: dataArr,
+                        backgroundColor: bgColors,
+                        borderRadius: 4
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: { display: false },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `${ctx.formattedValue}%`
+                            }
+                        },
+                        datalabels: {
+                            color: '#fff',
+                            font: { weight: 'bold' },
+                            formatter: (val) => val.toFixed(1) + '%'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            grid: { color: '#eee', borderDash: [2,2] },
+                            ticks: { callback: (v) => v + '%' }
+                        },
+                        y: {
+                            grid: { display: false }
+                        }
+                    }
+                }
+            });
+        }
+
+        function openStatModal() { document.getElementById('stat-modal').classList.add('active'); }
+        function closeStatModal() { document.getElementById('stat-modal').classList.remove('active'); }
+        function applyStatFilter() {
+            userSelectedPeriod1 = document.getElementById('modal-select-current').value;
+            userSelectedPeriod2 = document.getElementById('modal-select-baseline').value;
+            recalculateStats(); closeStatModal();
+        }
+
+        async function generateAIInsight() {
+            const btn = document.getElementById('btn-generate-ai');
+            const res = document.getElementById('ai-result');
+            if(!globalChartLabels.length) { alert("Data kosong."); return; }
+            btn.disabled = true; btn.innerHTML = 'Menganalisis...';
+            res.innerHTML = '<p style="text-align:center;color:#666;">Sedang memproses...</p>';
+            try {
+                const payload = { 
+                    category: globalCategory, 
+                    chart_data: { 
+                        labels: globalChartLabels, 
+                        selesai: globalDataSelesai, 
+                        bjt: globalDataBJT, 
+                        outstanding: globalDataOut, 
+                        tdd: globalDataTDD 
+                    } 
+                };
+                const resp = await fetch('/api/generate_dashboard_insight', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(payload) });
+                const d = await resp.json();
+                if(resp.ok) res.innerHTML = d.analysis; else res.innerHTML = `<p style="color:red;">Error: ${d.error}</p>`;
+            } catch(e) { res.innerHTML = `<p style="color:red;">Koneksi gagal.</p>`; }
+            finally { btn.disabled = false; btn.innerHTML = 'Analisis Ulang'; }
+        }
+    </script>
+</body>
+</html>

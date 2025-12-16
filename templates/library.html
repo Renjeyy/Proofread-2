@@ -1,0 +1,526 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Library Dokumen - CoE SKAI IFG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />
+    
+    <style>
+        .library-container {
+            padding: 2rem;
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .library-toolbar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+            background: #fff;
+            padding: 15px;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            border: 1px solid #e0e0e0;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .toolbar-left, .toolbar-right {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .lib-select, .lib-search {
+            padding: 8px 12px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            font-size: 14px;
+            outline: none;
+        }
+
+        .lib-search { 
+            width: 250px; 
+        }
+
+        .reset-link {
+            color: #C62828;
+            text-decoration: none;
+            font-size: 14px;
+            cursor: pointer;
+        }
+
+        .reset-link:hover { 
+            text-decoration: underline; 
+        }
+
+        .library-table-wrapper {
+            background: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
+            overflow-x: auto;
+        }
+
+        .library-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+        }
+
+        .library-table thead {
+            background-color: #f9f9f9;
+            border-bottom: 2px solid #eee;
+        }
+
+        .library-table th {
+            text-align: center;
+            padding: 15px;
+            font-weight: 600;
+            color: #333;
+        }
+
+        .library-table td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+            vertical-align: middle;
+            color: #555;
+            text-align: center;
+        }
+
+        .library-table tr:hover { 
+            background-color: #fcfcfc; 
+        }
+
+        .col-title, .col-summary {
+            text-align: justify !important;
+        }
+
+        .col-title a {
+            color: #0277BD;
+            font-weight: 600;
+            text-decoration: none;
+            font-size: 15px;
+            display: block;
+        }
+
+        .col-title a:hover { 
+            text-decoration: underline; 
+        }
+
+        .col-category span {
+            color: #0277BD;
+            cursor: pointer;
+        }
+
+        .file-type-badge {
+            display: inline-block;
+            padding: 3px 8px;
+            border-radius: 4px;
+            font-size: 11px;
+            font-weight: bold;
+            text-transform: uppercase;
+            color: #555;
+            background: #eee;
+        }
+
+        .action-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .btn-view {
+            background-color: #0277BD;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-view:hover { 
+            background-color: #01579B; 
+        }
+
+        .btn-delete {
+            background-color: #C62828;
+            color: white;
+            padding: 6px 12px;
+            border-radius: 4px;
+            text-decoration: none;
+            font-size: 13px;
+            border: none;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+
+        .btn-delete:hover { 
+            background-color: #B71C1C; 
+        }
+
+        .btn-add-new {
+            background-color: #C62828;
+            color: white;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        .btn-add-new:hover { 
+            background-color: #B71C1C; 
+        }
+
+        .form-group { 
+            margin-bottom: 20px; 
+            text-align: left; 
+        }
+
+        .form-group label { 
+            display: block; 
+            margin-bottom: 8px; 
+            font-weight: 600; 
+            font-size: 0.95rem;
+            color: #333;
+        }
+
+        .form-group input, .form-group textarea {
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px;
+            font-size: 14px;
+            box-sizing: border-box;
+            font-family: inherit;
+        }
+
+        .form-group input:focus, .form-group textarea:focus {
+            outline: none;
+            border-color: #C62828;
+        }
+
+        .modal-content {
+            background-color: #fefefe;
+            margin: 5% auto;
+            padding: 30px;
+            border: 1px solid #888;
+            width: 90%; 
+            max-width: 500px;
+            border-radius: 12px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            box-sizing: border-box;
+        }
+
+        .modal-content::-webkit-scrollbar {
+            width: 8px;
+        }
+
+        .modal-content::-webkit-scrollbar-track {
+            background: #f1f1f1;
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb {
+            background: #ccc; 
+            border-radius: 4px;
+        }
+
+        .modal-content::-webkit-scrollbar-thumb:hover {
+            background: #bbb; 
+        }
+
+        .modal-actions {
+            display: flex;
+            justify-content: space-between;
+            gap: 20px;
+            margin-top: 30px;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        .modal-actions button {
+            flex: 1;
+            width: 50%;
+            height: 48px;
+            padding: 0 !important;
+            margin: 0 !important;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 16px;
+            font-weight: 600;
+            border-radius: 6px;
+            cursor: pointer;
+            border: none;
+            box-sizing: border-box;
+        }
+
+        .btn-secondary {
+            background-color: #6c757d; 
+            color: white;
+        }
+
+        .btn-secondary:hover { 
+            background-color: #5a6268; 
+        }
+
+        .login-btn {
+            background-color: #C62828;
+            color: white;
+        }
+
+        .login-btn:hover { 
+            background-color: #B71C1C; 
+        }
+
+        .delete-modal-content {
+            text-align: center;
+            padding: 30px;
+            border-radius: 12px;
+            max-width: 400px;
+            animation: popIn 0.3s ease;
+        }
+
+        .delete-icon-wrapper {
+            width: 80px;
+            height: 80px;
+            background-color: #FFEBEE;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin: 0 auto 20px auto;
+        }
+
+        .delete-icon { 
+            font-size: 40px; 
+            color: #C62828; 
+        }
+
+        .delete-title { 
+            font-size: 1.5rem; 
+            color: #333; 
+            margin-bottom: 10px; 
+            font-weight: 700; 
+        }
+
+        .delete-text { 
+            color: #666; 
+            margin-bottom: 25px; 
+            line-height: 1.5; 
+        }
+
+        .delete-actions { 
+            display: flex; 
+            gap: 15px; 
+            justify-content: center; 
+            width: 100%;
+        }
+
+        .btn-cancel-modal, .btn-confirm-delete-modal {
+            flex: 1;
+            height: 45px;
+            border-radius: 6px;
+            border: none;
+            font-weight: 600;
+            cursor: pointer;
+            transition: 0.2s;
+            font-size: 15px;
+        }
+
+        .btn-cancel-modal { 
+            background-color: #f0f0f0; 
+            color: #333; 
+        }
+
+        .btn-cancel-modal:hover { 
+            background-color: #e0e0e0; 
+        }
+
+        .btn-confirm-delete-modal { 
+            background-color: #C62828; 
+            color: white; 
+            box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2);
+        }
+
+        .btn-confirm-delete-modal:hover { 
+            background-color: #B71C1C; 
+            transform: translateY(-1px);
+        }
+
+        @keyframes popIn {
+            from { transform: scale(0.8); opacity: 0; }
+            to { transform: scale(1); opacity: 1; }
+        }
+    </style>
+</head>
+<body data-user-id="{{ current_user.id }}">
+    
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a href="{{ url_for('dashboard') }}">
+                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo">
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn">Analisis Dokumen <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('dashboard') }}#folder-management">Folder</a>
+                    <a href="{{ url_for('dashboard') }}#fitur">Proofread</a>
+                    <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
+                </div>
+            </li>
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
+                    <a href="{{ url_for('ams_temuan_page') }}">Temuan</a>
+                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
+                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
+                    <a href="{{ url_for('ams_auditors_page') }}">Auditors</a>
+                </div>
+            </li>
+            <li><a href="{{ url_for('mailbox_page') }}">Email</a></li>
+            <li><a href="#" class="active" style="font-weight: 700; color: #C62828;">Library</a></li>
+        </ul>
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <div class="library-container">
+            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
+                <h2 class="section-title" style="margin: 0; text-align: left;">Library Dokumen</h2>
+                <button class="btn-add-new" onclick="openAddFileModal()">
+                    <span>+</span> Tambah File Baru
+                </button>
+            </div>
+
+            <div class="library-toolbar">
+                <div class="toolbar-left">
+                    <select id="filter-category" class="lib-select" onchange="filterLibrary()">
+                        <option value="">All Categories</option>
+                    </select>
+                    <select id="filter-type" class="lib-select" onchange="filterLibrary()">
+                        <option value="">All Types</option>
+                    </select>
+                    <a href="#" class="reset-link" onclick="resetFilters()">↺ Reset</a>
+                </div>
+                <div class="toolbar-right">
+                    <label for="search-library" style="color:#666; font-size:14px;">Search:</label>
+                    <input type="text" id="search-library" class="lib-search" placeholder="Cari judul atau ringkasan..." onkeyup="filterLibrary()">
+                </div>
+            </div>
+
+            <div class="library-table-wrapper">
+                <table class="library-table" id="library-table">
+                    <thead>
+                        <tr>
+                            <th width="20%">Title</th>
+                            <th width="15%">Cluster by</th>
+                            <th width="35%">Summary</th>
+                            <th width="15%">Categories</th>
+                            <th width="10%">Size</th>
+                            <th width="10%">Type</th>
+                            <th width="10%">Action</th>
+                        </tr>
+                    </thead>
+                    <tbody id="library-table-body">
+                        <tr>
+                            <td colspan="6" style="padding: 30px;">Memuat data library...</td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </main>
+
+    <div id="add-file-modal" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 500px; border-radius: 12px; padding: 30px; box-sizing: border-box;">
+            <span class="modal-close-btn" onclick="closeAddFileModal()" style="font-size: 24px;">&times;</span>
+            <h3 style="margin-top:0; color: #C62828; text-align: center; font-size: 1.5rem; margin-bottom: 25px;">Upload File Baru</h3>
+            <div style="border-bottom: 2px solid #C62828; margin-bottom: 25px; width: 100%;"></div>
+            
+            <form id="add-file-form" onsubmit="handleUploadFile(event)">
+                <div class="form-group">
+                    <label>Judul Dokumen</label>
+                    <input type="text" id="new-file-title" required placeholder="Contoh: Pedoman Audit 2025">
+                </div>
+                <div class="form-group" style="display: flex; gap: 15px;">
+                    <div style="flex: 1;">
+                        <label>Tipe Cluster</label>
+                        <select id="cluster-group" class="lib-select" style="width: 100%; box-sizing: border-box;" onchange="updateClusterOptions()">
+                            <option value="" disabled selected>-- Pilih Tipe --</option>
+                            <option value="Internal">Internal</option>
+                            <option value="Eksternal">Eksternal</option>
+                        </select>
+                    </div>
+                    <div style="flex: 1;">
+                        <label>Spesifik Cluster</label>
+                        <select id="cluster-specific" class="lib-select" style="width: 100%; box-sizing: border-box;" disabled>
+                            <option value="" disabled selected>-- Pilih Detail --</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group">
+                    <label>Kategori</label>
+                    <input type="text" id="new-file-category" required placeholder="Contoh: Policies, Reports, dll">
+                </div>
+
+                <div class="form-group">
+                    <label>Ringkasan (Summary)</label>
+                    <textarea id="new-file-summary" rows="3" placeholder="Deskripsi singkat isi dokumen..."></textarea>
+                </div>
+                
+                <div class="form-group">
+                    <label>File</label>
+                    <input type="file" id="new-file-upload" required style="padding: 8px;">
+                </div>
+                
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAddFileModal()">Batal</button>
+                    <button type="submit" class="login-btn">Upload</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="custom-delete-modal" class="modal hidden" style="z-index: 3000;">
+        <div class="modal-content delete-modal-content">
+            <div class="delete-icon-wrapper">
+                <span class="delete-icon">🗑️</span>
+            </div>
+            <h3 class="delete-title">Hapus File?</h3>
+            <p class="delete-text">
+                Apakah Anda yakin ingin menghapus file <strong id="delete-filename-display"></strong>? 
+                Tindakan ini tidak dapat dibatalkan.
+            </p>
+            <div class="delete-actions">
+                <button class="btn-cancel-modal" onclick="closeDeleteModal()">Batal</button>
+                <button class="btn-confirm-delete-modal" onclick="confirmDeleteAction()">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <footer><p>2025 Library Center of Excellence | SKAI IFG</p></footer>
+    
+    <script src="{{ url_for('static', filename='library.js') }}"></script>
+</body>
+</html>

@@ -1,0 +1,502 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Dashboard Center of Excellence SKAI IFG</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />
+    
+    <!-- SheetJS untuk Export Excel -->
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+
+    <script>
+    function navGoToHome() { window.location.hash = 'home'; showPage('home'); }
+    function navGoToFolder() { window.location.hash = 'folder-management'; showPage('folder-management'); if (typeof loadUserFolders === "function") loadUserFolders(); }
+    function navGoToFitur() { window.location.hash = 'fitur'; showPage('fitur'); }
+    
+    function updateNavbarActiveState(pageId) {
+        const parent = document.getElementById('nav-analisis-parent');
+        const folderLink = document.getElementById('nav-folder');
+        const proofreadLink = document.getElementById('nav-proofread');
+        if(parent) parent.classList.remove('active');
+        if(folderLink) folderLink.classList.remove('active');
+        if(proofreadLink) proofreadLink.classList.remove('active');
+        
+        if (pageId === 'folder-management') { 
+            if(parent) parent.classList.add('active'); 
+            if(folderLink) folderLink.classList.add('active'); 
+        } else if (['fitur', 'proofreading', 'compare', 'review'].includes(pageId)) { 
+            if(parent) parent.classList.add('active'); 
+            if(proofreadLink) proofreadLink.classList.add('active'); 
+        }
+    }
+
+    function showPage(pageId) {
+        const sectionsToHide = ["hero-section", "dashboard-widgets-section", "features-page-container", "dropdown-section", "folder-management-section", "proofreading", "compare", "review"];
+        sectionsToHide.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add("hidden"); });
+        
+        const featureSelect = document.getElementById("feature-select");
+        const folderHistoryDetail = document.getElementById("folder-history-detail");
+        
+        updateNavbarActiveState(pageId);
+        
+        switch (pageId) {
+            case 'home': case '':
+                document.getElementById("hero-section")?.classList.remove("hidden");
+                document.getElementById("dashboard-widgets-section")?.classList.remove("hidden");
+                if (featureSelect) featureSelect.value = "";
+                if (typeof fetchAndRenderDashboardWidgets === "function") fetchAndRenderDashboardWidgets();
+                break;
+            case 'folder-management':
+                document.getElementById("folder-management-section")?.classList.remove("hidden");
+                if (folderHistoryDetail) folderHistoryDetail.classList.add("hidden");
+                if (typeof loadUserFolders === "function") loadUserFolders();
+                break;
+            case 'fitur':
+                document.getElementById("features-page-container")?.classList.remove("hidden");
+                if (featureSelect) featureSelect.value = "";
+                break;
+            case 'proofreading': case 'compare': case 'review':
+                document.getElementById("features-page-container")?.classList.remove("hidden");
+                document.getElementById("dropdown-section")?.classList.remove("hidden");
+                document.getElementById(pageId)?.classList.remove("hidden");
+                if (featureSelect) featureSelect.value = pageId;
+                if (typeof checkSessionStorage === "function") checkSessionStorage(pageId);
+                break;
+        }
+    }
+
+    function showFeature() {
+        const selection = document.getElementById("feature-select").value;
+        if (selection) { window.location.hash = selection; showPage(selection); } 
+        else { window.location.hash = 'fitur'; showPage('fitur'); }
+    }
+
+    function handlePageLoad() {
+        const currentPage = window.location.hash.replace('#', '');
+        showPage(currentPage || 'home');
+        if (typeof checkDeadlines === "function") checkDeadlines();
+    }
+
+    async function checkDeadlines() {
+        try {
+            const res = await fetch('/api/check_deadline_notifications');
+            if (res.ok) {
+                const notifs = await res.json();
+                if (notifs.length > 0) {
+                    const item = notifs[0]; 
+                    const msg = `Remind ke <strong>${item.auditee}</strong> mengenai <strong>${item.subject}</strong> dengan tanggal deadline <strong>${item.deadline}</strong>`;
+                    document.getElementById('deadline-notif-content').innerHTML = msg;
+                    const modal = document.getElementById('deadline-notification-modal');
+                    if(modal) modal.classList.remove('hidden');
+                }
+            }
+        } catch (e) { console.error("Gagal cek notifikasi", e); }
+    }
+    
+    // --- FUNGSI EXPORT TO EXCEL ---
+    function exportToExcel(featureId) {
+        let storageKey, defaultFilename;
+
+        if (featureId === 'proofreading') {
+            storageKey = 'proofreadResults';
+            defaultFilename = 'Hasil_Proofreading';
+        } else if (featureId === 'compare') {
+            storageKey = 'compareResults';
+            defaultFilename = 'Hasil_Perbandingan';
+        } else if (featureId === 'review') {
+            storageKey = 'reviewResults';
+            defaultFilename = 'Hasil_Reviu_Lengkap';
+        } else {
+            alert("Fitur tidak dikenali.");
+            return;
+        }
+
+        const storedData = sessionStorage.getItem(storageKey);
+        if (!storedData) {
+            alert("Tidak ada data untuk diekspor. Silakan lakukan analisis terlebih dahulu.");
+            return;
+        }
+
+        try {
+            const jsonData = JSON.parse(storedData);
+            if (!jsonData || jsonData.length === 0) {
+                alert("Data kosong.");
+                return;
+            }
+
+            // Bersihkan data sebelum export (hapus HTML tags dll jika ada)
+            // Kita buat array baru khusus untuk Excel agar rapi
+            let exportData = [];
+
+            if (featureId === 'proofreading') {
+                exportData = jsonData.map(row => ({
+                    "Kata/Frasa Salah": row["Kata/Frasa Salah"] || row.salah || "",
+                    "Perbaikan Sesuai KBBI": row["Perbaikan Sesuai KBBI"] || row.benar || "",
+                    "Konteks Kalimat": row["Pada Kalimat"] || row.kalimat || "",
+                    "Halaman": row["Ditemukan di Halaman"] || row.halaman || ""
+                }));
+            } else if (featureId === 'compare') {
+                exportData = jsonData.map(row => ({
+                    "Sub-bab Asal": row["sub_bab_asal"] || "",
+                    "Kalimat Menyimpang": row["kalimat_menyimpang"] || "",
+                    "Alasan Perbedaan": row["alasan"] || ""
+                }));
+            } else if (featureId === 'review') {
+                exportData = jsonData.map(row => ({
+                    "Kategori": row["kategori"] || "",
+                    "Masalah": row["masalah"] || "",
+                    "Saran Perbaikan": row["saran"] || "",
+                    "Penjelasan": row["penjelasan"] || "",
+                    "Lokasi": row["lokasi"] || ""
+                }));
+            }
+
+            const worksheet = XLSX.utils.json_to_sheet(exportData);
+            
+            // Auto-width columns (Sederhana)
+            const wscols = Object.keys(exportData[0]).map(key => ({ wch: 20 })); // Default width
+            // Coba adjust width berdasarkan konten (opsional, bisa berat kalau data banyak)
+            worksheet['!cols'] = wscols;
+
+            const workbook = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(workbook, worksheet, "Hasil Analisis");
+
+            // Generate nama file dengan timestamp
+            const date = new Date();
+            const timestamp = `${date.getFullYear()}${(date.getMonth()+1).toString().padStart(2,'0')}${date.getDate().toString().padStart(2,'0')}_${date.getHours()}${date.getMinutes()}`;
+            XLSX.writeFile(workbook, `${defaultFilename}_${timestamp}.xlsx`);
+
+        } catch (e) {
+            console.error("Gagal export Excel:", e);
+            alert("Terjadi kesalahan saat mengekspor data.");
+        }
+    }
+
+    window.onload = handlePageLoad;
+    </script>
+    
+    <style>
+        .nav-links a.active { font-weight: 700 !important; color: #C62828 !important; }
+        .nav-links > li > a.active::after { width: 100%; }
+        .notif-header { text-align: center; margin-bottom: 1.5rem; }
+        .notif-icon { font-size: 3rem; color: #FF9800; margin-bottom: 1rem; }
+        .notif-text { font-size: 1.1rem; color: #333; line-height: 1.6; text-align: center; margin-bottom: 2rem; }
+        .dashboard-widgets { display: grid; grid-template-columns: 1fr 1fr; gap: 2rem; margin-top: 2rem; padding: 0 2rem; }
+        .widget-container { background: #fff; border: 1px solid #e0e0e0; border-radius: 12px; padding: 1.5rem; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        .widget-container h2 { margin-top: 0; color: #333; font-size: 1.2rem; border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 15px; }
+        .reminder-group h3 { font-size: 1rem; padding: 8px; border-radius: 4px; color: white; margin-bottom: 10px; }
+        .reminder-title-on-progress { background-color: #4CAF50; }
+        .reminder-title-overdue { background-color: #F44336; }
+        .no-reminder { color: #888; font-style: italic; }
+        #task-calendar { display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; }
+        .calendar-day { border: 1px solid #eee; padding: 10px; min-height: 80px; position: relative; }
+        .calendar-day-header { font-weight: bold; margin-bottom: 5px; display: block; }
+        .calendar-task-dot { height: 8px; width: 8px; border-radius: 50%; display: inline-block; margin-right: 2px; }
+        .task-dot-blue { background-color: #2196F3; }
+        .task-dot-red { background-color: #F44336; }
+
+        /* Style tambahan untuk tombol Export Excel */
+        .export-excel-btn {
+            background-color: #217346; /* Warna hijau Excel */
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            transition: background-color 0.2s;
+        }
+        .export-excel-btn:hover {
+            background-color: #1e6b41;
+        }
+        .results-action-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            align-items: center;
+        }
+    </style>
+</head>
+<body data-user-id="{{ current_user_id }}">
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a href="#" onclick="navGoToHome(); return false;">
+                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo">
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="#" onclick="navGoToHome(); return false;">Home</a></li> 
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn" id="nav-analisis-parent">Analisis Dokumen <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="#" id="nav-folder" onclick="navGoToFolder(); return false;">Folder</a>
+                    <a href="#" id="nav-proofread" onclick="navGoToFitur(); return false;">Proofread</a>
+                    <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
+                </div>
+            </li>
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
+                    <a href="{{ url_for('ams_temuan_page') }}">Temuan</a>
+                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
+                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
+                    <a href="{{ url_for('ams_auditors_page') }}">Auditors</a>
+                </div>
+            </li>
+            <li><a href="{{ url_for('mailbox_page') }}" class="active-mailbox">Email</a></li>
+            <li><a href="{{ url_for('library_page') }}">Library</a></li>
+        </ul>
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+    <main>
+        <section id="folder-management-section" class="hero-section folder-management-section hidden">
+            <div class="folder-header modern-header">
+                <h2 class="folder-title">Kelola File Audit Anda</h2>
+                <button id="create-folder-btn" class="start-btn create-folder-btn">+ Buat Folder Baru</button>
+            </div>
+            <div id="folder-grid" class="feature-grid folder-list">
+                <p class="no-folder-state" style="grid-column: 1 / -1;">Belum ada folder yang tersimpan. Klik "Buat Folder Baru" untuk memulai.</p>
+            </div>
+            <div id="folder-history-detail" class="feature-section hidden" style="margin-top: 2rem; text-align: left;">
+                <div id="history-result-view" class="feature-section hidden" style="margin-top: 2rem; background-color: #fff; border-radius: 12px; padding: 1.5rem; border: 1px solid var(--border-light);"></div>
+            </div>
+        </section>
+        <div id="api-monitor-widget" class="feature-card" style="padding: 1.5rem; margin-bottom: 2rem;">
+            <div style="display: flex; align-items: center; justify-content: space-between; gap: 20px;">
+                <div style="width: 50px; height: 50px; background: #FFF3E0; border-radius: 50%; display: flex; align-items: center; justify-content: center; color: #E65100; font-size: 1.5rem;">⚡</div>
+                <div style="flex-grow: 1;">
+                    <div style="display: flex; justify-content: space-between; margin-bottom: 5px;"><span style="font-weight: 600; color: #333;">Penggunaan API Gemini</span></div>
+                    <div style="width: 100%; background-color: #f0f0f0; border-radius: 10px; height: 12px; overflow: hidden;">
+                        <div id="usage-chart-bar" style="width: 0%; height: 100%; background-color: #4CAF50; transition: width 0.5s ease, background-color 0.3s;"></div>
+                    </div>
+                    <div style="margin-top: 5px; font-weight: bold; font-size: 1.1rem; color: #333;"><span id="usage-text-dashboard">0 / 10</span></div>
+                </div>
+                <div style="text-align: right; border-left: 1px solid #eee; padding-left: 20px; min-width: 100px;">
+                    <div style="font-size: 0.85rem; color: #666;">Reset dalam:</div>
+                    <div id="reset-timer-dashboard" style="font-weight: bold; color: #D32F2F; font-size: 1.1rem;">--:--</div>
+                </div>
+            </div>
+        </div>
+        <section id="hero-section" class="hero-section">
+            <div class="hero-content">
+                <h1>Selamat Datang di Website CoE SKAI IFG</h1>
+                <p class="subtitle">Divisi Satuan Kerja Audit Internal</p>
+                <p>Platform ini membantu Anda dalam proofreading otomatis dan Dashboard Tindak Lanjut CoE IFG.</p>
+            </div>
+            <div class="hero-image">
+                <img src="{{ url_for('static', filename='Proofread GIF.gif') }}" alt="Hero Image">
+                <p class="image-caption">Source : Qais Sarhan (Dribble)</p>
+            </div>
+        </section>
+        <section id="dashboard-widgets-section" class="dashboard-widgets hidden">
+            <div class="widget-container calendar-container">
+                <h2>Kalender Tugas Aktif</h2>
+                <div id="task-calendar"><p style="text-align:center; color:#888;">Memuat kalender...</p></div>
+            </div>
+            <div class="widget-container">
+                <h2>Daftar Reminder</h2>
+                <div class="reminder-group">
+                    <h3 class="reminder-title-on-progress">Log Analisis - On Progress</h3>
+                    <ul id="log-progress-list"><li class="no-reminder">Belum ada reminder untuk bagian ini</li></ul>
+                </div>
+                <div class="reminder-group">
+                    <h3 class="reminder-title-overdue">Log Analisis - Overdue</h3>
+                    <ul id="log-overdue-list"><li class="no-reminder">Belum ada reminder untuk bagian ini</li></ul>
+                </div>
+                <div class="reminder-group" style="margin-top: 2rem;">
+                    <h3 style="background-color: #1976D2;">Reminder Tindak Lanjut</h3>
+                    <ul id="ams-dashboard-list"><li class="no-reminder">Belum ada reminder untuk bagian ini</li></ul>
+                </div>
+            </div>
+        </section>
+        <section id="features-page-container" class="hidden">
+            <h2 class="section-title">Fitur yang Tersedia</h2>
+            <p class="grid-intro-text">Kami menyediakan 3 layanan berikut, Anda dipersilakan untuk memilih fitur yang ingin Anda gunakan.</p>
+            <section id="feature-grid" class="feature-grid">
+                <div class="feature-card">
+                    <h3>Proofreading</h3>
+                    <p>Perbaiki tata bahasa, ejaan, dan gaya akademik dokumen Anda secara otomatis.</p>
+                    <button class="feature-btn" onclick="document.getElementById('feature-select').value='proofreading'; showFeature();">Mulai Sekarang</button>
+                </div>
+                <div class="feature-card">
+                    <h3>Banding Dokumen</h3>
+                    <p>Bandingkan dua versi dokumen Anda secara berdampingan untuk melihat perubahan.</p>
+                    <button class="feature-btn" onclick="document.getElementById('feature-select').value='compare'; showFeature();">Mulai Sekarang</button>
+                </div>
+                <div class="feature-card">
+                    <h3>Reviu Dokumen Lengkap</h3>
+                    <p>Analisis menyeluruh mencakup: <strong>Proofreading, Rewording Kalimat, dan Restrukturisasi Teks</strong> dalam satu kali proses.</p>
+                    <button class="feature-btn" onclick="document.getElementById('feature-select').value='review'; showFeature();">Mulai Sekarang</button>
+                </div>
+            </section>
+        </section>
+        <section id="dropdown-section" class="dropdown-section hidden">
+            <h3>Pilih Fitur yang Sedang Aktif</h3>
+            <select id="feature-select" onchange="showFeature()">
+                <option value="">-- Pilih Fitur --</option>
+                <option value="proofreading">Proofreading</option>
+                <option value="compare">Perbandingan Dokumen</option>
+                <option value="review">Reviu Dokumen Lengkap</option>
+            </select>
+        </section>
+
+        <!-- PROOFREADING SECTION -->
+        <section id="proofreading" class="feature-section hidden">
+            <h3>Proofreading Otomatis</h3>
+            <p>Unggah dokumen Anda dalam format .docx dan AI akan membantu Anda untuk memperbaiki tata bahasa, ejaan, serta gaya akademis dokumen Anda secara otomatis.</p>
+            <div class="upload-box">
+                <input type="file" id="proofread-file" accept=".docx, .pdf" />
+                <button id="proofread-analyze-btn" class="analyze-btn">Mulai Analisis</button>
+            </div>
+            <div id="proofread-loading" class="loading hidden"><div class="spinner"></div> Dokumen Anda sedang dianalisis...</div>
+            <div id="proofread-results-container" class="results-container hidden">
+                <h4>Hasil Analisis</h4>
+                <div id="proofread-save-to-folder-bar" class="results-action-bar">
+                    <button id="proofread-save-btn" class="save-btn hidden">Simpan ke Folder</button>
+                    <button id="proofread-view-new-tab-btn" class="view-new-tab-btn hidden">Tampilkan di halaman baru</button>
+                    <!-- Tombol Export Excel -->
+                    <button onclick="exportToExcel('proofreading')" class="export-excel-btn">
+                        <span>📊</span> Export Excel
+                    </button>
+                </div>
+                <div id="proofread-results-table"></div>
+            </div>
+        </section>
+
+        <!-- COMPARE SECTION -->
+        <section id="compare" class="feature-section hidden">
+             <h3>Perbandingan Dokumen</h3>
+             <p>Bandingkan dua versi dokumen (.docx) Anda.</p>
+             <div class="compare-mode-toggle">
+                <label for="advanced-compare-toggle">Mode Analisis Lanjutan</label>
+                <label class="switch"><input type="checkbox" id="advanced-compare-toggle"><span class="slider round"></span></label>
+             </div>
+             <div class="upload-box split">
+                <div><label>Dokumen Asli:</label><input type="file" id="compare-file1" accept=".docx, .pdf"></div>
+                <div><label>Dokumen Lainnya:</label><input type="file" id="compare-file2" accept=".docx, .pdf"></div>
+             </div>
+             <button id="compare-analyze-btn" class="analyze-btn full-width">Mulai Perbandingan</button>
+             <div id="compare-loading" class="loading hidden"><div class="spinner"></div> Analisis sedang berjalan...</div>
+             <div id="compare-results-container" class="results-container hidden">
+                 <div id="compare-save-to-folder-bar" class="results-action-bar">
+                    <button id="compare-save-btn" class="save-btn hidden">Simpan ke Folder</button>
+                    <button id="compare-view-new-tab-btn" class="view-new-tab-btn hidden">Tampilkan di halaman baru</button>
+                    <!-- Tombol Export Excel -->
+                    <button onclick="exportToExcel('compare')" class="export-excel-btn">
+                        <span>📊</span> Export Excel
+                    </button>
+                 </div>
+                 <div id="compare-results-table"></div>
+             </div>
+        </section>
+
+        <!-- REVIEW SECTION -->
+        <section id="review" class="feature-section hidden">
+            <h3>Reviu Dokumen Lengkap</h3>
+            <p>Fitur ini menggabungkan pengecekan Typo (Proofread), Koherensi Kalimat, dan Struktur Paragraf.</p>
+            <div class="upload-box">
+                <input type="file" id="review-file" accept=".docx, .pdf">
+                <button id="review-analyze-btn" class="analyze-btn">Mulai Reviu</button>
+            </div>
+            <div id="review-loading" class="loading hidden">
+                <div class="spinner"></div> AI sedang mereviu dokumen secara komprehensif...
+            </div>
+            <div id="review-results-container" class="hidden">
+                <div id="review-save-to-folder-bar" class="results-action-bar">
+                    <button id="review-save-btn" class="save-btn hidden">Simpan ke Folder</button>
+                    <button id="review-view-new-tab-btn" class="view-new-tab-btn hidden">Tampilkan di halaman baru</button>
+                    <!-- Tombol Export Excel -->
+                    <button onclick="exportToExcel('review')" class="export-excel-btn">
+                        <span>📊</span> Export Excel
+                    </button>
+                </div>
+                <div id="review-results-table"></div>
+            </div>
+        </section>
+    </main>
+    <footer><p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p></footer>
+    <div id="deadline-notification-modal" class="modal hidden" style="z-index: 3000;">
+        <div class="modal-content" style="max-width: 500px; padding: 2rem; border-radius: 16px;">
+            <div class="notif-header"><div class="notif-icon">🔔</div><h3 style="margin:0; color: #FF9800;">Pengingat Deadline</h3></div>
+            <div id="deadline-notif-content" class="notif-text"></div>
+            <div class="modal-actions" style="justify-content: center; gap: 1rem;">
+                <button class="btn-secondary" onclick="document.getElementById('deadline-notification-modal').classList.add('hidden')" style="flex:1;">Tutup</button>
+                <a href="{{ url_for('ams_reminder_page') }}" class="login-btn" style="flex:1; text-decoration:none; text-align:center;">View</a>
+            </div>
+        </div>
+    </div>
+    <div id="save-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn" id="save-modal-close-btn">&times;</span>
+            <h3>Simpan Hasil ke Folder</h3>
+            <p>Simpan hasil analisis dari fitur <strong id="save-modal-feature-name"></strong>.</p>
+            <select id="folder-select-dropdown"></select>
+            <div class="modal-actions"><button id="confirm-save-btn" class="login-btn">Simpan</button></div>
+        </div>
+    </div>
+    <div id="folder-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn" id="folder-modal-close-btn">&times;</span>
+            <h3>Buat Folder Baru</h3>
+            <form id="create-folder-form">
+                <input type="text" id="folder-name-input" name="name" placeholder="Masukkan nama folder..." required autocomplete="off">
+                <button type="submit" id="folder-modal-submit-btn">Buat Folder</button>
+            </form>
+        </div>
+    </div>
+    <div id="share-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn" id="share-modal-close-btn">&times;</span>
+            <h3>Share Folder: <span id="share-modal-folder-name"></span></h3>
+            <div class="results-table-wrapper" style="max-height: 300px; overflow-y: auto; text-align: center;">
+                <table class="share-user-table">
+                    <thead><tr><th>Pilih</th><th>Username</th><th>Departemen</th></tr></thead>
+                    <tbody id="share-user-table-body"></tbody>
+                </table>
+            </div>
+            <button id="confirm-share-btn" class="login-btn" style="margin-top:10px;">Share</button>
+        </div>
+    </div>
+    <div id="custom-message-modal" class="modal hidden" style="z-index: 9999;">
+        <div class="modal-content custom-message-box" style="max-width:400px; text-align:center; padding:2rem; border-radius: 12px;">
+            <span class="modal-close-btn" onclick="document.getElementById('custom-message-modal').classList.add('hidden')">&times;</span> 
+            <h3 id="custom-message-title" style="border-bottom: none; margin-bottom: 10px; color: var(--primary-color);">Pesan</h3>   
+            <div id="custom-message-details" style="text-align: left; margin: 1rem 0; display: none;"></div>
+            <p id="custom-message-text" style="text-align: center; margin-top: 1rem; margin-bottom: 2rem;"></p>
+            <button onclick="document.getElementById('custom-message-modal').classList.add('hidden')" class="login-btn full-width" style="width: 100%; padding: 10px;">OK</button>
+        </div>
+    </div>
+    <div id="delete-confirm-modal" class="modal hidden" style="z-index: 10000;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 12px; padding: 2rem;">
+            <div style="font-size: 3rem; margin-bottom: 1rem;">⚠️</div>
+            <h3 style="color: #C62828; margin-bottom: 1rem;">Hapus Folder?</h3>
+            <p id="delete-confirm-text" style="color: #555; margin-bottom: 2rem; line-height: 1.5;"></p>
+            <div style="display: flex; gap: 10px; justify-content: center;">
+                <button id="cancel-delete-btn" class="btn-secondary" style="background-color: #ccc; color: #333;">Batal</button>
+                <button id="confirm-delete-btn" class="login-btn" style="background-color: #C62828; color: white;">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+    <div id="custom-confirm-modal" class="modal hidden" style="z-index: 10001;">
+        <div class="modal-content custom-message-box" style="max-width:400px; text-align:center; padding:2rem; border-radius: 12px;">
+            <h3 id="custom-confirm-title" style="border-bottom: none; margin-bottom: 10px; color: var(--primary-color);">Konfirmasi</h3> 
+            <p id="custom-confirm-text" style="text-align: center; margin-top: 1rem; margin-bottom: 2rem;"></p>
+            <div class="modal-actions" style="justify-content: center; border-top: none;">
+                <button id="custom-confirm-cancel-btn" class="btn-secondary" style="background-color: #ccc; color: #333;">Batal</button>
+                <button id="custom-confirm-ok-btn" class="login-btn">Ya, Lanjutkan</button>
+            </div>
+        </div>
+    </div>
+    <script src="{{ url_for('static', filename='script.js') }}" defer></script>
+</body>
+</html>

@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Detail Pesan - {{ message.subject }}</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        .message-detail-container {
+            max-width: 900px;
+            margin: 2rem auto;
+            background: #fff;
+            padding: 30px;
+            border-radius: 12px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.08);
+        }
+        .message-header h2 {
+            color: var(--primary);
+            border-bottom: 2px solid var(--border-light);
+            padding-bottom: 1px;
+            margin-bottom: 10px;
+        }
+        .message-meta p {
+            margin: 5px 0;
+            font-size: 0.95rem;
+            color: #555;
+        }
+
+        .message-body-box {
+            margin-top: 20px;
+            padding: 20px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background-color: #f9f9f9;
+            white-space: pre-line; 
+            text-align: justify;
+            line-height: 1.6;
+            font-family: Arial, sans-serif;
+            color: #333;
+        }
+
+        .message-actions {
+            margin-top: 30px;
+            display: flex;
+            gap: 5px;
+        }
+        .attachment-link {
+            display: inline-block;
+            margin-top: 10px;
+            padding: 8px 15px;
+            background-color: var(--info);
+            color: white;
+            text-decoration: none;
+            border-radius: 6px;
+            font-weight: 600;
+        }
+
+        .back-to-inbox-btn {
+            background-color: var(--primary);
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-size: 1em;
+            font-weight: 600;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.2s ease;
+        }
+        .back-to-inbox-btn:hover {
+            background-color: #0056b3;
+        }
+        .message-meta .timezone-note {
+            font-size: 0.8em;
+            color: #888;
+            margin-left: 5px;
+        }
+    </style>
+</head>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a 
+                href="#" 
+                onclick="navGoToHome(); return false;"
+            >
+                <img 
+                    src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" 
+                    alt="Logo"
+                >
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li>
+                <a 
+                    href="#" 
+                    onclick="navGoToHome(); return false;"
+                >
+                    Home
+                </a>
+            </li> 
+            <li><a href="{{ url_for('mailbox_page') }}" class="active-mailbox">Email</a></li>
+        </ul>
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.username }} ({{ current_user.label }})</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+    <main>
+        <div class="message-detail-container">
+            <div class="message-header">
+                <h2>{{ message.subject }}</h2>
+            </div>
+
+            <div class="message-meta">
+                <p><strong>Dari:</strong> {{ message.sender.username }} ({{ message.sender.label }})</p>
+                <p><strong>Kepada:</strong> {{ message.recipient.username }} ({{ message.recipient.label }})</p>
+                <p><strong>Tanggal:</strong> {{ message.timestamp.strftime('%d %b %Y, %H:%M') }} WIB</p>
+            </div>
+
+            <div class="message-body-box">{{ message.body | trim }}</div>
+
+            {% if message.original_filename %}
+            <p><strong>Lampiran:</strong> 
+                <a href="{{ url_for('api_download_message_attachment', message_id=message.id) }}" class="attachment-link">
+                    <i class="fas fa-download"></i> Unduh {{ message.original_filename }}
+                </a>
+            </p>
+            {% endif %}
+
+            <div class="message-actions">
+                <a href="{{ url_for('mailbox_page') }}" class="back-to-inbox-btn">
+                    <i class="fas fa-chevron-left"></i> Kembali ke Kotak Surat
+                </a>
+            </div>
+        </div>
+    </main>
+
+</body>
+</html>

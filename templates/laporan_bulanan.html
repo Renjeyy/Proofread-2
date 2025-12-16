@@ -1,0 +1,651 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <title>Laporan Bulanan - {{ session.nama_sesi }}</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    <style>
+        body { font-family: 'Arial', sans-serif; padding: 20px; background-color: #f4f4f4; }
+        .container { background: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.1); max-width: 1200px; margin: 0 auto; }
+        h2 { color: #333; text-align: center; margin-bottom: 20px; }
+        
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 14px;
+            color: black;
+            border: 1px solid black;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid black;
+            padding: 8px 12px;
+            vertical-align: middle;
+            position: relative;
+        }
+        .report-table thead th {
+            background-color: #C00000;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .report-table tfoot th, .report-table tfoot td {
+            background-color: #C00000;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .report-table tbody tr:nth-child(even) {
+            background-color: #fff;
+        }
+        .report-table tbody tr:hover {
+            background-color: #f1f1f1;
+        }
+        .text-center { text-align: center; }
+        .text-left { text-align: left; }
+        
+        .action-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 5px;
+            color: white;
+            font-weight: bold;
+            cursor: pointer;
+            transition: background-color 0.2s;
+            font-size: 14px;
+        }
+        .action-btn:hover { opacity: 0.9; }
+
+        .btn-view {
+            padding: 6px 12px;
+            background-color: #1976d2;
+            color: white;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 12px;
+            font-weight: bold;
+        }
+        .btn-view:hover { background-color: #1565c0; }
+
+        .btn-delete-x {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: none;
+            border: none;
+            color: #aaa;
+            font-weight: bold;
+            font-size: 12px;
+            cursor: pointer;
+            padding: 0 4px;
+            line-height: 1;
+            z-index: 10;
+        }
+        .btn-delete-x:hover {
+            color: red;
+            background-color: #ffebee;
+            border-radius: 50%;
+        }
+        
+        .printing .btn-delete-x, 
+        .printing .btn-view,
+        .printing .action-col { 
+            display: none !important; 
+        }
+
+        .custom-modal {
+            display: none;
+            position: fixed;
+            z-index: 9999;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            overflow: auto;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        .custom-modal.show {
+            display: flex;
+        }
+        .custom-modal-content {
+            background-color: #fefefe;
+            padding: 25px;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.2);
+            animation: fadeIn 0.2s;
+        }
+
+        .full-screen-modal-content {
+            background-color: #fefefe;
+            padding: 20px;
+            border-radius: 8px;
+            width: 95%;
+            height: 90%;
+            max-width: 1400px;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.3);
+            animation: fadeIn 0.3s;
+        }
+
+        .modal-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            border-bottom: 2px solid #eee;
+            padding-bottom: 15px;
+            margin-bottom: 15px;
+        }
+        .modal-body {
+            flex: 1;
+            overflow-y: auto;
+        }
+
+        .detail-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-size: 13px;
+        }
+        .detail-table th, .detail-table td {
+            border: 1px solid #ddd;
+            padding: 10px;
+            vertical-align: top;
+            text-align: left;
+        }
+        .detail-table th {
+            background-color: #e3f2fd;
+            color: #0d47a1;
+            position: sticky;
+            top: 0;
+            font-weight: bold;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.9); }
+            to { opacity: 1; transform: scale(1); }
+        }
+        .modal-icon {
+            font-size: 40px;
+            color: #d32f2f;
+            margin-bottom: 15px;
+        }
+        .modal-title {
+            font-size: 18px;
+            font-weight: bold;
+            color: #333;
+            margin-bottom: 10px;
+        }
+        .modal-text {
+            font-size: 14px;
+            color: #666;
+            margin-bottom: 20px;
+            line-height: 1.5;
+        }
+        .modal-buttons {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+        }
+        .btn-modal {
+            padding: 10px 20px;
+            border-radius: 6px;
+            border: none;
+            font-weight: bold;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        .btn-cancel { background-color: #e0e0e0; color: #333; }
+        .btn-confirm { background-color: #d32f2f; color: white; }
+        .btn-close-modal { background-color: #333; color: white; border: none; padding: 8px 16px; border-radius: 4px; cursor: pointer; }
+        
+        .safe-notice {
+            font-size: 12px;
+            color: #2e7d32;
+            background-color: #e8f5e9;
+            padding: 8px;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            border: 1px solid #c8e6c9;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container" id="report-container">
+    <input type="hidden" id="session-id-val" value="{{ session.id }}">
+    <input type="hidden" id="session-name-val" value="{{ session.nama_sesi }}">
+
+    <div style="display:flex; justify-content:space-between; align-items:center;">
+        <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" style="height: 50px;">
+        <div style="text-align: right;">
+            <h2 style="margin:0;">Laporan Status Tindak Lanjut</h2>
+            <small style="color:#666;">Sesi: {{ session.nama_sesi }}</small>
+        </div>
+    </div>
+    
+    <hr style="margin: 20px 0; border: 0; border-top: 1px solid #ddd;">
+
+    <div id="button-container" style="margin-bottom: 20px; display: none; gap: 10px;">
+        <button id="back-btn" class="action-btn" style="background-color: #5C6BC0;">← Kembali ke Temuan</button>
+        <button id="download-jpg-btn" class="action-btn" style="background-color: #217346;">&#128247; Download as JPG</button>
+    </div>
+
+    <div id="loading" style="text-align: center; padding: 20px;">Memuat dan menghitung data...</div>
+
+    <table class="report-table" id="report-table" style="display: none;">
+        <thead>
+            <tr>
+                <th rowspan="2" style="width: 40%;">Unit Kerja</th>
+                <th rowspan="2" style="width: 10%;">Tahun</th>
+                <th colspan="2">Status Tindak Lanjut</th>
+                <th rowspan="2" style="width: 10%;" class="action-col">Action</th>
+            </tr>
+            <tr>
+                <th style="width: 20%;">Belum Jatuh Tempo</th>
+                <th style="width: 20%;">Outstanding</th>
+            </tr>
+        </thead>
+        <tbody id="report-body"></tbody>
+        <tfoot id="report-foot">
+            <tr>
+                <th colspan="2">Total</th>
+                <th id="total-bjt">0</th>
+                <th id="total-os">0</th>
+                <th class="action-col"></th>
+            </tr>
+        </tfoot>
+    </table>
+</div>
+
+<div id="custom-delete-modal" class="custom-modal">
+    <div class="custom-modal-content">
+        <div class="modal-icon">⚠️</div>
+        <div class="modal-title">Hapus Data?</div>
+        <div id="modal-message" class="modal-text"></div>
+        <div class="safe-notice">
+            Info: Data hanya dihapus dari tampilan laporan ini.<br>Database utama Audit <strong>TIDAK</strong> akan terhapus.
+        </div>
+        <div class="modal-buttons">
+            <button id="btn-modal-cancel" class="btn-modal btn-cancel">Batal</button>
+            <button id="btn-modal-confirm" class="btn-modal btn-confirm">Ya, Hapus</button>
+        </div>
+    </div>
+</div>
+
+<div id="detail-modal" class="custom-modal">
+    <div class="full-screen-modal-content">
+        <div class="modal-header">
+            <div>
+                <h3 style="margin:0; color: #C62828;">Detail Temuan Perhitungan</h3>
+                <span id="detail-subtitle" style="font-size: 14px; color: #666;"></span>
+            </div>
+            <button class="btn-close-modal" onclick="document.getElementById('detail-modal').classList.remove('show')">Tutup</button>
+        </div>
+        <div class="modal-body">
+            <table class="detail-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No AOI</th>
+                        <th style="width: 100px;">PIC SKAI</th>
+                        <th>Jenis AOI</th>
+                        <th>Klasifikasi</th>
+                        <th>No LHA</th>
+                        <th>Nama Penugasan</th>
+                        <th>Area of Improvement (AOI)</th>
+                        <th>Status</th>
+                    </tr>
+                </thead>
+                <tbody id="detail-table-body"></tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    const sessionId = document.getElementById('session-id-val').value;
+    const sessionName = document.getElementById('session-name-val').value;
+    
+    let globalGroupedData = {};
+    let allRawData = []; 
+    let pendingDeleteCallback = null;
+
+    const modal = document.getElementById('custom-delete-modal');
+    const modalMsg = document.getElementById('modal-message');
+    const btnCancel = document.getElementById('btn-modal-cancel');
+    const btnConfirm = document.getElementById('btn-modal-confirm');
+
+    function showDeleteModal(message, callback) {
+        modalMsg.textContent = message;
+        pendingDeleteCallback = callback;
+        modal.classList.add('show');
+    }
+
+    function hideDeleteModal() {
+        modal.classList.remove('show');
+        pendingDeleteCallback = null;
+    }
+
+    btnCancel.addEventListener('click', hideDeleteModal);
+    
+    btnConfirm.addEventListener('click', () => {
+        if (pendingDeleteCallback) pendingDeleteCallback();
+        hideDeleteModal();
+    });
+
+    function getCutoffDates(sName) {
+        const months = {
+            'januari': 0, 'februari': 1, 'maret': 2, 'april': 3, 'mei': 4, 'juni': 5,
+            'juli': 6, 'agustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'desember': 11,
+            'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'jun': 5, 'jul': 6, 'agu': 7, 'agt': 7, 'sep': 8, 'okt': 9, 'nov': 10, 'dec': 11, 'des': 11
+        };
+
+        const lowerName = sName.toLowerCase();
+        let detectedMonth = -1;
+        let detectedYear = new Date().getFullYear();
+        
+        const yearMatch = lowerName.match(/20\d{2}/);
+        if (yearMatch) detectedYear = parseInt(yearMatch[0]);
+
+        for (const [key, val] of Object.entries(months)) {
+            if (lowerName.includes(key)) {
+                detectedMonth = val;
+                break;
+            }
+        }
+
+        if (detectedMonth === -1) {
+            const today = new Date();
+            detectedMonth = today.getMonth() - 1;
+            if (detectedMonth < 0) {
+                detectedMonth = 11;
+                detectedYear = today.getFullYear() - 1;
+            }
+        }
+
+        const dateCurr = new Date(detectedYear, detectedMonth + 1, 0); 
+        const datePrev = new Date(detectedYear, detectedMonth, 0); 
+
+        return { prev: datePrev, curr: dateCurr };
+    }
+
+    function determineStatus(targetDateStr, cutoffDate, controlVal) {
+        if (!targetDateStr) return 'OS'; 
+        if (controlVal && controlVal.includes('$$FORCE_SELESAI$$')) return 'SELESAI'; 
+
+        const tDate = new Date(targetDateStr);
+        cutoffDate.setHours(0,0,0,0);
+        tDate.setHours(0,0,0,0);
+
+        if (tDate > cutoffDate) return 'BJT';
+        else return 'OS';
+    }
+
+    function cleanAuditeeName(rawName) {
+        if(!rawName) return "";
+        let cleaned = rawName;
+        cleaned = cleaned.replace(/\d+\.\s*/g, ', ');
+        cleaned = cleaned.replace(/\n/g, ', ');
+        if(cleaned.startsWith(', ')) cleaned = cleaned.substring(2);
+        cleaned = cleaned.replace(/\s+/g, ' ').replace(/,\s*,/g, ',').trim();
+        return cleaned;
+    }
+
+    function openDetailModal(divName, year) {
+        const modal = document.getElementById('detail-modal');
+        const tbody = document.getElementById('detail-table-body');
+        const subtitle = document.getElementById('detail-subtitle');
+        
+        subtitle.textContent = `Unit Kerja: ${divName} | Tahun: ${year}`;
+        tbody.innerHTML = '';
+
+        const cutoffs = getCutoffDates(sessionName);
+
+        const filteredData = allRawData.filter(row => {
+            let aName = (row.auditee || "").trim();
+            if (!aName) aName = "Tanpa Nama Unit";
+            aName = cleanAuditeeName(aName);
+
+            let y = row.klasifikasi || "-";
+            const ym = y.match(/20\d{2}/);
+            if(ym) y = ym[0];
+
+            let isFinished = false;
+            if (row.jml_rekomendasi > 0 && row.selesai >= row.jml_rekomendasi) isFinished = true;
+            if (row.control && row.control.includes('$$FORCE_SELESAI$$')) isFinished = true;
+
+            return aName === divName && y === year && !isFinished;
+        });
+
+        if (filteredData.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="8" class="text-center">Tidak ada data detail (Mungkin semua sudah selesai).</td></tr>';
+        } else {
+            filteredData.forEach(row => {
+                const tr = document.createElement('tr');
+                const target = row.perubahan_target || row.target_penyelesaian;
+                const status = determineStatus(target, cutoffs.curr, row.control);
+                const statusColor = status === 'BJT' ? '#1565c0' : '#c62828';
+
+                tr.innerHTML = `
+                    <td>${row.no_aoi || '-'}</td>
+                    <td>${row.pic_skai || '-'}</td>
+                    <td>${row.jenis_aoi || '-'}</td>
+                    <td>${row.klasifikasi || '-'}</td>
+                    <td>${row.no_lha || '-'}</td>
+                    <td style="text-align: justify;">${row.nama_penugasan || '-'}</td>
+                    <td style="text-align: justify;">${row.aoi ? row.aoi.replace(/\n/g, '<br>') : '-'}</td>
+                    <td style="font-weight:bold; color:${statusColor};">${status}</td>
+                `;
+                tbody.appendChild(tr);
+            });
+        }
+
+        modal.classList.add('show');
+    }
+
+    function renderTableFromGlobalData() {
+        const tbody = document.getElementById('report-body');
+        const totalBjtEl = document.getElementById('total-bjt');
+        const totalOsEl = document.getElementById('total-os');
+        
+        tbody.innerHTML = '';
+        let sumBjt = 0;
+        let sumOs = 0;
+
+        const sortedDivisions = Object.keys(globalGroupedData).sort();
+
+        if (sortedDivisions.length === 0) {
+            tbody.innerHTML = '<tr><td colspan="5" class="text-center">Tidak ada data unit kerja.</td></tr>';
+        } else {
+            sortedDivisions.forEach(divName => {
+                const yearsObj = globalGroupedData[divName];
+                const sortedYears = Object.keys(yearsObj).sort();
+                
+                if(sortedYears.length === 0) return;
+
+                const rowSpan = sortedYears.length;
+
+                sortedYears.forEach((year, index) => {
+                    const stats = yearsObj[year];
+                    const tr = document.createElement('tr');
+
+                    if (index === 0) {
+                        const tdDivisi = document.createElement('td');
+                        tdDivisi.className = "text-center";
+                        tdDivisi.rowSpan = rowSpan;
+                        tdDivisi.style.verticalAlign = "middle";
+                        
+                        tdDivisi.innerText = divName;
+
+                        const btnDelDiv = document.createElement('button');
+                        btnDelDiv.className = 'btn-delete-x';
+                        btnDelDiv.innerHTML = '&#10005;'; 
+                        btnDelDiv.title = 'Hapus Divisi ini dari laporan';
+                        
+                        btnDelDiv.onclick = function() {
+                            showDeleteModal(`Apakah Anda yakin ingin menyembunyikan seluruh data "${divName}" dari laporan ini?`, () => {
+                                delete globalGroupedData[divName];
+                                renderTableFromGlobalData();
+                            });
+                        };
+                        tdDivisi.appendChild(btnDelDiv);
+                        tr.appendChild(tdDivisi);
+                    }
+
+                    const tdTahun = document.createElement('td');
+                    tdTahun.className = "text-center";
+                    tdTahun.innerText = year;
+                    
+                    const btnDelYear = document.createElement('button');
+                    btnDelYear.className = 'btn-delete-x';
+                    btnDelYear.innerHTML = '&#10005;'; 
+                    btnDelYear.title = 'Hapus Tahun ini dari laporan';
+                    
+                    btnDelYear.onclick = function() {
+                        showDeleteModal(`Apakah Anda yakin ingin menyembunyikan data tahun ${year} untuk "${divName}" dari laporan ini?`, () => {
+                            delete globalGroupedData[divName][year];
+                            if(Object.keys(globalGroupedData[divName]).length === 0) {
+                                delete globalGroupedData[divName];
+                            }
+                            renderTableFromGlobalData();
+                        });
+                    };
+                    tdTahun.appendChild(btnDelYear);
+                    tr.appendChild(tdTahun);
+
+                    const tdBjt = document.createElement('td');
+                    tdBjt.textContent = stats.bjt;
+                    tdBjt.className = "text-center";
+                    tr.appendChild(tdBjt);
+
+                    const tdOs = document.createElement('td');
+                    tdOs.textContent = stats.os;
+                    tdOs.className = "text-center";
+                    tr.appendChild(tdOs);
+
+                    const tdAction = document.createElement('td');
+                    tdAction.className = "text-center action-col";
+                    
+                    const btnView = document.createElement('button');
+                    btnView.className = 'btn-view';
+                    btnView.innerHTML = '&#128065; View';
+                    btnView.title = 'Lihat detail temuan';
+                    btnView.onclick = function() {
+                        openDetailModal(divName, year);
+                    };
+                    tdAction.appendChild(btnView);
+                    tr.appendChild(tdAction);
+
+                    tbody.appendChild(tr);
+
+                    sumBjt += stats.bjt;
+                    sumOs += stats.os;
+                });
+            });
+        }
+
+        totalBjtEl.textContent = sumBjt;
+        totalOsEl.textContent = sumOs;
+    }
+
+    document.addEventListener('DOMContentLoaded', async () => {
+        const backBtn = document.getElementById('back-btn');
+        const downloadBtn = document.getElementById('download-jpg-btn');
+        const buttonContainer = document.getElementById('button-container');
+        const reportContainer = document.getElementById('report-container');
+
+        backBtn.addEventListener('click', () => {
+            try { window.close(); } catch (e) { window.location.href = '/ams_temuan_page'; }
+            setTimeout(() => { window.location.href = '/ams_temuan_page'; }, 100);
+        });
+
+        downloadBtn.addEventListener('click', () => {
+            const originalText = downloadBtn.textContent;
+            downloadBtn.textContent = "Memproses...";
+            buttonContainer.style.display = 'none';
+            
+            reportContainer.classList.add('printing');
+
+            html2canvas(reportContainer, {
+                scale: 2, 
+                useCORS: true,
+                backgroundColor: '#ffffff'
+            }).then(canvas => {
+                const imgData = canvas.toDataURL('image/jpeg', 0.9);
+                const link = document.createElement('a');
+                const safeSessionName = sessionName.replace(/[^a-z0-9]/gi, '_').toLowerCase();
+                link.download = `Laporan_Bulanan_${safeSessionName}.jpg`;
+                link.href = imgData;
+                link.click();
+
+                buttonContainer.style.display = 'flex';
+                reportContainer.classList.remove('printing');
+                downloadBtn.textContent = originalText;
+            }).catch(err => {
+                console.error("Gagal download JPG:", err);
+                alert("Gagal mengunduh gambar.");
+                buttonContainer.style.display = 'flex';
+                reportContainer.classList.remove('printing');
+                downloadBtn.textContent = originalText;
+            });
+        });
+
+        try {
+            const cutoffs = getCutoffDates(sessionName);
+            const response = await fetch(`/api/get_temuan_data/${sessionId}`);
+            if (!response.ok) throw new Error("Gagal ambil data");
+            const data = await response.json();
+
+            allRawData = data; 
+            globalGroupedData = {};
+
+            data.forEach(row => {
+                let auditeeName = (row.auditee || "").trim();
+                
+                if (!auditeeName) auditeeName = "Tanpa Nama Unit";
+
+                auditeeName = cleanAuditeeName(auditeeName);
+
+                let year = row.klasifikasi || "-";
+                const yearMatch = year.match(/20\d{2}/);
+                if(yearMatch) year = yearMatch[0];
+
+                if (!globalGroupedData[auditeeName]) {
+                    globalGroupedData[auditeeName] = {};
+                }
+                if (!globalGroupedData[auditeeName][year]) {
+                    globalGroupedData[auditeeName][year] = { bjt: 0, os: 0 };
+                }
+
+                let isFinished = false;
+                if (row.jml_rekomendasi > 0 && row.selesai >= row.jml_rekomendasi) isFinished = true;
+                if (row.control && row.control.includes('$$FORCE_SELESAI$$')) isFinished = true;
+
+                if (!isFinished) {
+                    const target = row.perubahan_target || row.target_penyelesaian;
+
+                    const statusCurr = determineStatus(target, cutoffs.curr, row.control);
+                    if (statusCurr === 'BJT') globalGroupedData[auditeeName][year].bjt += 1;
+                    else if (statusCurr === 'OS') globalGroupedData[auditeeName][year].os += 1;
+                }
+            });
+
+            renderTableFromGlobalData();
+
+            document.getElementById('loading').style.display = 'none';
+            document.getElementById('report-table').style.display = 'table';
+            buttonContainer.style.display = 'flex';
+
+        } catch (e) {
+            console.error(e);
+            document.getElementById('loading').textContent = "Terjadi kesalahan saat memuat data.";
+        }
+    });
+</script>
+</body>
+</html>

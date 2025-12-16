@@ -1,0 +1,513 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Data Auditors</title>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <style>
+        :root {
+            --primary-color: #C62828;
+            --primary-hover: #b71c1c;
+            --secondary-color: green;
+            --danger-color: #D32F2F;
+            --text-color: #333;
+            --bg-light: #f8f9fa;
+            --border-color: #ddd;
+            --nav-active-bg: #FFF8E1; 
+        }
+        * { box-sizing: border-box; outline: none; }
+        body { font-family: 'Poppins', sans-serif; margin: 0; color: var(--text-color); background-color: #fff; font-size: 0.9rem; }
+        
+        /* Navbar Styles */
+        .navbar { padding: 0.8rem 2rem; display: flex; justify-content: space-between; align-items: center; background: #fff; box-shadow: 0 2px 10px rgba(0,0,0,0.05); position: sticky; top: 0; z-index: 100; }
+        .nav-logo img { height: 40px; }
+        .nav-links { list-style: none; display: flex; gap: 30px; margin: 0; padding: 0; }
+        .nav-links a { text-decoration: none; color: #555; font-weight: 500; transition: color 0.2s; }
+        .nav-links a:hover { color: var(--primary-color); }
+        
+        .nav-dropdown-container { position: relative; }
+        .nav-dropdown-content { display: none; position: absolute; top: 100%; left: 0; background: #fff; box-shadow: 0 4px 12px rgba(0,0,0,0.1); border-radius: 8px; min-width: 200px; z-index: 1000; overflow: hidden; }
+        .nav-dropdown-container:hover .nav-dropdown-content { display: block; }
+        .nav-dropdown-content a { display: block; padding: 10px 15px; border-bottom: 1px solid #eee; color: #333; }
+        .nav-dropdown-content a:hover { background-color: #f5f5f5; color: var(--primary-color); }
+        
+        .nav-dropdown-content a.active {
+            background-color: var(--nav-active-bg);
+            color: var(--primary-color);
+            font-weight: 700;
+        }
+
+        .nav-extra { font-weight: 600; }
+        .logout-btn { color: var(--danger-color) !important; margin-left: 15px; }
+
+        /* Main Content */
+        .main-container { padding: 30px; max-width: 1400px; margin: 0 auto; }
+        .header-section { display: flex; justify-content: space-between; align-items: center; margin-bottom: 30px; border-bottom: 2px solid #f0f0f0; padding-bottom: 15px; }
+        .header-section h1 { margin: 0; color: var(--primary-color); font-size: 1.8rem; font-weight: 700; }
+        
+        .action-bar { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; background: #f8f9fa; padding: 15px; border-radius: 8px; border: 1px solid #eee; }
+        .filter-group { display: flex; align-items: center; gap: 10px; }
+        .custom-select { padding: 8px 12px; border-radius: 6px; border: 1px solid #ccc; font-family: inherit; min-width: 250px; }
+        
+        .btn { padding: 8px 16px; border: none; border-radius: 6px; cursor: pointer; font-weight: 600; font-family: inherit; transition: all 0.2s; }
+        .btn-primary { background: var(--primary-color); color: white; box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2); }
+        .btn-primary:hover { background: var(--primary-hover); transform: translateY(-2px); }
+        
+        .btn-success { background: var(--secondary-color); color: white; }
+        .btn-danger { background: var(--danger-color); color: white; }
+        .btn:hover { opacity: 0.9; }
+
+        /* Table Styles */
+        .table-wrapper { overflow-x: auto; border: 1px solid var(--border-color); border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.05); }
+        table { width: 100%; border-collapse: collapse; min-width: 1000px; }
+        
+        th { 
+            background-color: var(--bg-light); 
+            color: #555; 
+            font-weight: 700; 
+            padding: 14px 16px; 
+            text-align: center; /* Center Header */
+            position: sticky; 
+            top: 0; 
+            border-bottom: 2px solid #eee; 
+        }
+        
+        td { 
+            padding: 14px 16px; 
+            border-bottom: 1px solid #f0f0f0; 
+            color: #333; 
+            vertical-align: middle; 
+            text-align: center; /* Center Content */
+        }
+        tr:hover { background-color: #fcfcfc; }
+        
+        /* Modal */
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 2000; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .modal-content { background: white; padding: 25px; border-radius: 12px; width: 500px; max-width: 95%; box-shadow: 0 10px 25px rgba(0,0,0,0.2); animation: slideUp 0.3s ease-out; }
+        @keyframes slideUp { from { transform: translateY(20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+
+        .modal-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 1px solid #eee; padding-bottom: 10px; }
+        .modal-header h3 { margin: 0; color: var(--primary-color); }
+        .close-btn { cursor: pointer; font-size: 1.5rem; color: #999; }
+        
+        .form-group { margin-bottom: 15px; }
+        .form-group label { display: block; margin-bottom: 5px; font-weight: 600; color: #555; }
+        .form-control { width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit; }
+        .file-drop-area { border: 2px dashed #ccc; padding: 30px; text-align: center; border-radius: 8px; cursor: pointer; transition: border-color 0.2s; margin-bottom: 15px; }
+        .file-drop-area:hover { border-color: var(--primary-color); background: #f0f7ff; }
+        
+        .loading-overlay { position: fixed; top:0; left:0; width:100%; height:100%; background: rgba(255,255,255,0.8); z-index: 3000; display: flex; flex-direction: column; align-items: center; justify-content: center; }
+        .spinner { width: 40px; height: 40px; border: 4px solid #f3f3f3; border-top: 4px solid var(--primary-color); border-radius: 50%; animation: spin 1s linear infinite; }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+        
+        .notif-icon { font-size: 3.5rem; margin-bottom: 15px; }
+        .notif-success { color: var(--secondary-color); }
+        .notif-error { color: var(--danger-color); }
+        
+        .hidden { display: none !important; }
+    </style>
+</head>
+<body>
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a href="{{ url_for('dashboard') }}">
+                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo">
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn">Analisis Dokumen <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('dashboard') }}#folder-management">Folder</a>
+                    <a href="{{ url_for('dashboard') }}#fitur">Proofread</a>
+                    <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
+                </div>
+            </li>
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn" style="color: var(--primary-color); font-weight: 700;">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
+                    <a href="{{ url_for('ams_temuan_page') }}">Temuan</a>
+                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
+                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
+                    <a href="{{ url_for('ams_auditors_page') }}" class="active">Auditors</a>
+                </div>
+            </li>
+            <li><a href="{{ url_for('mailbox_page') }}">Email</a></li>
+            <li><a href="{{ url_for('library_page') }}">Library</a></li>
+        </ul>
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+
+    <div class="main-container">
+        <section class="header-section">
+            <h1>Data Auditors</h1>
+            <button class="btn btn-primary" onclick="openImportModal()">+ Import Excel</button>
+        </section>
+
+        <section class="action-bar">
+            <div class="filter-group">
+                <label>Pilih Sesi:</label>
+                <select id="period-filter" class="custom-select" onchange="loadAuditorData()">
+                    <option value="all">Tampilkan Semua Sesi</option>
+                </select>
+            </div>
+            <button class="btn btn-danger" onclick="deleteAllData()">Hapus Semua Data</button>
+        </section>
+
+        <div class="table-wrapper">
+            <table>
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No</th>
+                        <th>Nama Auditor</th>
+                        <th>Departemen</th>
+                        <th>Total Temuan</th>
+                        <th>Selesai</th>
+                        <th>Belum Jatuh Tempo</th>
+                        <th>Outstanding</th>
+                        <th>Periode</th>
+                    </tr>
+                </thead>
+                <tbody id="auditor-tbody">
+                    <tr><td colspan="8" style="padding: 20px; color: #999;">Memuat data...</td></tr>
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <!-- Import Modal -->
+    <div id="import-modal" class="modal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Import Data Auditors</h3>
+                <span class="close-btn" onclick="closeImportModal()">&times;</span>
+            </div>
+            <div class="form-group">
+                <label>Pilih File Excel:</label>
+                <div class="file-drop-area" id="drop-area">
+                    <p style="margin:0; color:#666;">Klik atau drag file Excel ke sini</p>
+                    <input type="file" id="excel-file" accept=".xlsx, .xls" style="display: none;">
+                </div>
+                <div id="file-name-display" style="font-size: 0.9rem; color: var(--primary-color); margin-bottom: 10px;"></div>
+            </div>
+            
+            <div id="sheet-selection-container" class="hidden form-group">
+                <label>Pilih Sheet:</label>
+                <select id="sheet-select" class="form-control"></select>
+            </div>
+
+            <div class="form-group">
+                <label>Periode Laporan (Sesi):</label>
+                <input type="month" id="import-period" class="form-control">
+            </div>
+
+            <div style="display: flex; justify-content: flex-end; gap: 10px; margin-top: 20px;">
+                <button class="btn" onclick="closeImportModal()" style="background:#eee; color:#333;">Batal</button>
+                <button class="btn btn-success" id="btn-process-import" disabled onclick="processImport()">Import Data</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Notification Modal -->
+    <div id="notification-modal" class="modal">
+        <div class="modal-content" style="width: 400px; text-align: center; padding-top: 30px;">
+            <div id="notif-icon" class="notif-icon"></div>
+            <h3 id="notif-title" style="margin-top: 0; margin-bottom: 10px; font-size: 1.4rem;"></h3>
+            <p id="notif-message" style="color: #666; margin-bottom: 25px; line-height: 1.5;"></p>
+            <button class="btn btn-primary" onclick="closeNotificationModal()" style="width: 100%; padding: 10px;">OK</button>
+        </div>
+    </div>
+
+    <div id="loading" class="loading-overlay hidden">
+        <div class="spinner"></div>
+        <p style="margin-top: 10px; font-weight: 600;">Sedang memproses...</p>
+    </div>
+
+    <script>
+        let workbook = null;
+        let selectedFile = null;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            loadAuditorData();
+            
+            const dropArea = document.getElementById('drop-area');
+            const fileInput = document.getElementById('excel-file');
+
+            dropArea.addEventListener('click', () => fileInput.click());
+            fileInput.addEventListener('change', (e) => handleFile(e.target.files[0]));
+            dropArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                dropArea.style.borderColor = 'var(--primary-color)';
+                dropArea.style.background = '#f0f7ff';
+            });
+            dropArea.addEventListener('dragleave', () => {
+                dropArea.style.borderColor = '#ccc';
+                dropArea.style.background = 'transparent';
+            });
+            dropArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                dropArea.style.borderColor = '#ccc';
+                dropArea.style.background = 'transparent';
+                handleFile(e.dataTransfer.files[0]);
+            });
+        });
+
+        function openImportModal() {
+            document.getElementById('import-modal').classList.add('active');
+            document.getElementById('import-period').valueAsDate = new Date();
+        }
+
+        function closeImportModal() {
+            document.getElementById('import-modal').classList.remove('active');
+            resetImportForm();
+        }
+
+        function showNotification(title, message, type = 'success') {
+            const modal = document.getElementById('notification-modal');
+            const iconEl = document.getElementById('notif-icon');
+            const titleEl = document.getElementById('notif-title');
+            const msgEl = document.getElementById('notif-message');
+
+            iconEl.className = 'notif-icon';
+            if (type === 'success') {
+                iconEl.innerHTML = '✅'; 
+                iconEl.classList.add('notif-success');
+                titleEl.style.color = 'var(--secondary-color)';
+            } else {
+                iconEl.innerHTML = '❌'; 
+                iconEl.classList.add('notif-error');
+                titleEl.style.color = 'var(--danger-color)';
+            }
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+            modal.classList.add('active');
+        }
+
+        function closeNotificationModal() {
+            document.getElementById('notification-modal').classList.remove('active');
+        }
+
+        function resetImportForm() {
+            workbook = null;
+            selectedFile = null;
+            document.getElementById('excel-file').value = '';
+            document.getElementById('file-name-display').textContent = '';
+            document.getElementById('sheet-selection-container').classList.add('hidden');
+            document.getElementById('btn-process-import').disabled = true;
+        }
+
+        async function handleFile(file) {
+            if (!file) return;
+            selectedFile = file;
+            document.getElementById('file-name-display').textContent = file.name;
+            
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = new Uint8Array(e.target.result);
+                workbook = XLSX.read(data, { type: 'array' });
+                
+                const sheetSelect = document.getElementById('sheet-select');
+                sheetSelect.innerHTML = '';
+                workbook.SheetNames.forEach(name => {
+                    const opt = document.createElement('option');
+                    opt.value = name;
+                    opt.textContent = name;
+                    sheetSelect.appendChild(opt);
+                });
+                
+                document.getElementById('sheet-selection-container').classList.remove('hidden');
+                document.getElementById('btn-process-import').disabled = false;
+            };
+            reader.readAsArrayBuffer(file);
+        }
+
+        async function processImport() {
+            if (!workbook) return;
+            const sheetName = document.getElementById('sheet-select').value;
+            const period = document.getElementById('import-period').value;
+            
+            if (!period) { showNotification('Peringatan', 'Harap pilih periode!', 'error'); return; }
+
+            showLoading(true);
+            
+            try {
+                const worksheet = workbook.Sheets[sheetName];
+                const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                
+                let headerIndex = -1;
+                const keywords = ['nama', 'name', 'auditor', 'departemen', 'department', 'total'];
+                
+                for(let i=0; i<Math.min(20, jsonData.length); i++) {
+                    const rowStr = jsonData[i].join(' ').toLowerCase();
+                    let hits = 0;
+                    keywords.forEach(k => { if(rowStr.includes(k)) hits++; });
+                    if(hits >= 2) {
+                        headerIndex = i;
+                        break;
+                    }
+                }
+
+                if (headerIndex === -1) throw new Error("Header tabel tidak ditemukan.");
+
+                const headers = jsonData[headerIndex].map(h => String(h).toLowerCase().trim());
+                const dataRows = jsonData.slice(headerIndex + 1);
+                
+                const getIdx = (keyPart) => headers.findIndex(h => h.includes(keyPart));
+                
+                const idxName = getIdx('nama') !== -1 ? getIdx('nama') : getIdx('name');
+                const idxDept = getIdx('departemen');
+                const idxTotal = getIdx('total');
+                const idxSelesai = getIdx('selesai');
+                const idxBJT = getIdx('jatuh tempo') !== -1 ? getIdx('jatuh tempo') : getIdx('bjt');
+                const idxOut = getIdx('outstanding');
+
+                const payload = [];
+                dataRows.forEach(row => {
+                    if (row.length === 0 || !row[idxName]) return;
+                    
+                    const cleanInt = (val) => {
+                        if (!val) return 0;
+                        const num = parseInt(val);
+                        return isNaN(num) ? 0 : num;
+                    };
+
+                    payload.push({
+                        name: row[idxName],
+                        department: idxDept !== -1 ? row[idxDept] : '-',
+                        total_temuan: idxTotal !== -1 ? cleanInt(row[idxTotal]) : 0,
+                        selesai: idxSelesai !== -1 ? cleanInt(row[idxSelesai]) : 0,
+                        bjt: idxBJT !== -1 ? cleanInt(row[idxBJT]) : 0,
+                        outstanding: idxOut !== -1 ? cleanInt(row[idxOut]) : 0,
+                        period: period
+                    });
+                });
+
+                const res = await fetch('/api/add_auditor_data', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ data: payload })
+                });
+
+                if (res.ok) {
+                    showNotification('Sukses', 'Data Auditor berhasil diimport!', 'success');
+                    closeImportModal();
+                    // Reload data, passing the newly imported period to auto-select it
+                    loadAuditorData(period);
+                } else {
+                    const err = await res.json();
+                    showNotification('Gagal', 'Gagal Import: ' + err.error, 'error');
+                }
+
+            } catch (e) {
+                console.error(e);
+                showNotification('Error', 'Terjadi kesalahan saat memproses file: ' + e.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        async function loadAuditorData(targetPeriod = null) {
+            const filterPeriod = document.getElementById('period-filter');
+            // If targetPeriod is provided (from import), use it. Otherwise use dropdown value.
+            const selectedP = targetPeriod || filterPeriod.value;
+            
+            try {
+                const res = await fetch(`/api/get_auditor_data?period=${selectedP}`);
+                const data = await res.json();
+                
+                // Clear existing options except 'all'
+                filterPeriod.innerHTML = '<option value="all">Tampilkan Semua Sesi</option>';
+                
+                const periods = [...new Set(data.all_periods)].sort().reverse();
+                
+                // Function to format period string YYYY-MM to "Data Auditor Periode Month Year"
+                const formatSessionName = (p) => {
+                    const [year, month] = p.split('-');
+                    const date = new Date(year, month - 1);
+                    const monthName = date.toLocaleString('id-ID', { month: 'long' });
+                    return `Data Auditor Periode ${monthName} ${year}`;
+                };
+
+                periods.forEach(p => {
+                    const opt = document.createElement('option');
+                    opt.value = p;
+                    opt.textContent = formatSessionName(p);
+                    filterPeriod.appendChild(opt);
+                });
+
+                // Logic to set the selected option
+                if (targetPeriod) {
+                    filterPeriod.value = targetPeriod;
+                } else if (periods.includes(selectedP)) {
+                    filterPeriod.value = selectedP;
+                } else {
+                    filterPeriod.value = 'all';
+                }
+
+                const tbody = document.getElementById('auditor-tbody');
+                tbody.innerHTML = '';
+                
+                if (data.rows.length === 0) {
+                    tbody.innerHTML = '<tr><td colspan="8" style="padding:20px; color:#999;">Tidak ada data.</td></tr>';
+                    return;
+                }
+
+                data.rows.forEach((row, idx) => {
+                    const tr = document.createElement('tr');
+                    tr.innerHTML = `
+                        <td>${idx + 1}</td>
+                        <td>${row.name}</td>
+                        <td>${row.department}</td>
+                        <td style="font-weight:bold;">${row.total_temuan}</td>
+                        <td style="color: var(--secondary-color); font-weight:bold;">${row.selesai}</td>
+                        <td>${row.bjt}</td>
+                        <td style="color: var(--danger-color); font-weight:bold;">${row.outstanding}</td>
+                        <td>${row.period}</td>
+                    `;
+                    tbody.appendChild(tr);
+                });
+
+            } catch (e) {
+                console.error("Error loading data:", e);
+            }
+        }
+
+        async function deleteAllData() {
+            if (!confirm('Apakah Anda yakin ingin menghapus SEMUA data Auditor? Tindakan ini tidak dapat dibatalkan.')) return;
+            
+            showLoading(true);
+            try {
+                const res = await fetch('/api/delete_all_auditor_data', { method: 'DELETE' });
+                if (res.ok) {
+                    showNotification('Sukses', 'Semua data berhasil dihapus.', 'success');
+                    const filterPeriod = document.getElementById('period-filter');
+                    filterPeriod.innerHTML = '<option value="all">Tampilkan Semua Sesi</option>';
+                    filterPeriod.value = 'all';
+                    loadAuditorData();
+                } else {
+                    showNotification('Gagal', 'Gagal menghapus data.', 'error');
+                }
+            } catch(e) {
+                showNotification('Error', 'Error: ' + e.message, 'error');
+            } finally {
+                showLoading(false);
+            }
+        }
+
+        function showLoading(show) {
+            if (show) document.getElementById('loading').classList.remove('hidden');
+            else document.getElementById('loading').classList.add('hidden');
+        }
+    </script>
+</body>
+</html>

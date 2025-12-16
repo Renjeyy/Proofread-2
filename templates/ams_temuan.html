@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Monitoring Temuan</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
+    <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
+    
+    <style>
+        :root {
+            --primary-color: #C62828;
+            --secondary-color: green;
+            --text-color: #333;
+            --bg-light: #f8f9fa;
+            --border-color: #ddd;
+        }
+
+        body { font-family: 'Poppins', sans-serif; color: var(--text-color); margin: 0; background-color: #fff; font-size: 0.9rem; }
+
+        .temuan-table-wrapper {
+            overflow-x: auto; max-width: 100%; border: 1px solid #e0e0e0; border-radius: 8px;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); background: white; margin-bottom: 20px;
+        }
+        .temuan-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 0.9rem; }
+        .temuan-table th, .temuan-table td { border-bottom: 1px solid #ddd; border-right: 1px solid #ddd; padding: 12px 15px; vertical-align: middle !important; line-height: 1.5; }
+        .temuan-table th { background-color: #f8f9fa; position: sticky; top: 0; z-index: 10; font-weight: 700; text-align: center; color: #444; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
+
+        .th-identitas { background-color: #e3f2fd !important; color: #0d47a1; }
+        .th-rencana   { background-color: #fff3e0 !important; color: #e65100; }
+        .th-status    { background-color: #e8f5e9 !important; color: #1b5e20; }
+        .th-bpk       { background-color: #ffebee !important; color: #b71c1c; }
+
+        .temuan-table th:last-child,
+        .temuan-table td:last-child {
+            position: sticky;
+            right: 0;
+            border-left: 2px solid #e0e0e0;
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+        }
+
+        .temuan-table th:last-child {
+            z-index: 12;
+            background-color: #f8f9fa;
+        }
+
+        .temuan-table td:last-child {
+            z-index: 11;
+            background-color: #fff;
+        }
+
+        .col-narrow { min-width: 80px; max-width: 100px; text-align: center; }
+        .col-medium { min-width: 150px; max-width: 200px; text-align: center; }
+        .col-wide { min-width: 350px; max-width: 600px; text-align: left; white-space: pre-wrap; }
+
+        .col-history { min-width: 350px; max-width: 500px; vertical-align: top !important; background-color: #f3e5f5; padding: 5px !important; }
+        .history-mini-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; background-color: rgba(255, 255, 255, 0.8); border-radius: 4px; overflow: hidden; }
+        .history-mini-table thead th { background-color: greenyellow !important; color: black; font-weight: 600; padding: 4px 6px; text-align: center; border: none; position: static !important; z-index: auto !important;}
+        .history-mini-table tbody td { border-bottom: 1px solid #e1bee7; padding: 4px 6px; color: #333; vertical-align: top !important; }
+
+        .text-center { text-align: center !important; }
+        .text-left   { text-align: left !important; }
+        
+        .status-bjt {
+            color: #0d47a1;               
+            background-color: #e3f2fd;    
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.85em;
+            border: 1px solid #bbdefb;    
+            display: inline-block;
+        }
+        .status-os { color: #721c24; background-color: #f8d7da; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.85em; border: 1px solid #f5c6cb; display: inline-block; }
+        .status-selesai { 
+            color: #004085; 
+            background-color: #cce5ff; 
+            padding: 4px 10px; 
+            border-radius: 20px; 
+            font-weight: 600; 
+            font-size: 0.85em; 
+            border: 1px solid #b8daff; 
+            display: inline-block; 
+        }
+
+        .comment-list { display: flex; flex-direction: column; gap: 8px; }
+        .comment-card { background: #fff; border: 1px solid #ddd; border-left: 4px solid #2196f3; border-radius: 6px; padding: 8px 10px; position: relative; }
+        .comment-header { font-size: 0.7rem; color: #777; display: flex; justify-content: space-between; margin-bottom: 4px; }
+        .comment-user { font-weight: 700; color: #1565c0; }
+        .comment-content { font-size: 0.85rem; color: #333; white-space: pre-wrap; }
+        .btn-delete-comment { position: absolute; top: 2px; right: 5px; background: none; border: none; color: #aaa; cursor: pointer; font-size: 16px; }
+        .btn-delete-comment:hover { color: #d32f2f; }
+        .btn-add-note-modern { display: flex; align-items: center; justify-content: center; width: 100%; padding: 6px; background: #f9f9f9; color: #666; border: 1px dashed #ccc; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
+        .btn-add-note-modern:hover { background: #e3f2fd; border-color: #2196f3; color: #1976d2; }
+        
+        .modal { z-index: 2000; }
+        .hidden { display: none !important; }
+        
+        .box-layout-modal { 
+            width: 600px !important; 
+            max-width: 95vw; 
+            padding: 2.5rem !important; 
+            border-radius: 12px; 
+            max-height: 85vh; 
+            overflow-y: auto; 
+        }
+
+        .form-grid-wrapper { 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            margin-bottom: 10px;
+        }
+
+        .form-group { margin-bottom: 0; }
+        .form-group label { 
+            display: block; 
+            margin-bottom: 6px; 
+            font-weight: 600; 
+            color: var(--text-color); 
+            font-size: 0.9rem; 
+        }
+
+        .form-group input[type="text"],
+        .form-group input[type="number"],
+        .form-group input[type="date"],
+        .form-group select,
+        .custom-select {
+            width: 100%;
+            height: 42px !important; 
+            padding: 0 12px;
+            border: 1px solid #ccc;
+            border-radius: 6px;
+            font-family: 'Poppins', sans-serif;
+            font-size: 0.9rem;
+            color: #333;
+            box-sizing: border-box;
+            display: block;
+            background-color: white;
+            outline: none;
+        }
+
+        .form-group select {
+            -webkit-appearance: none;
+            -moz-appearance: none;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 12px center;
+            background-size: 10px auto;
+            padding-right: 35px;
+            cursor: pointer;
+            padding-top: 0 !important;    
+            padding-bottom: 0 !important; 
+            line-height: 42px !important;
+        }
+
+        .form-group input:focus, .form-group select:focus {
+            border-color: #2196f3;
+            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
+        }
+
+        .form-group textarea {
+            width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px;
+            font-family: 'Poppins', sans-serif; font-size: 0.9rem; box-sizing: border-box;
+        }
+        
+        .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
+        .cancel-btn { background: #fff; border: 1px solid #ccc; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #555; }
+        .login-btn { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+
+        .search-popup-list {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            max-height: 400px;
+            overflow-y: auto;
+            border: 1px solid #eee;
+            border-radius: 6px;
+        }
+        .search-popup-list li {
+            padding: 12px;
+            border-bottom: 1px solid #f5f5f5;
+            cursor: pointer;
+            transition: background 0.2s;
+        }
+        .search-popup-list li:hover {
+            background-color: #e3f2fd;
+        }
+        .search-popup-list li:last-child {
+            border-bottom: none;
+        }
+        .nav-links a.active {
+            font-weight: 700 !important;
+            color: var(--primary-color) !important;
+        }
+
+        .nav-links > li > a.active::after {
+            width: 100%;
+        }
+
+        .col-justify-middle {
+            text-align: justify !important;
+            vertical-align: middle !important;
+        }
+        .mini-comment-table th {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mini-comment-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        .btn-delete-comment-icon:hover {
+            color: #c62828 !important;
+            background-color: #ffebee !important;
+            border-radius: 50%;
+            width: 24px;
+            height: 24px;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .btn-add-note-modern {
+            margin-top: 12px !important;
+            background-color: #fff !important;
+            border: 1px dashed #1976d2 !important;
+            color: #1976d2 !important;
+            transition: all 0.3s ease;
+        }
+
+        .btn-add-note-modern:hover {
+            background-color: #e3f2fd !important;
+            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
+        }
+        .btn-delete-floating {
+            position: absolute;
+            top: 2px;
+            right: 2px;
+            background: none;
+            border: none;
+            color: #ef5350; 
+            cursor: pointer;
+            font-size: 1.2em;
+            font-weight: bold;
+            line-height: 1;
+            padding: 0 4px;
+            border-radius: 4px;
+            transition: all 0.2s;
+            opacity: 0.6; 
+        }
+
+        .btn-delete-floating:hover {
+            color: #c62828;
+            background-color: #ffebee;
+            opacity: 1;
+        }
+
+        .mini-comment-table th {
+            font-weight: 700;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .mini-comment-table tr:last-child td {
+            border-bottom: none;
+        }
+
+        /* STYLE KHUSUS UNTUK TABEL LAPORAN (REPORT TABLE) */
+        .report-table {
+            width: 100%;
+            border-collapse: collapse;
+            font-family: Arial, sans-serif;
+            font-size: 12px;
+            color: black;
+            border: 1px solid black;
+        }
+        .report-table th, .report-table td {
+            border: 1px solid black;
+            padding: 6px 10px;
+            vertical-align: middle;
+        }
+        .report-table thead th {
+            background-color: #C00000;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .report-table tfoot th, .report-table tfoot td {
+            background-color: #C00000;
+            color: white;
+            font-weight: bold;
+            text-align: center;
+        }
+        .report-table tbody td {
+            background-color: white;
+        }
+    </style>
+</head>
+<body>
+
+    <input type="hidden" id="current-username" value="{{ current_user.fullname }}">
+
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo"></a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
+                <li class="nav-dropdown-container">
+                    <a href="#" class="nav-dropbtn">
+                        Analisis Dokumen <span style="font-size: 0.7em;">▼</span>
+                    </a>
+                    <div class="nav-dropdown-content">
+                        <a href="{{ url_for('dashboard') }}#folder-management">Folder</a>
+                        <a href="{{ url_for('dashboard') }}#fitur">Proofread</a>
+                        
+                        <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
+                    </div>
+                </li> 
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn" style="color:var(--primary-color, #C62828); font-weight: 700;">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
+                    <a href="{{ url_for('ams_temuan_page') }}" class="active">Temuan</a>
+                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
+                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
+                    <a href="{{ url_for('ams_auditors_page') }}">Auditors</a>
+                </div>
+            </li>
+            <li>
+                <a href="{{ url_for('mailbox_page') }}" class="active-mailbox">Email</a>
+                <li><a href="{{ url_for('library_page') }}">Library</a></li>
+            </li>
+        </ul>
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+
+    <main class="monitoring-main">
+        <section class="monitoring-header">
+            <h1>Daftar Temuan Audit</h1>
+            <button id="add-temuan-session-btn" class="start-btn">Buat Sesi Temuan Baru</button>
+        </section>
+
+        <section class="filter-section" style="margin-bottom: 1rem;">
+            <div class="multi-select-container" style="display: flex; align-items: center; gap: 1rem;">
+                <label class="filter-label" style="font-weight: 600; margin: 0;">Pilih Sesi Temuan:</label>
+                <select id="temuan-session-select" style="height: 42px; padding: 0 10px; border-radius: 8px; border: 1px solid #ccc; min-width: 300px;">
+                    <option value="" disabled selected>-- Pilih Sesi --</option>
+                </select>
+                <button id="load-temuan-btn" class="analyze-btn" style="height: 42px; padding: 0 20px;">Tampilkan</button>
+                <button id="delete-session-btn" class="analyze-btn" style="height: 42px; background-color: var(--danger); display: none;">Hapus Sesi</button>
+            </div>
+        </section>
+
+        <section id="search-filter-container" class="hidden" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
+            <div style="display: flex; gap: 30px; align-items: flex-end;">
+                
+                <div style="flex: 0 0 250px;">
+                    <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333; position: relative; top: 10px;">Filter by:</label>
+                    <select id="filter-column-select" style="width: 100%; padding: 0 12px; border-radius: 6px; border: 1px solid #ccc; height:42px; box-sizing: border-box;">
+                        <option value="all">Semua Kolom</option>
+                        <option value="no_aoi">No AOI</option>
+                        <option value="pic_skai">PIC SKAI</option> 
+                        <option value="jenis_aoi">Jenis AOI</option>
+                        <option value="klasifikasi">Klasifikasi</option>
+                        <option value="auditee">Auditee</option>
+                        <option value="pic_auditee">PIC Auditee</option>
+                    </select>
+                </div>
+                
+                <div style="flex: 0 0 250px;"> 
+                    <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">Advanced Search:</label>
+                    <div style="position: relative; width: 100%;">
+                        <input type="text" id="advanced-search-display" readonly placeholder="Pilih Unique Values" 
+                               style="width: 100%; padding: 0 12px; border-radius: 6px; border: 1px solid #ccc; height:42px; line-height: 40px; box-sizing: border-box; cursor: pointer; background-color: white; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        <input type="hidden" id="advanced-search-value"> 
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="temuan-container" class="data-table-container hidden">
+            <div class="list-header" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
+                <h3 id="table-title" style="margin: 0;">Detail Temuan</h3>  
+                <div style="display: flex; gap: 10px;">
+                    <button id="monthly-report-btn" class="analyze-btn" style="background-color: #d32f2f; color: white;">
+                        &#128196; Laporan Bulanan
+                    </button>
+                    <button id="share-session-btn" class="analyze-btn" style="background-color: #f57c00; color: white;">Share</button>            
+                    <button id="open-new-page-btn" class="analyze-btn" style="background-color: #5C6BC0; color: white;" onclick="openSessionInNewPage()">
+                        &#10066; Buka di halaman baru
+                    </button>
+                    <input type="file" id="excel-import-input" accept=".xlsx, .xls" style="display: none;" />
+                    <button id="import-excel-btn" class="analyze-btn" style="background-color: #00897b;">Import Excel</button>
+                    <button id="add-row-btn" class="analyze-btn">Tambah Baris Data</button>
+                </div>
+            </div>
+
+            <div class="temuan-table-wrapper">
+                <table class="temuan-table" id="main-temuan-table">
+                    <thead>
+                        <tr>
+                            <th class="th-identitas col-narrow">No AOI</th>
+                            <th class="th-identitas col-medium">PIC SKAI</th>
+                            <th class="th-identitas col-narrow">Jenis AOI</th>
+                            <th class="th-identitas col-medium">Klasifikasi</th>
+                            <th class="th-identitas col-medium">No LHA</th>
+                            <th class="th-identitas col-medium">Nama Penugasan</th>
+                            <th class="th-identitas col-wide">Area of Improvement (AOI)</th>
+                            <th class="th-identitas col-wide">Rekomendasi</th>
+                            <th class="th-rencana col-wide">Rencana Tindak Lanjut</th>
+                            <th class="th-rencana col-wide">Rencana Evidence</th>
+                            <th class="th-rencana col-medium">Auditee</th>
+                            <th class="th-rencana col-medium">PIC Auditee</th>
+                            <th class="th-rencana col-medium">Target Penyelesaian</th>
+                            <th class="th-rencana col-medium">Perubahan Target</th>
+                            <th class="th-status col-wide">Tindak Lanjut</th>
+                            <th class="th-status col-medium">Signifikansi</th>
+                            <th class="th-status col-medium" id="header-status-prev">Status Akhir (Bulan Lalu)</th>
+                            <th class="th-status col-medium" id="header-status-curr">Status Akhir (Bulan Ini)</th>
+                            <th class="th-status col-narrow">Jml Rekomendasi</th>
+                            <th class="th-status col-narrow">Selesai</th>
+                            <th class="th-bpk col-narrow">Belum JT / BS (BPK)</th>
+                            <th class="th-bpk col-narrow">OS / BD (BPK)</th>
+                            <th class="th-bpk col-narrow">TDD (BPK)</th>
+                            <th class="th-identitas col-medium">Control</th>
+                            <th class="th-identitas col-wide" style="background-color: #fff8e1 !important;">Catatan Auditor</th>
+                            <th class="col-history" style="background-color: #f3e5f5 !important; color: #4a148c;">History Modified</th>
+                            <th class="col-medium">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="temuan-tbody"></tbody>
+                </table>
+            </div>
+            
+            <div style="margin-top: 1rem; text-align: right;">
+                <button onclick="exportTableToExcel('main-temuan-table', 'Data_Temuan')" class="analyze-btn" style="background-color: #217346;">Export Excel</button>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
+    </footer>
+
+    <div id="filter-value-modal" class="modal hidden" style="z-index: 2500;">
+        <div class="modal-content" style="max-width: 500px; height: 600px; display: flex; flex-direction: column;">
+            <span class="modal-close-btn" onclick="document.getElementById('filter-value-modal').classList.add('hidden')">&times;</span>
+            <h3 style="margin-bottom: 15px; color: var(--primary-color);">Pilih Nilai</h3>
+            
+            <div style="margin-bottom: 10px;">
+                <input type="text" id="popup-search-input" placeholder="Cari di list..." 
+                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
+                <ul id="filter-value-list" class="search-popup-list">
+                </ul>
+            </div>
+            
+            <div style="margin-top: 10px; text-align: right;">
+                <button class="cancel-btn" onclick="document.getElementById('filter-value-modal').classList.add('hidden')">Tutup</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="share-session-modal" class="modal hidden" style="z-index: 2100;">
+        <div class="modal-content" style="max-width: 600px; padding: 2rem;">
+            <span class="modal-close-btn" id="close-share-modal">&times;</span>
+            <h3 style="color: #C62828; margin-bottom: 20px;">Share Sesi Temuan: <span id="share-session-name-display"></span></h3>
+            
+            <div id="user-list-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;">
+                <table class="user-share-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"><input type="checkbox" id="select-all-users"></th>
+                            <th data-sort-key="name" class="sortable">Nama <span class="sort-icon"></span></th>
+                            <th data-sort-key="label" class="sortable">Label <span class="sort-icon"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body">
+                        </tbody>
+                </table>
+            </div>
+            
+            <button type="button" class="login-btn" id="btn-submit-share" style="width: 100%; margin-top: 25px; padding: 12px;">Share Akses</button>
+        </div>
+    </div>
+
+    <div id="add-data-modal" class="modal hidden">
+        <div class="modal-content box-layout-modal">
+            <span class="modal-close-btn" id="close-data-modal">&times;</span>
+            <h3 style="text-align:center; color:#C62828; margin-bottom:20px;">Edit Data Temuan</h3>
+            <form id="add-data-form">
+                <input type="hidden" id="current-session-id" name="session_id">
+                
+                <div class="form-grid-wrapper">
+                    <div class="form-group">
+                        <label>No AOI:</label>
+                        <input type="text" name="no_aoi">
+                    </div>
+                    <div class="form-group">
+                        <label>PIC SKAI:</label>
+                        <select name="pic_skai" id="pic-skai-select" class="custom-select">
+                            <option value="" selected>-- Pilih PIC SKAI --</option>
+                            </select>
+                    </div>
+                    <div class="form-group"><label>Jenis AOI:</label><input type="text" name="jenis_aoi"></div>
+                    <div class="form-group"><label>Klasifikasi:</label><input type="text" name="klasifikasi"></div>
+                    <div class="form-group"><label>No LHA:</label><input type="text" name="no_lha"></div>
+                    <div class="form-group"><label>Nama Penugasan:</label><input type="text" name="nama_penugasan"></div>
+                    <div class="form-group"><label>Area of Improvement (AOI):</label><textarea name="aoi" rows="2"></textarea></div>
+                    <div class="form-group"><label>Rekomendasi:</label><textarea name="rekomendasi" rows="2"></textarea></div>
+                    <div class="form-group"><label>Rencana Tindak Lanjut:</label><textarea name="rencana_tl" rows="2"></textarea></div>
+                    <div class="form-group"><label>Rencana Evidence:</label><textarea name="rencana_evidence" rows="2"></textarea></div>
+                    <div class="form-group"><label>PIC Auditee (Gunakan Enter untuk pemisah):</label><textarea name="pic_auditee" rows="4" placeholder="Contoh:&#10;1. Deny Syahbani&#10;2. Renzie Aditya"></textarea></div>
+                    <div class="form-group"><label>Auditee:</label><input type="text" name="auditee"></div>
+                    <div class="form-group"><label>Target Penyelesaian:</label><input type="date" name="target_penyelesaian"></div>
+                    <div class="form-group"><label>Perubahan Target:</label><input type="date" name="perubahan_target"></div>
+                    <div class="form-group"><label>Tindak Lanjut:</label><textarea name="tindak_lanjut" rows="2"></textarea></div>
+                    <div class="form-group"><label>Signifikansi:</label><input type="text" name="signifikansi"></div>
+                    <div class="form-group"><label>Jml Rekomendasi:</label><input type="number" name="jml_rekomendasi" value="0"></div>
+                    <div class="form-group"><label>Selesai:</label><input type="number" name="selesai" value="0"></div>
+                    <div class="form-group"><label>Belum JT / BS (BPK):</label><input type="number" name="belum_jt_bs" value="0"></div>
+                    <div class="form-group"><label>OS / BD (BPK):</label><input type="number" name="os_bd" value="0"></div>
+                    <div class="form-group"><label>TDD (BPK):</label><input type="number" name="tdd" value="0"></div>
+                    <div class="form-group"><label>Control:</label><input type="text" name="control"></div>
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="cancel-btn" id="cancel-data-btn">Batal</button>
+                    <button type="submit" class="login-btn">Simpan Data</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="create-temuan-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 450px; padding: 25px; border-radius: 12px; background: white;">
+            <span class="modal-close-btn" id="close-create-modal" style="position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer;">&times;</span>
+            
+            <h3 style="margin: 0 0 20px 0; color: #C62828; text-align: center; font-size: 1.4rem; font-weight: 700;">Buat Sesi Temuan Baru</h3>
+            
+            <form id="create-temuan-form">
+                <div style="display: flex; flex-direction: column; gap: 12px;">
+                    
+                    <div class="form-group" style="margin: 0;">
+                        <label style="display: block; margin-bottom: 0px; font-weight: 600; color: #333; font-size: 0.9rem;">Jenis Audit:</label>
+                        <select name="jenis_audit" required 
+                                style="width: 100%; height: 45px; padding: 0 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; background-color: #fff; outline: none; cursor: pointer;">
+                            <option value="" disabled selected>-- Pilih Jenis --</option>
+                            <option value="Audit Internal">Audit Internal</option>
+                            <option value="Audit Dengan Tujuan Tertentu">Audit Dengan Tujuan Tertentu</option>
+                            <option value="Audit Investigasi">Audit Investigasi</option>
+                            <option value="Review Internal">Review Internal</option>
+                            <option value="Assessment Internal">Assessment Internal</option>
+                            <option value="Audit Eksternal">Audit Eksternal</option>
+                            <option value="Review Eksternal">Review Eksternal</option>
+                            <option value="Assessment Eksternal">Assessment Eksternal</option>
+                            <option value="Advisory">Advisory</option>
+                        </select>
+                    </div>
+
+                    <div class="form-group" style="margin: 0;">
+                        <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333; font-size: 0.9rem;">Nama Sesi / Penugasan:</label>
+                        <input type="text" name="session_name" required placeholder="Contoh: Audit Cabang X 2024" 
+                               style="width: 100%; height: 45px; padding: 0 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;">
+                    </div>
+                </div>
+
+                <div style="margin-top: 15px; padding-top: 0px; border-top: 1px solid #eee;">
+                    <button type="submit" class="login-btn" 
+                            style="width: 100%; padding: 12px; font-size: 1rem; font-weight: 600; border-radius: 8px; background-color: #C62828; color: white; border: none; cursor: pointer; transition: background 0.3s;">
+                        Buat
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+    
+    <div id="sheet-selection-modal" class="modal hidden">
+        <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 12px; text-align: center;">
+            <span class="modal-close-btn" id="close-sheet-modal">&times;</span>
+            <h3 style="color: #333; margin-bottom: 10px;">Pilih Sheet Excel</h3>
+            <p style="margin-bottom: 20px; color: #666;">Pilih sheet yang berisi data temuan:</p>
+            <div class="form-group">
+                <select id="excel-sheet-select" style="width: 100%; padding: 0 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; height: 42px;"></select>
+            </div>
+            <div class="modal-actions" style="margin-top: 25px; display: flex; justify-content: center; gap: 10px;">
+                <button type="button" class="btn-secondary" id="cancel-sheet-btn" style="padding: 10px 20px; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px;">Batal</button>
+                <button type="button" class="login-btn" id="process-import-btn" style="padding: 10px 20px;">Proses Data</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="import-progress-modal" class="modal hidden" style="z-index: 2000; position: fixed; left: 0; top: 0; width: 100%; height: 100%; overflow: auto; background-color: rgba(0,0,0,0.4);">
+        <div class="modal-content" style="background-color: #fefefe; margin: 15% auto; padding: 30px; border: 1px solid #888; width: 80%; max-width: 400px; text-align: center; border-radius: 12px;">
+            <h3 style="margin-top: 0; color: var(--primary-color);">Sedang Mengimpor Data</h3>
+            <p style="margin-bottom: 20px;">Mohon tunggu sebentar...</p>
+            <div class="progress-container" style="width: 100%; background-color: #f1f1f1; border-radius: 8px; margin: 15px 0; overflow: hidden; height: 30px;">
+                <div id="import-progress-bar" style="width: 0%; height: 100%; background-color: #4CAF50; text-align: center; line-height: 30px; color: white; font-weight: bold; transition: width 0.3s;">0%</div>
+            </div>
+            <p id="import-progress-text" style="font-size: 0.9em; color: #666; margin-top: 10px;">Memulai...</p>
+        </div>
+    </div>
+
+    <div id="comment-modal" class="modal hidden" style="z-index: 2002;">
+        <div class="modal-content" style="max-width: 500px; padding: 2rem; border-radius: 12px;">
+            <span class="modal-close-btn" id="close-comment-modal">&times;</span>
+            <h3 style="margin-bottom: 15px; color: var(--primary-color);">Tambahkan Komentar</h3>
+            <form id="comment-form">
+                <div class="form-group full-width">
+                    <label style="display: block; margin-bottom: 5px; font-weight: 600;">Isi Komentar:</label>
+                    <textarea name="comment_text" id="comment-text-input" rows="5" required placeholder="Tulis catatan Anda di sini..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; font-family: inherit;"></textarea>
+                </div>
+                <div class="modal-actions" style="margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px;">
+                    <button type="button" class="cancel-btn" onclick="document.getElementById('comment-modal').classList.add('hidden')" style="background: #fff; border: 1px solid #ccc; padding: 8px 20px; border-radius: 6px;">Batal</button>
+                    <button type="submit" class="login-btn" style="padding: 8px 20px;">Simpan Komentar</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="delete-confirm-modal" class="modal hidden" style="z-index: 2001;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; border-radius: 12px; padding: 30px;">
+            <div style="font-size: 50px; color: #d32f2f; margin-bottom: 15px;">&#9888;</div>
+            <h3 style="margin-bottom: 10px; color: #333;">Konfirmasi Hapus</h3>
+            <p style="color: #666; margin-bottom: 25px;">Apakah Anda yakin ingin menghapus baris data ini? Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="modal-actions" style="justify-content: center; gap: 15px;">
+                <button id="btn-confirm-cancel" class="cancel-btn" style="padding: 10px 20px; background: #fff; border: 1px solid #ccc; border-radius: 6px;">Batal</button>
+                <button id="btn-confirm-delete" class="login-btn" style="background-color: #d32f2f; padding: 10px 20px; color: white; border: none; border-radius: 6px;">Ya, Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="delete-comment-modal" class="modal hidden" style="z-index: 2005;">
+        <div class="modal-content" style="max-width: 350px; text-align: center; border-radius: 12px; padding: 25px;">
+            <div style="font-size: 40px; color: #e57373; margin-bottom: 10px;">&times;</div>
+            <h4 style="margin-top: 0; color: #333;">Hapus Catatan?</h4>
+            <p style="color: #666; font-size: 0.9rem; margin-bottom: 20px;">Tindakan ini tidak dapat dibatalkan.</p>
+            <div class="modal-actions" style="justify-content: center; gap: 10px;">
+                <button id="btn-cancel-delete-comment" class="cancel-btn" style="padding: 8px 16px; font-size: 0.9rem; background: #fff; border: 1px solid #ccc; border-radius: 6px;">Batal</button>
+                <button id="btn-confirm-delete-comment" class="login-btn" style="background-color: #d32f2f; padding: 8px 16px; font-size: 0.9rem; color: white; border: none; border-radius: 6px;">Hapus</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="custom-message-modal" class="modal hidden">
+        <div class="modal-content custom-message-box" style="max-width: 400px; text-align: center; padding: 2rem; border-radius: 12px;">
+            <span class="modal-close-btn" onclick="document.getElementById('custom-message-modal').classList.add('hidden')">&times;</span>
+            <p id="custom-message-text" style="text-align: center; margin: 20px 0; font-size: 1rem; color: #333;"></p>
+            <button onclick="document.getElementById('custom-message-modal').classList.add('hidden')" class="login-btn full-width" style="width: 100%; padding: 10px;">OK</button>
+        </div>
+    </div>
+
+    <div id="import-warning-modal" class="modal hidden" style="z-index: 2005;">
+        <div class="modal-content" style="max-width: 450px; text-align: center; border-radius: 12px; padding: 30px;">
+            <div style="font-size: 50px; margin-bottom: 10px;">⚠️</div>
+            <h3 style="margin-top: 0; color: #ff9800; margin-bottom: 10px;">Import Berhasil</h3>
+            <p style="color: #333; font-weight: bold; margin-bottom: 15px;">MOHON PERHATIAN:</p>
+            <p style="color: #555; font-size: 0.95rem; line-height: 1.6; margin-bottom: 15px;">
+                Harap periksa kembali angka pada kolom:<br>
+                <strong style="color: #d32f2f;">Selesai, Belum JT / BS, OS / BD, TDD, dan Control.</strong>
+            </p>
+            <p style="color: #666; font-size: 0.85rem; font-style: italic; background: #fff3e0; padding: 10px; border-radius: 6px; margin-bottom: 25px;">
+                "Sistem dapat membuat kesalahan dalam membaca rumus/format Excel. Pastikan data sesuai."
+            </p>
+            <button id="btn-close-warning" class="login-btn" style="width: 100%; padding: 12px; background-color: #ff9800; color: white; border: none; font-weight: bold;">Saya Mengerti, Saya Akan Cek</button>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='ams_temuan.js') }}?v=9"></script>
+    
+    <script>
+        function openSessionInNewPage() {
+            const select = document.getElementById('temuan-session-select');
+            const sessionId = select.value;
+
+            if (!sessionId) {
+                if (typeof showCustomMessage === "function") {
+                    showCustomMessage("Silakan pilih sesi terlebih dahulu.");
+                } else {
+                    alert("Silakan pilih sesi terlebih dahulu.");
+                }
+                return;
+            }
+            const url = `/view_session_full/${sessionId}`;
+            window.open(url, '_blank');
+        }
+        
+        document.addEventListener('DOMContentLoaded', async () => {
+            const picSkaiSelect = document.getElementById('pic-skai-select');
+            if(picSkaiSelect) {
+                try {
+                    const res = await fetch('/api/get_all_users');
+                    if(res.ok) {
+                        const users = await res.json();
+                        const filtered = users.filter(u => {
+                            const l = (u.label || '').toUpperCase();
+                            return l === 'COE' || l === 'ADVISORY' || l === 'AUDIT';
+                        });
+
+                        filtered.sort((a, b) => a.fullname.localeCompare(b.fullname));
+
+                        filtered.forEach(u => {
+                            const opt = document.createElement('option');
+                            opt.value = u.username; 
+                            opt.textContent = `${u.fullname} (${u.label})`;
+                            picSkaiSelect.appendChild(opt);
+                        });
+                    }
+                } catch(e) { console.error("Gagal load user", e); }
+            }
+        });
+    </script>
+</body>
+</html>

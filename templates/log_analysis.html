@@ -1,0 +1,192 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Log Analisis & Tracker</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
+</head>
+<style>
+    .nav-links a.active {
+        font-weight: 700 !important;
+        color: #C62828 !important;
+    }
+
+    .nav-links > li > a.active::after {
+        width: 100%;
+    }
+</style>
+<body>
+
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a href="{{ url_for('dashboard') }}">
+                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo">
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
+            
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn active">
+                    Analisis Dokumen <span style="font-size: 0.7em;">▼</span>
+                </a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('dashboard') }}#folder-management">Folder</a>
+                    <a href="{{ url_for('dashboard') }}#fitur">Proofread</a>
+                    
+                    <a href="{{ url_for('log_analysis_page') }}" class="active">Log Analisis</a>
+                </div>
+            </li>
+
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
+                    <a href="{{ url_for('ams_temuan_page') }}">Temuan</a>
+                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
+                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
+                </div>
+            </li>
+            <li><a href="{{ url_for('mailbox_page') }}" class="active-mailbox">Email</a></li>
+            <li><a href="{{ url_for('library_page') }}">Library</a></li>
+        </ul>
+        
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+
+    <main>
+        <section class="feature-section">
+            <h1 style="text-align: center;">Log Analisis & Tracker Tugas</h1>            
+            <button id="add-task-btn" class="start-btn" style="margin-bottom: 2rem;">Add Task</button>
+            <div id="log-loading" class="loading hidden"><div class="spinner"></div> Memuat data log...</div>
+            <div id="log-error" class="error-box hidden"></div>
+
+            <div class="results-table-wrapper">
+                <table id="log-table">
+                    <thead>
+                        <tr>
+                            <th>No.</th>
+                            <th>Nama Dokumen</th>
+                            <th>Fitur</th>
+                            <th>Tanggal Dikerjakan</th>
+                            <th>Deadline</th> 
+                            <th>Tanggal Selesai</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="log-table-body">
+                    </tbody>
+                </table>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
+    </footer>
+    <div id="task-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn" id="task-modal-close-btn">&times;</span>
+            <h3 id="task-modal-title">Tambah Tugas Baru</h3>
+            <form id="task-form">
+                <input type="hidden" id="task-log-id">
+
+                <label for="task-filename-input">Nama Dokumen *</label>
+                <input type="text" id="task-filename-input">
+
+                <label for="task-feature-select">Fitur</label>
+                <select id="task-feature-select">
+                    <option value="">-- Pilih Fitur --</option>
+                    <option value="proofreading">Proofreading Otomatis</option>
+                    <option value="compare">Perbandingan Dokumen</option>
+                    <option value="coherence">Analisis Koherensi</option>
+                    <option value="restructure">Restrukturisasi Koherensi</option>
+                </select>
+
+                <label for="task-start-time-input">Tanggal Mulai</label>
+                <input type="date" id="task-start-time-input" name="start_time">
+
+                <label for="task-deadline-input">Deadline</label>
+                <input type="date" id="task-deadline-input" name="deadline">
+
+                <label for="task-end-time-input">Tanggal Selesai</label>
+                <input type="date" id="task-end-time-input" name="end_time">
+
+                <button type="submit" class="login-btn" style="margin-top: 1rem;">Tambah Tugas</button>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='script.js') }}"></script>
+    <script src="{{ url_for('static', filename='log_analysis.js') }}"></script>
+
+    <div id="custom-message-modal" class="modal hidden">
+        <div class="modal-content custom-message-box">
+            <span class="modal-close-btn" id="custom-message-close-btn">&times;</span>
+            <h3 id="custom-message-title" style="border-bottom: none; margin-bottom: 0;">Pesan</h3>
+            <div id="custom-message-details" style="text-align: left; margin: 1rem 0; display: none;">
+            </div>
+            <p id="custom-message-text" style="text-align: center; margin-top: 1rem; margin-bottom: 2rem;"></p>
+            <button id="custom-message-ok-btn" class="login-btn full-width" style="margin-top: 0;">OK</button>
+        </div>
+    </div>
+    <div id="custom-confirm-modal" class="modal hidden">
+        <div class="modal-content custom-confirm-box">
+            <h3 id="custom-confirm-title" style="border-bottom: none; margin-bottom: 0;">Konfirmasi</h3>
+            <p id="custom-confirm-text" style="text-align: center; margin-top: 1rem; margin-bottom: 2rem; font-weight: 500;"></p>
+            <div class="confirm-actions" style="display: flex; gap: 1rem; justify-content: center;">
+                <button id="custom-confirm-ok-btn" class="login-btn" style="flex: 1; background-color: var(--danger);">Ya, Hapus</button>
+                <button id="custom-confirm-cancel-btn" class="login-btn" style="flex: 1; background-color: #6c757d;">Batal</button>
+            </div>
+        </div>
+    </div>
+    <div id="edit-task-modal" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="modal-close-btn" onclick="document.getElementById('edit-task-modal').classList.add('hidden')">&times;</span>
+            
+            <h3>Edit Tugas</h3>
+            
+            <form onsubmit="event.preventDefault(); saveEditTask();">
+                <div class="form-group">
+                    <label>Nama Dokumen</label>
+                    <input type="text" id="edit-task-filename" required>
+                </div>
+                <div class="form-group">
+                    <label>Fitur</label>
+                    <select id="edit-task-feature">
+                        <option value="Proofreading">Proofreading</option>
+                        <option value="compare">Perbandingan Dokumen</option>
+                        <option value="coherence">Analisis Koherensi</option>
+                        <option value="restructure">Restrukturisasi</option>
+                        <option value="Tindak Lanjut">Tindak Lanjut</option>
+                    </select>
+                </div>
+                
+                <div class="form-group">
+                    <label>Tanggal Mulai</label>
+                    <input type="datetime-local" id="edit-task-start">
+                </div>
+                <div class="form-group">
+                    <label>Deadline</label>
+                    <input type="datetime-local" id="edit-task-deadline">
+                </div>
+                <div class="form-group">
+                    <label>Tanggal Selesai</label>
+                    <input type="datetime-local" id="edit-task-end">
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="document.getElementById('edit-task-modal').classList.add('hidden')">Batal</button>
+                    <button type="submit" class="login-btn">Simpan Perubahan</button>
+                </div>
+            </form>
+        </div>
+    </div>
+</body>
+</html>

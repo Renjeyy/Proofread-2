@@ -1,0 +1,364 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Assign PIC SKAI - {{ reminder.subject }}</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png">
+    
+    <style>
+        body { background-color: #f4f6f9; font-family: 'Poppins', sans-serif; color: #333; margin: 0; }
+        .assign-container { background: white; width: 98%; margin: 20px auto; padding: 30px; border-radius: 8px; box-shadow: 0 2px 10px rgba(0,0,0,0.05); box-sizing: border-box; }
+        .page-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px; border-bottom: 2px solid #eee; padding-bottom: 15px; }
+        .page-title h2 { margin: 0; color: #C62828; font-size: 1.6rem; }
+        .page-subtitle { color: #666; font-size: 0.9rem; margin-top: 5px; }
+        
+        .info-box { 
+            background: #e3f2fd; 
+            padding: 15px 20px; 
+            border-radius: 6px; 
+            border: 1px solid #bbdefb; 
+            margin-bottom: 20px; 
+            display: flex; 
+            gap: 40px; 
+            align-items: flex-start;
+        }
+        
+        .info-item label { 
+            display: block; 
+            font-size: 0.75rem; 
+            color: #555; 
+            font-weight: 600; 
+            text-transform: uppercase; 
+            margin-bottom: 4px;
+        }
+        
+        .info-item div { 
+            font-weight: 700; 
+            font-size: 1rem; 
+            color: #1565c0; 
+        }
+
+        .table-responsive { 
+            overflow-x: auto; 
+            border: 1px solid #ddd; 
+            border-radius: 6px; 
+            max-height: 70vh; 
+            position: relative; 
+        }
+        .assign-table { 
+            width: 100%; 
+            border-collapse:
+            collapse; min-width: 2400px; 
+        }
+        .assign-table th, .assign-table td { 
+            padding: 12px 15px; 
+            border-bottom: 1px solid #eee; 
+            vertical-align: middle; 
+            white-space: normal; 
+            text-align: justify;
+        }
+        .assign-table th { 
+            background-color: #f8f9fa; 
+            font-weight: 600; 
+            color: #444; 
+            text-align: center; 
+            border-bottom: 2px solid #ddd; 
+            height: 50px; 
+        }
+        .col-sticky-right { 
+            position: sticky; 
+            right: 0; 
+            z-index: 10; 
+            background-color: #fff; 
+            border-left: 3px solid #eee; 
+            box-shadow: -2px 0 5px rgba(0,0,0,0.05); 
+            width: 350px; 
+            min-width: 350px; 
+            text-align: center; 
+        }
+        th.col-sticky-right { 
+            background-color: #e8f5e9; 
+            color: #2e7d32; z-index: 11; 
+        }
+        .pic-select { 
+            width: 100%; 
+            padding: 8px; 
+            border: 1px solid #ccc; 
+            border-radius: 4px; 
+            font-family: inherit; 
+            cursor: pointer;
+         }
+        .pic-select:focus {
+             border-color: #1976d2;
+             outline: none; 
+            }
+        .footer-spacer { 
+            height: 80px; 
+        }
+        .sticky-footer { 
+            position: fixed; 
+            bottom: 0; 
+            left: 0; 
+            width: 100%;
+            background: white; 
+            padding: 15px 0; 
+            border-top: 1px solid #ddd; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
+            z-index: 100; display: flex; 
+            justify-content: center; 
+        }
+        .footer-content { 
+            width: 98%; 
+            display: flex; 
+            justify-content: 
+            flex-end; gap: 15px; 
+        }
+        .btn-save-all { 
+            background-color: #2e7d32; 
+            color: white; 
+            padding: 12px 25px;
+            border: none; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            font-size: 1rem; 
+        }
+        .btn-save-all:hover { 
+            background-color: #1b5e20; 
+        }
+        .btn-back { 
+            background-color: #fff; 
+            color: #555; 
+            border: 1px solid #ccc; 
+            padding: 12px 20px; 
+            border-radius: 6px; 
+            text-decoration: none; 
+            font-weight: 600; 
+            display: inline-block; 
+        }
+        .btn-back:hover { 
+            background-color: #f5f5f5; 
+        }
+        .modal { 
+            position: fixed; 
+            top: 0; left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background-color: rgba(0, 0, 0, 0.5); 
+            display: flex; 
+            justify-content: center; 
+            align-items: center; 
+            z-index: 2000; 
+        }
+        .hidden {
+             display: none !important; 
+        }
+        .success-modal-content { 
+            background-color: white; 
+            padding: 30px; 
+            border-radius: 12px; 
+            text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
+            width: 90%; 
+            max-width: 400px; 
+            animation: slideDown 0.3s ease-out; 
+        }
+        .success-icon { 
+            font-size: 50px; 
+            color: #2e7d32; 
+            margin-bottom: 15px; 
+        }
+        .success-title { 
+            font-size: 1.4rem; 
+            font-weight: 700; color: #333; 
+            margin: 0 0 10px 0; 
+        }
+        .success-message { 
+            color: #666; 
+            margin-bottom: 25px; 
+            font-size: 0.95rem; 
+        }
+        .btn-success-ok { 
+            background-color: #2e7d32; 
+            color: white; 
+            border: none; 
+            padding: 10px 30px; 
+            border-radius: 6px; 
+            font-weight: 600; 
+            cursor: pointer; 
+            font-size: 1rem; 
+            width: 100%; 
+        }
+        .btn-success-ok:hover { 
+            background-color: #1b5e20; 
+        }
+        @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
+    </style>
+</head>
+<body>
+
+    {% set allowed_pic_list = (reminder.pic_skai or '').split(',') | map('trim') | list %}
+
+    <div class="assign-container">
+        <div class="page-header">
+            <div class="page-title">
+                <h2>Assign Penugasan (PIC SKAI)</h2>
+                <div class="page-subtitle">
+                    Tentukan PIC SKAI untuk setiap temuan di bawah ini agar muncul di dashboard mereka.
+                </div>
+            </div>
+        </div>
+
+        <div class="info-box">
+            <div class="info-item">
+                <label>Auditee</label>
+                <div>{{ reminder.assigned_to }}</div>
+            </div>
+            <div class="info-item">
+                <label>Perihal</label>
+                <div>{{ reminder.subject }}</div>
+            </div>
+            <div class="info-item">
+                <label>Total Temuan</label>
+                <div>{{ rows|length }} Data</div>
+            </div>
+        </div>
+
+        <div class="table-responsive">
+            <table class="assign-table">
+                <thead>
+                    <tr>
+                        <th style="width: 50px;">No</th>
+                        <th style="min-width: 100px;">No AOI</th>
+                        <th style="min-width: 120px;">Jenis</th>
+                        <th style="min-width: 120px;">Klasifikasi</th>
+                        <th style="min-width: 200px;">No LHA</th>
+                        <th style="min-width: 250px;">Nama Penugasan</th>
+                        <th style="min-width: 350px;">AOI</th>
+                        <th style="min-width: 350px;">Rekomendasi</th>
+                        <th style="min-width: 150px;">Auditee Asal</th>
+                        <th style="min-width: 250px;">PIC Reminder</th>
+                        <th style="min-width: 200px;">Dibuat Oleh</th>
+                        <th class="col-sticky-right">ASSIGN PIC SKAI</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for row in rows %}
+                    <tr>
+                        <td style="text-align: center;">{{ loop.index }}</td>
+                        <td style="text-align: center;">{{ row.no_aoi or '-' }}</td>
+                        <td style="text-align: center;">{{ row.jenis_aoi or '-' }}</td>
+                        <td style="text-align: center;">{{ row.klasifikasi or '-' }}</td>
+                        <td style="text-align: justify;">{{ row.no_lha or '-' }}</td>
+                        <td>{{ row.nama_penugasan or '-' }}</td>
+                        <td><div style="max-height: 80px; overflow-y: auto; font-size: 0.85rem;">{{ row.aoi or '-' }}</div></td>
+                        <td><div style="max-height: 80px; overflow-y: auto; font-size: 0.85rem;">{{ row.rekomendasi or '-' }}</div></td>
+                        <td style="text-align: center;">{{ row.auditee }}</td>
+                        <td><div style="max-height: 80px; overflow-y: auto; font-size: 0.85rem;">{{ row.pic_reminder or '-' }}</div></td>
+                        <td style="text-align: center;">{{ row.dibuat_oleh or '-' }}</td>
+
+                        <td class="col-sticky-right">
+                            <select class="pic-select pic-updater" data-row-id="{{ row.id }}">
+                                <option value="">-- Pilih PIC --</option>
+                                
+                                {% for user in users %}
+                                    {% if (user.username in allowed_pic_list) or (user.fullname in allowed_pic_list) %}
+                                        
+                                        {% set is_selected = '' %}
+                                        {% if row.pic_skai and user.username in row.pic_skai %}
+                                            {% set is_selected = 'selected' %}
+                                        {% endif %}
+                                        
+                                        <option value="{{ user.username }}" {{ is_selected }}>
+                                            {{ user.fullname }} ({{ user.label }})
+                                        </option>
+
+                                    {% endif %}
+                                {% endfor %}
+                            </select>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="12" style="text-align: center; padding: 30px;">
+                            Tidak ada data temuan yang ditautkan.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+
+    <div class="footer-spacer"></div>
+
+    <div class="sticky-footer">
+        <div class="footer-content">
+            <a href="{{ url_for('ams_reminder_page') }}" class="btn-back">Kembali</a>
+            <button id="btn-save-changes" class="btn-save-all">Simpan Semua Perubahan</button>
+        </div>
+    </div>
+
+    <div id="success-modal" class="modal hidden">
+        <div class="success-modal-content">
+            <div class="success-icon">&#10004;</div>
+            <h3 class="success-title">Berhasil Disimpan!</h3>
+            <p class="success-message">Penugasan PIC SKAI telah berhasil diperbarui dan tersimpan di database.</p>
+            <button class="btn-success-ok" onclick="redirectBack()">OK, Kembali ke Menu</button>
+        </div>
+    </div>
+
+    <script>
+        function redirectBack() {
+            window.location.href = "{{ url_for('ams_reminder_page') }}";
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            const btnSave = document.getElementById('btn-save-changes');
+            const successModal = document.getElementById('success-modal');
+
+            if (btnSave) {
+                btnSave.addEventListener('click', async () => {
+                    const selects = document.querySelectorAll('.pic-updater');
+                    const updates = [];
+                    selects.forEach(sel => {
+                        updates.push({
+                            id: sel.dataset.rowId,
+                            pic_skai: sel.value
+                        });
+                    });
+
+                    if (updates.length === 0) return;
+                    btnSave.textContent = "Menyimpan...";
+                    btnSave.disabled = true;
+
+                    try {
+                        const response = await fetch('/api/update_linked_pic_skai', {
+                            method: 'POST',
+                            headers: { 'Content-Type': 'application/json' },
+                            body: JSON.stringify({ updates: updates })
+                        });
+
+                        if (response.ok) {
+                            successModal.classList.remove('hidden');
+                        } else {
+                            const err = await response.json();
+                            alert("Gagal menyimpan: " + err.error);
+                            btnSave.textContent = "Simpan Semua Perubahan";
+                            btnSave.disabled = false;
+                        }
+                    } catch (e) {
+                        console.error(e);
+                        alert("Terjadi kesalahan koneksi.");
+                        btnSave.textContent = "Simpan Semua Perubahan";
+                        btnSave.disabled = false;
+                    }
+                });
+            }
+        });
+    </script>
+</body>
+</html>

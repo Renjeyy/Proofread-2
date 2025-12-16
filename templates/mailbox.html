@@ -1,0 +1,369 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kotak Surat - SKAI IFG</title>
+    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
+    <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png"/>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    
+    <style>
+        .nav-links li a.active-mailbox {
+            font-weight: 700 !important;
+            color: #C62828 !important;
+        }
+        .nav-links > li > a.active-mailbox::after {
+            width: 100%;
+        }
+        
+        .mailbox-container {
+            display: flex;
+            gap: 2rem; 
+            min-height: calc(100vh - 200px); 
+        }
+        .mailbox-folders {
+            flex: 0 0 200px; 
+            background: var(--card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px; 
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .mailbox-list {
+            flex: 1; 
+            background: var(--card);
+            border: 1px solid var(--border-light);
+            border-radius: 12px; 
+            display: flex;
+            flex-direction: column;
+            padding: 1.5rem;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.05);
+        }
+        .action-view-btn {
+            background-color: var(--info); 
+            color: white;
+            border: none;
+            padding: 6px 10px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .action-view-btn:hover {
+            background-color: #1565C0;
+        }
+        .action-delete-btn {
+            background-color: var(--danger);
+            color: white;
+            border: none;
+            padding: 6px 10px; 
+            border-radius: 6px;
+            cursor: pointer;
+            font-size: 0.9em;
+            transition: background-color 0.2s;
+        }
+        .action-delete-btn:hover {
+            background-color: #B71C1C;
+        }
+        .unread-row {
+            font-weight: 700 !important;
+            background-color: #FFFBEF !important;
+        }
+        #message-list-table .action-cell {
+            width: 130px; 
+            text-align: center;
+        }
+        #message-list-table th,
+        #message-list-table td {
+            padding: 1rem 0.5rem; 
+            text-align: center; 
+            vertical-align: middle;
+            border-bottom: 1px solid var(--border-light);
+        }
+        #message-list-table th:nth-child(1), 
+        #message-list-table td:nth-child(1) {
+            width: 5%;
+            min-width: 40px;
+            white-space: nowrap;
+        }
+
+        #message-list-table th:nth-child(2), 
+        #message-list-table td:nth-child(2) {
+            width: 25%;
+            min-width: 150px;
+            white-space: normal; 
+            text-align: center; 
+        }
+        
+        #message-list-table th:nth-child(3), 
+        #message-list-table td:nth-child(3) {
+            width: 40%;
+            min-width: 250px;
+            white-space: normal; 
+            text-align: center; 
+        }
+        
+        #message-list-table th:nth-child(4), 
+        #message-list-table td:nth-child(4) {
+            width: 20%;
+            min-width: 150px;
+            text-align: center;
+            white-space: nowrap; 
+        }
+        
+        #message-list-table th:nth-child(5), 
+        #message-list-table td:nth-child(5) {
+            width: 10%;
+            min-width: 130px; 
+        }
+        #compose-modal .modal-content {
+            max-width: 800px; 
+            width: 90%; 
+            max-height: 90vh;
+            overflow-y: auto;
+        }
+    </style>
+</head>
+<body data-user-id="{{ current_user.id }}">
+
+    <script>
+        function goToDashboardFeature(hash) {
+            window.location.href = "{{ url_for('dashboard') }}" + hash;
+            return false;
+        }
+    </script>
+    
+    <nav class="navbar">
+        <div class="nav-logo">
+            <a 
+                href="#" 
+                onclick="navGoToHome(); return false;"
+            >
+                <img 
+                    src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" 
+                    alt="Logo"
+                >
+            </a>
+        </div>
+        <ul class="nav-links">
+            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn" id="nav-analisis-parent">Analisis Dokumen <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="#" onclick="goToDashboardFeature('#folder-management')">Folder</a>
+                    <a href="#" onclick="goToDashboardFeature('#proofreading')">Proofread</a>
+                    <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
+                </div>
+            </li>
+            <li class="nav-dropdown-container">
+                <a href="#" class="nav-dropbtn">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
+                <div class="nav-dropdown-content">
+                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
+                    <a href="{{ url_for('ams_temuan_page') }}">Temuan</a>
+                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
+                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
+                    <a href="{{ url_for('ams_auditors_page') }}">Auditors</a>
+                </div>
+            </li>
+            <li><a href="{{ url_for('mailbox_page') }}" class="active-mailbox">Email</a></li>
+            <li><a href="{{ url_for('library_page') }}">Library</a></li>
+        </ul>
+        
+        <div class="nav-extra">
+            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
+            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        </div>
+    </nav>
+    <main class="mailbox-main">
+        <h1>Kotak Surat SKAI IFG</h1>
+        
+        <div class="mailbox-container">
+            <div class="mailbox-folders">
+                <button id="compose-btn" class="start-btn full-width" style="margin-top:0; margin-bottom: 1.5rem; width: 100%;">
+                    <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Kirim Email
+                </button>
+                
+                <ul id="folder-list">
+                    <li class="folder-item active" data-folder="sent">
+                        <i class="fas fa-share-square"></i> Sent Items
+                    </li>
+                    <li class="folder-item" data-folder="inbox">
+                        <i class="fas fa-inbox"></i> Inbox
+                    </li>
+                </ul>
+            </div>
+            <div class="mailbox-list">
+                <div class="list-header" style="border-bottom: none; padding-bottom: 0;">
+                    <h3 id="list-title" style="margin-bottom: 0.5rem;">Sent Items</h3>
+                </div>
+                <div id="message-list-container" style="overflow-x: auto; flex-grow: 1;">
+                    <table id="message-list-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th id="sender-recipient-header">Ditunjukkan kepada</th>
+                                <th>Subject Mail</th>
+                                <th>Tanggal kirim</th>
+                                <th>Aksi</th> 
+                            </tr>
+                        </thead>
+                        <tbody id="message-table-body">
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    </main>
+    <footer>
+        <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
+    </footer>
+
+    <div id="compose-modal" class="modal hidden" style="z-index: 2000;">
+        <div class="modal-content">
+            <span class="modal-close-btn" id="compose-modal-close-btn">&times;</span>
+            <h3>Kirim Pesan Baru</h3>
+            <form id="compose-form" enctype="multipart/form-data">
+                
+                <div class="form-group full-width">
+                    <label for="recipient-select">Ditujukan kepada (Pilih User):</label>
+                    <select id="recipient-select" name="recipient_id" required>
+                        <option value="">-- Pilih Penerima --</option>
+                    </select>
+                </div>
+                
+                <div class="form-group full-width">
+                    <label for="subject-input">Subject:</label>
+                    <input type="text" id="subject-input" name="subject" required>
+                </div>
+                
+                <div class="form-group full-width" style="margin-top: 1.5rem; border: 1px solid #ddd; padding: 1rem; border-radius: 8px; background-color: #f0f4f8;">
+                    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 10px;">
+                        <label style="font-weight: 700; color: var(--info); margin: 0;">
+                            <i class="fas fa-robot"></i> AI Email Assistant
+                        </label>
+                        <span id="ai-settings-summary" style="font-size: 0.85em; color: #666;">
+                            (Default: Formal, Netral, 1-2 Paragraf)
+                        </span>
+                    </div>
+                
+                    <div style="display: flex; gap: 10px;">
+                        <button type="button" id="open-ai-custom-btn" class="btn-secondary" style="flex: 1; border: 1px solid var(--info); color: var(--info); background-color: #fff;">
+                            <i class="fas fa-sliders-h"></i> Customize Body Email
+                        </button>
+                        
+                        <button type="button" id="ai-generate-btn" class="analyze-btn" style="flex: 0 0 150px;">
+                            <i class="fas fa-magic"></i> Generate Draft
+                        </button>
+                    </div>
+                
+                    <div id="ai-loading" class="loading hidden" style="padding: 0.5rem; margin-top: 0.5rem; text-align: center;">
+                        <div class="spinner-small" style="display: inline-block;"></div> 
+                        <span style="margin-left: 8px; font-size: 0.9em; color: #555;">AI sedang menyusun draf...</span>
+                    </div>
+                </div>
+
+                <div class="form-group full-width" style="margin-top: 1.5rem;">
+                    <label for="body-input">Isi Email:</label>
+                    <textarea id="body-input" name="body" rows="10" placeholder="Isi pesan email Anda..." required></textarea>
+                </div>
+
+                <div class="modal-actions" style="border-top: none; justify-content: flex-end;">
+                    <button type="button" class="btn-secondary" id="compose-cancel-btn">Batal</button>
+                    <button type="button" class="submit-btn" id="preview-btn" style="background-color: var(--info);">
+                        <i class="fas fa-eye"></i> Preview Email
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="custom-message-modal" class="modal hidden" style="z-index: 9999;">
+        <div class="modal-content custom-message-box" style="max-width:400px; text-align:center; padding:2rem; border-radius: 12px;">
+            <span class="modal-close-btn" onclick="document.getElementById('custom-message-modal').classList.add('hidden')">&times;</span> 
+            <h3 id="custom-message-title" style="border-bottom: none; margin-bottom: 10px; color: var(--primary);">Pesan</h3>   
+            <p id="custom-message-text" style="text-align: center; margin-top: 1rem; margin-bottom: 2rem;"></p>
+            <button onclick="document.getElementById('custom-message-modal').classList.add('hidden')" class="login-btn full-width" style="width: 100%; padding: 10px;">OK</button>
+        </div>
+    </div>
+
+    <div id="preview-send-modal" class="modal hidden" style="z-index: 2001;">
+        <div class="modal-content" style="max-width: 700px;">
+            <span class="modal-close-btn" id="preview-modal-close-btn">&times;</span>
+            <h3 style="color: var(--info);">Pratinjau Pesan Internal</h3>
+            
+            <div style="text-align: left; background-color: #f7f7f7; padding: 1rem; border-radius: 8px; margin-bottom: 1.5rem;">
+                <p style="margin: 0;"><strong>Penerima:</strong> <span id="preview-target-name"></span></p> 
+                <p style="margin: 5px 0;"><strong>Subject:</strong> <span id="preview-target-subject"></span></p>
+            </div>
+
+            <div style="text-align: left; border: 1px solid #ccc; padding: 1rem; border-radius: 8px; max-height: 300px; overflow-y: auto;">
+                <p id="preview-target-body" style="white-space: pre-wrap; margin: 0;"></p>
+            </div>
+
+            <div class="modal-actions" style="margin-top: 1.5rem; border-top: 1px solid var(--border-light);">
+                <button type="button" class="btn-secondary" id="preview-back-btn">
+                    <i class="fas fa-chevron-left"></i> Edit
+                </button>
+                <button type="button" class="submit-btn" id="confirm-send-btn">
+                    <i class="fas fa-paper-plane"></i> Kirim Pesan
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <div id="ai-options-modal" class="modal hidden" style="z-index: 2100;"> 
+        <div class="modal-content" style="max-width: 500px;">
+            <span class="modal-close-btn" id="ai-options-close-btn">&times;</span>
+            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border-light); padding-bottom: 10px;">
+                <i class="fas fa-sliders-h"></i> Kustomisasi Email
+            </h3>
+            
+            <form id="ai-options-form">
+                <div class="form-group full-width">
+                    <label for="ai-formality">1. Formalitas Body</label>
+                    <select id="ai-formality" class="full-width" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                        <option value="Sangat Formal">Sangat Formal (Surat Resmi Kedinasan)</option>
+                        <option value="Formal" selected>Formal (Standar Audit/Kantor)</option>
+                        <option value="Semi Formal">Semi Formal (Rekan Kerja Akrab)</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="ai-tone">2. Tone (Nada) Bicara</label>
+                    <select id="ai-tone" class="full-width" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                        <option value="Netral & Profesional" selected>Netral & Profesional (Standar)</option>
+                        <option value="Tegas & Mendesak">Tegas & Mendesak (Untuk Reminder/Deadline)</option>
+                        <option value="Kooperatif & Ramah">Kooperatif & Ramah (Meminta Bantuan Data)</option>
+                        <option value="Informatif & Detail">Informatif & Detail (Menjelaskan Temuan)</option>
+                        <option value="Apresiatif">Apresiatif (Ucapan Terima Kasih)</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="ai-length">3. Panjang Email</label>
+                    <select id="ai-length" class="full-width" style="padding: 8px; border-radius: 6px; border: 1px solid #ccc;">
+                        <option value="Singkat (1-2 Paragraf)">Singkat (1-2 Paragraf)</option>
+                        <option value="Sedang (3-4 Paragraf)" selected>Sedang (3-4 Paragraf)</option>
+                        <option value="Panjang (> 5 Paragraf)">Panjang / Detail (> 5 Paragraf)</option>
+                    </select>
+                </div>
+
+                <div class="form-group full-width">
+                    <label for="ai-extra-prompt">4. Instruksi / Konteks Tambahan</label>
+                    <textarea id="ai-extra-prompt" rows="3" placeholder="Contoh: Minta data laporan keuangan Q3, deadline Jumat ini." style="padding: 10px; border-radius: 8px; border: 1px solid #ccc; width: 100%;"></textarea>
+                </div>
+
+                <div class="modal-actions">
+                    <button type="button" id="ai-save-options-btn" class="submit-btn" style="width: 100%;">
+                        <i class="fas fa-check"></i> Simpan Preferensi
+                    </button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <script src="{{ url_for('static', filename='mailbox.js') }}" defer></script>
+</body>
+</html>
