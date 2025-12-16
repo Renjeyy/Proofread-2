@@ -9,7 +9,6 @@ import docx
 import pandas as pd
 import google.generativeai as genai
 import shutil 
-from oauth2client.service_account import ServiceAccountCredentials
 from docx.shared import RGBColor
 import PIL.Image
 from flask import (Flask, request, jsonify, render_template, send_file, make_response, redirect, url_for, flash)
@@ -4613,4 +4612,5 @@ def api_generate_dashboard_insight():
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
 
 if __name__ == '__main__':
+
     app.run(debug=True, port=5000)
