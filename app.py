@@ -1000,6 +1000,32 @@ def _analyze_comparison(file1, file2):
                 })
     return comparison_results
 
+@app.route('/settings')
+@login_required
+def settings_page():
+    return render_template('settings.html', username=current_user.username, label=current_user.label)
+
+@app.route('/api/change_password', methods=['POST'])
+@login_required
+def api_change_password():
+    data = request.json
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+
+    if not old_password or not new_password:
+        return jsonify({"error": "Data tidak lengkap"}), 400
+
+    if not current_user.check_password(old_password):
+        return jsonify({"error": "Password lama salah"}), 400
+
+    try:
+        current_user.set_password(new_password)
+        db.session.commit()
+        return jsonify({"status": "success", "message": "Password berhasil diubah"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/register', methods=['GET', 'POST'])
 def register():
     if current_user.is_authenticated:
