@@ -6,12 +6,423 @@
     <title>Library Dokumen - CoE SKAI IFG</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
     <style>
+        :root {
+            --primary-color: #C62828;
+            --primary-hover: #B71C1C;
+            --primary-light: #FFEBEE;
+            --active-bg: #E3F2FD;
+            --active-text: #1565C0;
+            --secondary-bg: #F4F7FE;
+            --sidebar-width: 290px;
+            --sidebar-collapsed-width: 85px;
+            --text-dark: #2B3674;
+            --text-gray: #A3AED0;
+            --text-light-gray: #707EAE;
+            --white: #FFFFFF;
+            --border-color: #E0E5F2;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--secondary-bg);
+            display: block; 
+            min-height: 100vh;
+            font-size: 0.9rem;
+        }
+
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--white);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-sizing: border-box;
+            border-right: 1px solid var(--border-color);
+            z-index: 3000;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #ddd transparent;
+            transition: width 0.3s ease, padding 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+            padding: 24px 12px;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #ddd;
+            border-radius: 3px;
+        }
+
+        .sidebar-toggle-btn {
+            position: absolute;
+            top: 25px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--text-gray);
+            z-index: 3002;
+            transition: right 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-toggle-btn {
+            right: 50%;
+            transform: translateX(50%);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            min-height: 50px;
+            position: relative;
+        }
+
+        .sidebar-logo img {
+            max-width: 100px;
+            height: auto;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .sidebar-logo img {
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-links li {
+            width: 100%;
+        }
+
+        .nav-section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            padding-left: 12px;
+            display: block;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .nav-section-label {
+            display: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-light-gray);
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .nav-links a i {
+            font-size: 22px;
+            margin-right: 14px;
+            color: var(--text-gray);
+            transition: margin 0.3s ease, color 0.2s;
+            min-width: 22px;
+        }
+
+        .sidebar.collapsed .nav-links a {
+            justify-content: center;
+            padding: 12px;
+        }
+        
+        .sidebar.collapsed .nav-links a i {
+            margin-right: 0;
+        }
+        
+        .sidebar.collapsed .nav-links a span {
+            display: none;
+        }
+
+        .nav-links a:hover {
+            background-color: var(--secondary-bg);
+            color: var(--text-dark);
+        }
+        
+        .nav-links a:hover i {
+            color: var(--primary-color);
+        }
+
+        .nav-links a.active {
+            background-color: var(--active-bg);
+            color: var(--active-text);
+            font-weight: 700;
+        }
+        
+        .nav-links a.active i {
+            color: var(--active-text);
+        }
+
+        .sidebar-footer {
+            margin-top: 20px;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
+            padding: 16px;
+            border-radius: 16px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(198, 40, 40, 0.2);
+            transition: padding 0.3s;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .user-card {
+            padding: 12px;
+            align-items: center;
+            background: var(--primary-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar.collapsed .user-info {
+            gap: 0;
+            justify-content: center;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .user-details {
+            display: none;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .user-role {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .logout-link {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .sidebar.collapsed .logout-link span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .logout-link {
+            padding: 8px 0;
+            margin-top: 5px;
+        }
+
+        .logout-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        main {
+            margin-left: var(--sidebar-width) !important;
+            width: auto !important;
+            max-width: 100% !important;
+            padding: 30px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+        }
+        
+        main.expanded {
+            margin-left: var(--sidebar-collapsed-width) !important;
+        }
+
+        footer {
+            margin-top: auto;
+            background-color: var(--secondary-bg);
+            padding: 10px 0;
+            text-align: center;
+            color: #999;
+            font-size: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
         .library-container {
-            padding: 2rem;
-            max-width: 1200px;
+            padding: 0;
+            width: 100%;
+            max-width: 100%;
             margin: 0 auto;
+            flex: 1;
+        }
+
+        .shelf-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 25px;
+            margin-top: 20px;
+        }
+
+        .shelf-card {
+            background: #fff;
+            border-radius: 16px;
+            padding: 25px;
+            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
+            transition: transform 0.2s, box-shadow 0.2s;
+            border: 1px solid #E0E5F2;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            text-align: center;
+            position: relative;
+        }
+
+        .shelf-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+        }
+
+        .shelf-icon {
+            font-size: 50px;
+            color: var(--primary-color);
+            margin-bottom: 15px;
+            background: #FFEBEE;
+            padding: 15px;
+            border-radius: 50%;
+            width: 80px;
+            height: 80px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .shelf-title {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 8px;
+        }
+
+        .shelf-count {
+            font-size: 13px;
+            color: var(--text-gray);
+            margin-bottom: 20px;
+        }
+
+        .shelf-actions {
+            display: flex;
+            gap: 10px;
+            width: 100%;
+            margin-top: auto;
+        }
+
+        .btn-open-shelf {
+            flex: 2;
+            background-color: #1565C0;
+            color: white;
+            border: none;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-open-shelf:hover {
+            background-color: #0D47A1;
+        }
+
+        .btn-delete-shelf {
+            flex: 1;
+            background-color: #FFEBEE;
+            color: #C62828;
+            border: 1px solid #C62828;
+            padding: 10px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 14px;
+            transition: background 0.2s;
+        }
+
+        .btn-delete-shelf:hover {
+            background-color: #FFCDD2;
+        }
+
+        .hidden-view {
+            display: none !important;
         }
 
         .library-toolbar {
@@ -181,6 +592,25 @@
             background-color: #B71C1C; 
         }
 
+        .btn-back {
+            background-color: transparent;
+            color: #666;
+            padding: 8px 16px;
+            border-radius: 4px;
+            border: 1px solid #ccc;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            margin-right: 10px;
+        }
+
+        .btn-back:hover {
+            background-color: #eee;
+            color: #333;
+        }
+
         .form-group { 
             margin-bottom: 20px; 
             text-align: left; 
@@ -191,7 +621,7 @@
             margin-bottom: 8px; 
             font-weight: 600; 
             font-size: 0.95rem;
-            color: #333;
+            color: #333; 
         }
 
         .form-group input, .form-group textarea {
@@ -209,6 +639,10 @@
             border-color: #C62828;
         }
 
+        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3005; align-items: center; justify-content: center; }
+        .modal.active { display: flex; }
+        .hidden { display: none !important; }
+
         .modal-content {
             background-color: #fefefe;
             margin: 5% auto;
@@ -222,24 +656,6 @@
             overflow-y: auto;
             position: relative;
             box-sizing: border-box;
-        }
-
-        .modal-content::-webkit-scrollbar {
-            width: 8px;
-        }
-
-        .modal-content::-webkit-scrollbar-track {
-            background: #f1f1f1;
-            border-radius: 4px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb {
-            background: #ccc; 
-            border-radius: 4px;
-        }
-
-        .modal-content::-webkit-scrollbar-thumb:hover {
-            background: #bbb; 
         }
 
         .modal-actions {
@@ -365,96 +781,263 @@
             from { transform: scale(0.8); opacity: 0; }
             to { transform: scale(1); opacity: 1; }
         }
+        
+        .modal-close-btn {
+            position: absolute;
+            top: 15px;
+            right: 20px;
+            font-size: 24px;
+            cursor: pointer;
+            color: #999;
+        }
+        .modal-close-btn:hover {
+            color: #333;
+        }
+
+        .no-transition {
+            transition: none !important;
+        }
     </style>
-</head>
-<body data-user-id="{{ current_user.id }}">
     
-    <nav class="navbar">
-        <div class="nav-logo">
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('main');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+
+            if (isCollapsed) {
+                sidebar.classList.add('no-transition');
+                main.classList.add('no-transition');
+                sidebar.classList.add('collapsed');
+                main.classList.add('expanded');
+                if(toggleBtn) toggleBtn.className = 'bx bx-right-arrow-alt';
+                setTimeout(() => {
+                    sidebar.classList.remove('no-transition');
+                    main.classList.remove('no-transition');
+                }, 100); 
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('main');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('expanded');
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebar-collapsed', isCollapsed);
+            
+            if (isCollapsed) {
+                toggleBtn.className = 'bx bx-right-arrow-alt';
+            } else {
+                toggleBtn.className = 'bx bx-menu';
+            }
+        }
+    </script>
+</head>
+<body data-user-id="{{ current_user_id }}">
+    
+    <nav class="sidebar">
+        <div class="sidebar-toggle-btn" onclick="toggleSidebar()">
+            <i class='bx bx-menu'></i>
+        </div>
+
+        <div class="sidebar-logo">
             <a href="{{ url_for('dashboard') }}">
-                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo">
+                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo IFG">
             </a>
         </div>
+        
         <ul class="nav-links">
-            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
-            <li class="nav-dropdown-container">
-                <a href="#" class="nav-dropbtn">Analisis Dokumen <span style="font-size: 0.7em;">▼</span></a>
-                <div class="nav-dropdown-content">
-                    <a href="{{ url_for('dashboard') }}#folder-management">Folder</a>
-                    <a href="{{ url_for('dashboard') }}#fitur">Proofread</a>
-                    <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
-                </div>
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    <i class='bx bxs-home-alt-2'></i>
+                    <span>Dashboard</span>
+                </a>
             </li>
-            <li class="nav-dropdown-container">
-                <a href="#" class="nav-dropbtn">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
-                <div class="nav-dropdown-content">
-                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
-                    <a href="{{ url_for('ams_temuan_page') }}">Temuan</a>
-                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
-                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
-                    <a href="{{ url_for('ams_auditors_page') }}">Auditors</a>
-                </div>
+
+            <span class="nav-section-label">Analisis Dokumen</span>
+            
+            <li>
+                <a href="{{ url_for('dashboard') }}#folder-management">
+                    <i class='bx bxs-folder'></i>
+                    <span>Folder Saya</span>
+                </a>
             </li>
-            <li><a href="{{ url_for('mailbox_page') }}">Email</a></li>
-            <li><a href="#" class="active" style="font-weight: 700; color: #C62828;">Library</a></li>
+            <li>
+                <a href="{{ url_for('dashboard') }}#fitur">
+                    <i class='bx bxs-magic-wand'></i>
+                    <span>Proofread & Tools</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('log_analysis_page') }}">
+                    <i class='bx bxs-time-five'></i>
+                    <span>Log Analisis</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Tindak Lanjut</span>
+
+            <li>
+                <a href="{{ url_for('monitoring_ams_page') }}">
+                    <i class='bx bxs-bar-chart-alt-2'></i>
+                    <span>Rekap Monitoring</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_temuan_page') }}">
+                    <i class='bx bxs-file-find'></i>
+                    <span>Temuan</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_reminder_page') }}">
+                    <i class='bx bxs-bell-ring'></i>
+                    <span>Reminder</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">
+                    <i class='bx bxs-x-circle'></i>
+                    <span>TL Tidak Setuju</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_auditors_page') }}">
+                    <i class='bx bxs-user-badge'></i>
+                    <span>Auditors</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Lainnya</span>
+
+            <li>
+                <a href="{{ url_for('mailbox_page') }}">
+                    <i class='bx bxs-envelope'></i>
+                    <span>Email</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('library_page') }}" class="active">
+                    <i class='bx bxs-book-bookmark'></i>
+                    <span>Library</span>
+                </a>
+            </li>
         </ul>
-        <div class="nav-extra">
-            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
-            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class='bx bxs-user'></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ current_user.fullname }}</span>
+                        <span class="user-role">{{ current_user.label }}</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-link">
+                    <i class='bx bx-log-out'></i> <span>Logout</span>
+                </a>
+            </div>
         </div>
     </nav>
 
     <main>
         <div class="library-container">
-            <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 20px;">
-                <h2 class="section-title" style="margin: 0; text-align: left;">Library Dokumen</h2>
-                <button class="btn-add-new" onclick="openAddFileModal()">
-                    <span>+</span> Tambah File Baru
-                </button>
-            </div>
-
-            <div class="library-toolbar">
-                <div class="toolbar-left">
-                    <select id="filter-category" class="lib-select" onchange="filterLibrary()">
-                        <option value="">All Categories</option>
-                    </select>
-                    <select id="filter-type" class="lib-select" onchange="filterLibrary()">
-                        <option value="">All Types</option>
-                    </select>
-                    <a href="#" class="reset-link" onclick="resetFilters()">↺ Reset</a>
+            <div id="shelf-view">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+                    <h2 class="section-title" style="margin: 0; text-align: center; color: var(--text-dark);">Lemari Dokumen</h2>
+                    <button class="btn-add-new" onclick="openAddShelfModal()">
+                        <span>+</span> Buat Lemari Baru
+                    </button>
                 </div>
-                <div class="toolbar-right">
-                    <label for="search-library" style="color:#666; font-size:14px;">Search:</label>
-                    <input type="text" id="search-library" class="lib-search" placeholder="Cari judul atau ringkasan..." onkeyup="filterLibrary()">
+                
+                <div class="shelf-grid" id="shelf-grid-container">
                 </div>
             </div>
 
-            <div class="library-table-wrapper">
-                <table class="library-table" id="library-table">
-                    <thead>
-                        <tr>
-                            <th width="20%">Title</th>
-                            <th width="15%">Cluster by</th>
-                            <th width="35%">Summary</th>
-                            <th width="15%">Categories</th>
-                            <th width="10%">Size</th>
-                            <th width="10%">Type</th>
-                            <th width="10%">Action</th>
-                        </tr>
-                    </thead>
-                    <tbody id="library-table-body">
-                        <tr>
-                            <td colspan="6" style="padding: 30px;">Memuat data library...</td>
-                        </tr>
-                    </tbody>
-                </table>
+            <div id="file-view" class="hidden-view">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+                    <div style="display: flex; align-items: center;">
+                        <button class="btn-back" onclick="backToShelves()">
+                            <i class='bx bx-arrow-back'></i> Kembali
+                        </button>
+                        <h2 class="section-title" style="margin: 0; text-align: left; color: var(--text-dark);" id="current-shelf-title">Nama Lemari</h2>
+                    </div>
+                    <button class="btn-add-new" onclick="openAddFileModal()">
+                        <span>+</span> Tambah File Baru
+                    </button>
+                </div>
+
+                <div class="library-toolbar">
+                    <div class="toolbar-left">
+                        <select id="filter-category" class="lib-select" onchange="filterLibrary()">
+                            <option value="">All Categories</option>
+                        </select>
+                        <select id="filter-type" class="lib-select" onchange="filterLibrary()">
+                            <option value="">All Types</option>
+                        </select>
+                        <a href="#" class="reset-link" onclick="resetFilters()">↺ Reset</a>
+                    </div>
+                    <div class="toolbar-right">
+                        <label for="search-library" style="color:#666; font-size:14px;">Search:</label>
+                        <input type="text" id="search-library" class="lib-search" placeholder="Cari judul atau ringkasan..." onkeyup="filterLibrary()">
+                    </div>
+                </div>
+
+                <div class="library-table-wrapper">
+                    <table class="library-table" id="library-table">
+                        <thead>
+                            <tr>
+                                <th width="20%">Title</th>
+                                <th width="15%">Cluster by</th>
+                                <th width="35%">Summary</th>
+                                <th width="15%">Categories</th>
+                                <th width="10%">Size</th>
+                                <th width="10%">Type</th>
+                                <th width="10%">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody id="library-table-body">
+                            <tr>
+                                <td colspan="7" style="padding: 30px;">Memuat data library...</td>
+                            </tr>
+                        </tbody>
+                    </table>
+                </div>
             </div>
         </div>
+        
+        <footer style="margin-top: 30px;">
+            <p>2025 Library Center of Excellence | SKAI IFG</p>
+        </footer>
     </main>
 
-    <div id="add-file-modal" class="modal hidden" style="z-index: 2000;">
-        <div class="modal-content" style="max-width: 500px; border-radius: 12px; padding: 30px; box-sizing: border-box;">
-            <span class="modal-close-btn" onclick="closeAddFileModal()" style="font-size: 24px;">&times;</span>
+    <div id="add-shelf-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeAddShelfModal()">&times;</span>
+            <h3 style="margin-top:0; color: #C62828; text-align: center; font-size: 1.5rem; margin-bottom: 25px;">Buat Lemari Baru</h3>
+            <div style="border-bottom: 2px solid #C62828; margin-bottom: 25px; width: 100%;"></div>
+            
+            <form id="add-shelf-form" onsubmit="handleCreateShelf(event)">
+                <div class="form-group">
+                    <label>Nama Lemari</label>
+                    <input type="text" id="new-shelf-name" required placeholder="Contoh: Dokumen Audit 2024">
+                </div>
+                <div class="modal-actions">
+                    <button type="button" class="btn-secondary" onclick="closeAddShelfModal()">Batal</button>
+                    <button type="submit" class="login-btn">Buat</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div id="add-file-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeAddFileModal()">&times;</span>
             <h3 style="margin-top:0; color: #C62828; text-align: center; font-size: 1.5rem; margin-bottom: 25px;">Upload File Baru</h3>
             <div style="border-bottom: 2px solid #C62828; margin-bottom: 25px; width: 100%;"></div>
             
@@ -502,14 +1085,14 @@
         </div>
     </div>
 
-    <div id="custom-delete-modal" class="modal hidden" style="z-index: 3000;">
+    <div id="custom-delete-modal" class="modal hidden">
         <div class="modal-content delete-modal-content">
             <div class="delete-icon-wrapper">
                 <span class="delete-icon">🗑️</span>
             </div>
-            <h3 class="delete-title">Hapus File?</h3>
+            <h3 class="delete-title">Hapus Item?</h3>
             <p class="delete-text">
-                Apakah Anda yakin ingin menghapus file <strong id="delete-filename-display"></strong>? 
+                Apakah Anda yakin ingin menghapus <strong id="delete-filename-display"></strong>? 
                 Tindakan ini tidak dapat dibatalkan.
             </p>
             <div class="delete-actions">
@@ -518,8 +1101,6 @@
             </div>
         </div>
     </div>
-
-    <footer><p>2025 Library Center of Excellence | SKAI IFG</p></footer>
     
     <script src="{{ url_for('static', filename='library.js') }}"></script>
 </body>

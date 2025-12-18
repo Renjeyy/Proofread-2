@@ -6,8 +6,11 @@
     <title>Visualisasi Data Monitoring Audit</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />
+    <!-- Tambahkan Boxicons -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
+    <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     <style>
         * { box-sizing: border-box; outline: none; }
         body { 
@@ -31,11 +34,113 @@
             transition: color 0.2s;
         }
         .nav-links a:hover { color: #C62828; }
-        .nav-extra { font-weight: 600; color: #333; font-size: 0.95rem; }
+        .nav-extra { display: flex; align-items: center; gap: 15px; font-weight: 600; color: #333; font-size: 0.95rem; }
+
+        .btn-download-dash {
+            padding: 10px 20px;
+            background-color: #333;
+            color: white;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .btn-download-dash:hover { 
+            background-color: #000; 
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(0,0,0,0.15);
+        }
+
+        /* Styles untuk Download Modal Cards */
+        .download-option-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 15px;
+            padding: 10px 0;
+        }
+        
+        .download-option-card {
+            background: #fff;
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            text-align: center;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 12px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .download-option-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            border-color: #C62828;
+        }
+
+        .download-option-card .icon-box {
+            width: 50px;
+            height: 50px;
+            border-radius: 50%;
+            background: #FFEBEE;
+            color: #C62828;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            transition: all 0.3s ease;
+        }
+
+        .download-option-card:hover .icon-box {
+            background: #C62828;
+            color: white;
+        }
+
+        .download-option-card span {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: #444;
+        }
+
+        .download-option-card.full-dash {
+            grid-column: 1 / -1;
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
+            border: none;
+        }
+
+        .download-option-card.full-dash .icon-box {
+            background: rgba(255,255,255,0.2);
+            color: white;
+        }
+
+        .download-option-card.full-dash span {
+            color: white;
+            font-size: 1rem;
+        }
+
+        .download-option-card.full-dash:hover {
+            box-shadow: 0 10px 25px rgba(198, 40, 40, 0.4);
+        }
 
         .dashboard-container { padding: 30px 40px; width: 100%; max-width: 1600px; margin: 0 auto; }
         
-        .dashboard-title { margin-bottom: 25px; border-left: 5px solid #C62828; padding-left: 20px; }
+        .dashboard-title { 
+            margin-bottom: 25px; 
+            border-left: 5px solid #C62828; 
+            padding-left: 20px; 
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
+        }
         .dashboard-title h1 { font-size: 1.6rem; margin: 0; color: #1a1a1a; letter-spacing: -0.5px; }
         .dashboard-title p { font-size: 0.95rem; margin: 5px 0 0 0; color: #666; }
 
@@ -244,7 +349,6 @@
         .modal-overlay.active .modal-box { transform: translateY(0); }
         .modal-box.large { width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; }
         
-        /* Grid Layout */
         .radar-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 10px;
         }
@@ -296,10 +400,17 @@
         </div>
     </nav>
 
-    <div class="dashboard-container">
+    <div class="dashboard-container" id="main-dashboard-content">
         <div class="dashboard-title">
-            <h1>Dashboard Visual Monitoring Audit</h1>
-            <p>Analisis tren dan komposisi temuan audit lintas periode.</p>
+            <div>
+                <h1>Dashboard Visual Monitoring Audit</h1>
+                <p>Analisis tren dan komposisi temuan audit lintas periode.</p>
+            </div>
+            <div>
+                <button class="btn-download-dash" onclick="openDownloadModal()">
+                    <i class='bx bxs-download'></i> Download Dashboard
+                </button>
+            </div>
         </div>
         
         <div class="filter-bar">
@@ -365,7 +476,7 @@
             </div>
         </div>
 
-        <div class="ai-insight-box" id="ai-container">
+        <div class="ai-insight-box" id="ai-container" data-html2canvas-ignore="true">
             <div class="ai-header">
                 <div class="ai-title">Interpretasi AI</div>
                 <button class="btn-ai" onclick="generateAIInsight()" id="btn-generate-ai"><span>Analisis Data</span></button>
@@ -410,6 +521,34 @@
                 </div>
                 <div id="perf-interpretation" style="margin-top: 20px; font-size: 0.9rem; color: #444; text-align: justify; background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;">
                     <p style="margin:0; text-align:center; color:#888;">Memuat interpretasi...</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- MODAL DOWNLOAD DASHBOARD -->
+    <div class="modal-overlay" id="download-modal">
+        <div class="modal-box" style="width: 500px; max-width: 90%;">
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
+                <div style="font-size:1.2rem; font-weight:700; color: #333;">Opsi Download</div>
+                <button onclick="closeDownloadModal()" style="background:none; border:none; font-size:1.5rem; cursor:pointer; color:#999;">&times;</button>
+            </div>
+            <div class="download-option-grid">
+                <div class="download-option-card" onclick="downloadChart('trendLineChart', 'Trend_Chart.jpg')">
+                    <div class="icon-box"><i class='bx bx-bar-chart-alt-2'></i></div>
+                    <span>Trend Chart</span>
+                </div>
+                <div class="download-option-card" onclick="downloadChart('divergingChart', 'Change_Chart.jpg')">
+                    <div class="icon-box"><i class='bx bx-git-compare'></i></div>
+                    <span>Change Chart</span>
+                </div>
+                <div class="download-option-card" onclick="downloadChart('radarChart', 'Radar_Chart.jpg')">
+                    <div class="icon-box"><i class='bx bx-radar'></i></div>
+                    <span>Radar Chart</span>
+                </div>
+                <div class="download-option-card full-dash" onclick="downloadFullDashboard()">
+                    <div class="icon-box"><i class='bx bxs-dashboard'></i></div>
+                    <span>Download Full Dashboard (JPG)</span>
                 </div>
             </div>
         </div>
@@ -470,6 +609,97 @@
 
         Chart.register(ChartDataLabels);
 
+        // --- DOWNLOAD MODAL LOGIC ---
+        function openDownloadModal() {
+            document.getElementById('download-modal').classList.add('active');
+        }
+
+        function closeDownloadModal() {
+            document.getElementById('download-modal').classList.remove('active');
+        }
+
+        function downloadChart(canvasId, fileName) {
+            const canvas = document.getElementById(canvasId);
+            if (!canvas) {
+                alert("Chart tidak ditemukan.");
+                return;
+            }
+            
+            // Cari judul chart dari elemen HTML terdekat
+            let title = "";
+            const card = canvas.closest('.chart-card') || canvas.closest('.radar-item');
+            if (card) {
+                const h3 = card.querySelector('h3');
+                const h4 = card.querySelector('h4'); // Untuk radar items di modal
+                if (h3) title = h3.innerText;
+                else if (h4) title = h4.innerText;
+            }
+
+            // Setup canvas sementara
+            const tempCanvas = document.createElement('canvas');
+            const tempCtx = tempCanvas.getContext('2d');
+            
+            // Tambahkan ruang untuk judul di atas
+            const titleHeight = title ? 50 : 0;
+            const padding = 20;
+            
+            tempCanvas.width = canvas.width;
+            tempCanvas.height = canvas.height + titleHeight;
+
+            // Fill background putih
+            tempCtx.fillStyle = '#FFFFFF';
+            tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
+
+            // Gambar Judul
+            if (title) {
+                // Scaling font size based on canvas width roughly, or fixed size usually works for standard charts
+                const fontSize = Math.max(12, Math.floor(tempCanvas.width / 40)); 
+                tempCtx.font = `${fontSize}px Poppins, sans-serif`; // Hapus 'bold'
+                tempCtx.fillStyle = '#1a1a1a';
+                tempCtx.textAlign = 'center';
+                tempCtx.textBaseline = 'middle';
+                tempCtx.fillText(title, tempCanvas.width / 2, titleHeight / 2);
+            }
+
+            // Gambar Chart asli
+            tempCtx.drawImage(canvas, 0, titleHeight);
+
+            const link = document.createElement('a');
+            link.download = fileName;
+            link.href = tempCanvas.toDataURL('image/jpeg', 1.0);
+            link.click();
+            closeDownloadModal();
+        }
+
+        function downloadFullDashboard() {
+            const dashboard = document.getElementById('main-dashboard-content');
+            
+            const originalBackground = dashboard.style.background;
+            dashboard.style.background = "#f0f2f5"; 
+
+            // Tutup modal dulu biar gak ikut ke screenshot
+            closeDownloadModal();
+
+            // Sedikit delay agar modal benar-benar hilang sebelum capture
+            setTimeout(() => {
+                html2canvas(dashboard, {
+                    ignoreElements: (element) => {
+                        return element.dataset.html2canvasIgnore === 'true';
+                    },
+                    scale: 2, 
+                    useCORS: true 
+                }).then(canvas => {
+                    const link = document.createElement('a');
+                    link.download = 'Dashboard_Monitoring_Audit.jpg';
+                    link.href = canvas.toDataURL('image/jpeg', 0.9);
+                    link.click();
+                    
+                    dashboard.style.background = originalBackground;
+                });
+            }, 300);
+        }
+
+        // --- DROPDOWN LOGIC ---
         function toggleDropdown(id) {
             const allDropdowns = document.getElementsByClassName("dropdown-content");
             for (let i = 0; i < allDropdowns.length; i++) {
@@ -820,12 +1050,10 @@
             const container = document.getElementById('perf-grid-container');
             const interpretBox = document.getElementById('perf-interpretation');
             
-            // Clear existing charts
             container.innerHTML = '';
             interpretBox.innerHTML = '<p style="text-align:center; color:#888; margin:0;">Memuat data...</p>';
 
             try {
-                // Fetch data auditor performance
                 const res = await fetch('/api/get_auditor_performance');
                 const data = await res.json(); 
 
@@ -834,15 +1062,11 @@
                     return;
                 }
 
-                // 1. Logic Sorting:
-                // Primary: Current Selesai (Desc)
-                // Secondary: Delta (Desc) [Effort]
                 data.sort((a, b) => {
                     if (b.current !== a.current) return b.current - a.current;
                     return b.delta - a.delta;
                 });
 
-                // Save full data for modal
                 fullPerfData = [...data];
 
                 const top4 = data.slice(0, 4); 
@@ -854,11 +1078,9 @@
                 if (prevMonthIndex < 0) prevMonthIndex = 11;
                 const prevMonthName = mNames[prevMonthIndex];
 
-                // Render Top 4 Cards
                 top4.forEach((d, i) => {
                     const box = document.createElement('div');
                     box.className = 'radar-item';
-                    // Create canvas with unique ID
                     box.innerHTML = `
                         <h4 style="margin-bottom:15px; border-bottom:1px solid #eee; padding-bottom:5px;">${d.name}</h4>
                         <div style="height:180px; position:relative;">
@@ -891,9 +1113,9 @@
                                 datalabels: {
                                     color: '#333',
                                     anchor: 'end',
-                                    align: 'top', // Try to put on top
-                                    offset: -5,   // If inside, push down slightly
-                                    clamp: true,  // Keep inside if overflows
+                                    align: 'top', 
+                                    offset: -5,   
+                                    clamp: true,  
                                     font: { weight: 'bold', size: 11 },
                                     formatter: (val) => val
                                 }
@@ -903,13 +1125,12 @@
                                 x: { grid: { display: false }, border: {display: false} }
                             },
                             layout: {
-                                padding: { top: 20 } // Give space for top labels
+                                padding: { top: 20 } 
                             }
                         }
                     });
                 });
 
-                // Interpretation Logic
                 if (top4.length > 0) {
                     let text = `<b>Top 4 Auditor Bulan Ini (${currMonthName}):</b><br><ul style="margin:5px 0 0 20px; padding:0;">`;
                     top4.forEach((d) => {
@@ -1004,7 +1225,6 @@
             document.getElementById('perf-modal').classList.remove('active');
         }
 
-        // ... (Fungsi-fungsi lain tetap sama)
         function updateRadarChartInternal(filteredData, mainFilterAuditee) {
             const controls = document.getElementById('radar-controls');
             const radarList = document.getElementById('list-radar-auditee');

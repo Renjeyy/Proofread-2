@@ -6,20 +6,354 @@
     <title>Monitoring Temuan</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
+    <!-- Tambahkan Boxicons untuk icon sidebar -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
+        /* === SIDEBAR & LAYOUT STYLES === */
         :root {
+            /* Warna Sidebar & Layout */
             --primary-color: #C62828;
+            --primary-hover: #B71C1C;
+            --primary-light: #FFEBEE;
+            --active-bg: #E3F2FD;
+            --active-text: #1565C0;
+            --secondary-bg: #F4F7FE;
+            --sidebar-width: 290px;
+            --sidebar-collapsed-width: 85px;
+            --text-dark: #2B3674;
+            --text-gray: #A3AED0;
+            --text-light-gray: #707EAE;
+            --white: #FFFFFF;
+            --border-color: #E0E5F2;
+            
+            /* Warna Tabel Temuan Asli */
             --secondary-color: green;
             --text-color: #333;
             --bg-light: #f8f9fa;
-            --border-color: #ddd;
         }
 
-        body { font-family: 'Poppins', sans-serif; color: var(--text-color); margin: 0; background-color: #fff; font-size: 0.9rem; }
+        * {
+            box-sizing: border-box;
+        }
 
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--secondary-bg);
+            /* PERBAIKAN: Hapus display: flex pada body agar layout margin bekerja normal */
+            display: block; 
+            min-height: 100vh;
+            color: var(--text-color);
+            font-size: 0.9rem;
+        }
+
+        /* === SIDEBAR STYLES === */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--white);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-sizing: border-box;
+            border-right: 1px solid var(--border-color);
+            z-index: 3000;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #ddd transparent;
+            transition: width 0.3s ease, padding 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+            padding: 24px 12px;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #ddd;
+            border-radius: 3px;
+        }
+
+        .sidebar-toggle-btn {
+            position: absolute;
+            top: 25px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--text-gray);
+            z-index: 3002;
+            transition: right 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-toggle-btn {
+            right: 50%;
+            transform: translateX(50%);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            min-height: 50px;
+            position: relative;
+        }
+
+        .sidebar-logo img {
+            max-width: 100px;
+            height: auto;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .sidebar-logo img {
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-links li {
+            width: 100%;
+        }
+
+        .nav-section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            padding-left: 12px;
+            display: block;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .nav-section-label {
+            display: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-light-gray);
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .nav-links a i {
+            font-size: 22px;
+            margin-right: 14px;
+            color: var(--text-gray);
+            transition: margin 0.3s ease, color 0.2s;
+            min-width: 22px;
+        }
+
+        .sidebar.collapsed .nav-links a {
+            justify-content: center;
+            padding: 12px;
+        }
+        
+        .sidebar.collapsed .nav-links a i {
+            margin-right: 0;
+        }
+        
+        .sidebar.collapsed .nav-links a span {
+            display: none;
+        }
+
+        .nav-links a:hover {
+            background-color: var(--secondary-bg);
+            color: var(--text-dark);
+        }
+        
+        .nav-links a:hover i {
+            color: var(--primary-color);
+        }
+
+        .nav-links a.active {
+            background-color: var(--active-bg);
+            color: var(--active-text);
+            font-weight: 700;
+        }
+        
+        .nav-links a.active i {
+            color: var(--active-text);
+        }
+
+        .sidebar-footer {
+            margin-top: 20px;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
+            padding: 16px;
+            border-radius: 16px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(198, 40, 40, 0.2);
+            transition: padding 0.3s;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .user-card {
+            padding: 12px;
+            align-items: center;
+            background: var(--primary-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar.collapsed .user-info {
+            gap: 0;
+            justify-content: center;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .user-details {
+            display: none;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .user-role {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .logout-link {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .sidebar.collapsed .logout-link span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .logout-link {
+            padding: 8px 0;
+            margin-top: 5px;
+        }
+
+        .logout-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* === MAIN CONTENT ADJUSTMENT (PERBAIKAN UTAMA) === */
+        main, .monitoring-main {
+            /* Margin kiri menyesuaikan lebar sidebar */
+            margin-left: var(--sidebar-width) !important; 
+            
+            /* Lebar otomatis mengisi sisa ruang */
+            width: auto !important; 
+            max-width: 100%;
+            
+            padding: 30px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+        }
+        
+        main.expanded, .monitoring-main.expanded {
+            margin-left: var(--sidebar-collapsed-width) !important;
+        }
+
+        footer {
+            margin-top: auto;
+            background-color: var(--secondary-bg);
+            padding: 10px 0;
+            text-align: center;
+            color: #999;
+            font-size: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* === UTILITY CLASSES === */
+        .hidden { display: none !important; }
+        .start-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .start-btn:hover {
+            background-color: var(--primary-hover);
+        }
+
+        /* === TABLE & CONTENT STYLES ASLI (Dipertahankan) === */
         .temuan-table-wrapper {
             overflow-x: auto; max-width: 100%; border: 1px solid #e0e0e0; border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05); background: white; margin-bottom: 20px;
@@ -95,8 +429,7 @@
         .btn-add-note-modern { display: flex; align-items: center; justify-content: center; width: 100%; padding: 6px; background: #f9f9f9; color: #666; border: 1px dashed #ccc; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
         .btn-add-note-modern:hover { background: #e3f2fd; border-color: #2196f3; color: #1976d2; }
         
-        .modal { z-index: 2000; }
-        .hidden { display: none !important; }
+        .modal { z-index: 3005; /* Diatas sidebar */ }
         
         .box-layout-modal { 
             width: 600px !important; 
@@ -192,14 +525,6 @@
         .search-popup-list li:last-child {
             border-bottom: none;
         }
-        .nav-links a.active {
-            font-weight: 700 !important;
-            color: var(--primary-color) !important;
-        }
-
-        .nav-links > li > a.active::after {
-            width: 100%;
-        }
 
         .col-justify-middle {
             text-align: justify !important;
@@ -226,18 +551,6 @@
             justify-content: center;
         }
 
-        .btn-add-note-modern {
-            margin-top: 12px !important;
-            background-color: #fff !important;
-            border: 1px dashed #1976d2 !important;
-            color: #1976d2 !important;
-            transition: all 0.3s ease;
-        }
-
-        .btn-add-note-modern:hover {
-            background-color: #e3f2fd !important;
-            box-shadow: 0 2px 4px rgba(33, 150, 243, 0.2);
-        }
         .btn-delete-floating {
             position: absolute;
             top: 2px;
@@ -259,16 +572,6 @@
             color: #c62828;
             background-color: #ffebee;
             opacity: 1;
-        }
-
-        .mini-comment-table th {
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .mini-comment-table tr:last-child td {
-            border-bottom: none;
         }
 
         /* STYLE KHUSUS UNTUK TABEL LAPORAN (REPORT TABLE) */
@@ -300,50 +603,162 @@
         .report-table tbody td {
             background-color: white;
         }
+        .no-transition {
+            transition: none !important;
+        }
     </style>
+
+    <script>
+        document.addEventListener("DOMContentLoaded", function() {
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('main');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+
+            if (isCollapsed) {
+                sidebar.classList.add('no-transition');
+                main.classList.add('no-transition');
+                sidebar.classList.add('collapsed');
+                main.classList.add('expanded');
+                if(toggleBtn) toggleBtn.className = 'bx bx-right-arrow-alt';
+                setTimeout(() => {
+                    sidebar.classList.remove('no-transition');
+                    main.classList.remove('no-transition');
+                }, 100); 
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('main');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('expanded');
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebar-collapsed', isCollapsed);
+            
+            if (isCollapsed) {
+                toggleBtn.className = 'bx bx-right-arrow-alt';
+            } else {
+                toggleBtn.className = 'bx bx-menu';
+            }
+        }
+    </script>
 </head>
-<body>
+<body data-user-id="{{ current_user_id }}">
 
     <input type="hidden" id="current-username" value="{{ current_user.fullname }}">
 
-    <nav class="navbar">
-        <div class="nav-logo">
-            <a href="{{ url_for('dashboard') }}"><img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo"></a>
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar">
+        <div class="sidebar-toggle-btn" onclick="toggleSidebar()">
+            <i class='bx bx-menu'></i>
         </div>
+
+        <div class="sidebar-logo">
+            <a href="{{ url_for('dashboard') }}">
+                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo IFG">
+            </a>
+        </div>
+        
         <ul class="nav-links">
-            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
-                <li class="nav-dropdown-container">
-                    <a href="#" class="nav-dropbtn">
-                        Analisis Dokumen <span style="font-size: 0.7em;">▼</span>
-                    </a>
-                    <div class="nav-dropdown-content">
-                        <a href="{{ url_for('dashboard') }}#folder-management">Folder</a>
-                        <a href="{{ url_for('dashboard') }}#fitur">Proofread</a>
-                        
-                        <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
-                    </div>
-                </li> 
-            <li class="nav-dropdown-container">
-                <a href="#" class="nav-dropbtn" style="color:var(--primary-color, #C62828); font-weight: 700;">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
-                <div class="nav-dropdown-content">
-                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
-                    <a href="{{ url_for('ams_temuan_page') }}" class="active">Temuan</a>
-                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
-                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
-                    <a href="{{ url_for('ams_auditors_page') }}">Auditors</a>
-                </div>
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    <i class='bx bxs-home-alt-2'></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Analisis Dokumen</span>
+            
+            <li>
+                <a href="{{ url_for('dashboard') }}#folder-management">
+                    <i class='bx bxs-folder'></i>
+                    <span>Folder Saya</span>
+                </a>
             </li>
             <li>
-                <a href="{{ url_for('mailbox_page') }}" class="active-mailbox">Email</a>
-                <li><a href="{{ url_for('library_page') }}">Library</a></li>
+                <a href="{{ url_for('dashboard') }}#fitur">
+                    <i class='bx bxs-magic-wand'></i>
+                    <span>Proofread & Tools</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('log_analysis_page') }}">
+                    <i class='bx bxs-time-five'></i>
+                    <span>Log Analisis</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Tindak Lanjut</span>
+
+            <li>
+                <a href="{{ url_for('monitoring_ams_page') }}">
+                    <i class='bx bxs-bar-chart-alt-2'></i>
+                    <span>Rekap Monitoring</span>
+                </a>
+            </li>
+            <li>
+                <!-- MENU INI YANG AKTIF (Temuan) -->
+                <a href="{{ url_for('ams_temuan_page') }}" class="active">
+                    <i class='bx bxs-file-find'></i>
+                    <span>Temuan</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_reminder_page') }}">
+                    <i class='bx bxs-bell-ring'></i>
+                    <span>Reminder</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">
+                    <i class='bx bxs-x-circle'></i>
+                    <span>TL Tidak Setuju</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_auditors_page') }}">
+                    <i class='bx bxs-user-badge'></i>
+                    <span>Auditors</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Lainnya</span>
+
+            <li>
+                <a href="{{ url_for('mailbox_page') }}">
+                    <i class='bx bxs-envelope'></i>
+                    <span>Email</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('library_page') }}">
+                    <i class='bx bxs-book-bookmark'></i>
+                    <span>Library</span>
+                </a>
             </li>
         </ul>
-        <div class="nav-extra">
-            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
-            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class='bx bxs-user'></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ current_user.fullname }}</span>
+                        <span class="user-role">{{ current_user.label }}</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-link">
+                    <i class='bx bx-log-out'></i> <span>Logout</span>
+                </a>
+            </div>
         </div>
     </nav>
 
+    <!-- Gunakan kelas monitoring-main agar tetap sesuai dengan style spesifik Anda -->
     <main class="monitoring-main">
         <section class="monitoring-header">
             <h1>Daftar Temuan Audit</h1>
@@ -353,7 +768,7 @@
         <section class="filter-section" style="margin-bottom: 1rem;">
             <div class="multi-select-container" style="display: flex; align-items: center; gap: 1rem;">
                 <label class="filter-label" style="font-weight: 600; margin: 0;">Pilih Sesi Temuan:</label>
-                <select id="temuan-session-select" style="height: 42px; padding: 0 10px; border-radius: 8px; border: 1px solid #ccc; min-width: 300px;">
+                <select id="temuan-session-select" style="height: 42px; padding: 0 10px; border-radius: 8px; border: 1px solid #ccc; min-width: 200px;">
                     <option value="" disabled selected>-- Pilih Sesi --</option>
                 </select>
                 <button id="load-temuan-btn" class="analyze-btn" style="height: 42px; padding: 0 20px;">Tampilkan</button>
@@ -446,12 +861,13 @@
                 <button onclick="exportTableToExcel('main-temuan-table', 'Data_Temuan')" class="analyze-btn" style="background-color: #217346;">Export Excel</button>
             </div>
         </section>
+
+        <footer>
+            <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
+        </footer>
     </main>
 
-    <footer>
-        <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
-    </footer>
-
+    <!-- SEMUA MODAL TETAP SAMA SEPERTI ASLINYA -->
     <div id="filter-value-modal" class="modal hidden" style="z-index: 2500;">
         <div class="modal-content" style="max-width: 500px; height: 600px; display: flex; flex-direction: column;">
             <span class="modal-close-btn" onclick="document.getElementById('filter-value-modal').classList.add('hidden')">&times;</span>
@@ -591,8 +1007,8 @@
             <span class="modal-close-btn" id="close-sheet-modal">&times;</span>
             <h3 style="color: #333; margin-bottom: 10px;">Pilih Sheet Excel</h3>
             <p style="margin-bottom: 20px; color: #666;">Pilih sheet yang berisi data temuan:</p>
-            <div class="form-group">
-                <select id="excel-sheet-select" style="width: 100%; padding: 0 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; height: 42px;"></select>
+            <div class="form-group" style="width: 100%;">
+                <select id="excel-sheet-select" style="width: 100%; max-width: 100%; display: block; box-sizing: border-box; padding: 0 35px 0 12px; border-radius: 8px; border: 1px solid #ccc; font-size: 1rem; height: 42px;"></select>
             </div>
             <div class="modal-actions" style="margin-top: 25px; display: flex; justify-content: center; gap: 10px;">
                 <button type="button" class="btn-secondary" id="cancel-sheet-btn" style="padding: 10px 20px; border: 1px solid #ccc; background: #fff; color: #333; border-radius: 6px;">Batal</button>

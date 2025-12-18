@@ -8,8 +8,332 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png"/>
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+    <!-- Tambahkan Boxicons untuk icon sidebar -->
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
     <style>
+        /* === SIDEBAR & LAYOUT STYLES === */
+        :root {
+            /* Warna Sidebar & Layout */
+            --primary-color: #C62828;
+            --primary-hover: #B71C1C;
+            --primary-light: #FFEBEE;
+            --active-bg: #E3F2FD;
+            --active-text: #1565C0;
+            --secondary-bg: #F4F7FE;
+            --sidebar-width: 290px;
+            --sidebar-collapsed-width: 85px;
+            --text-dark: #2B3674;
+            --text-gray: #A3AED0;
+            --text-light-gray: #707EAE;
+            --white: #FFFFFF;
+            --border-color: #E0E5F2;
+            
+            /* Warna Asli Mailbox */
+            --card: #ffffff;
+            --border-light: #e0e0e0;
+            --info: #2196F3;
+            --danger: #d32f2f;
+        }
+
+        * {
+            box-sizing: border-box;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            font-family: 'DM Sans', sans-serif;
+            background-color: var(--secondary-bg);
+            /* Layout Block untuk Sidebar */
+            display: block; 
+            min-height: 100vh;
+            font-size: 0.9rem;
+        }
+
+        /* === SIDEBAR STYLES === */
+        .sidebar {
+            width: var(--sidebar-width);
+            background: var(--white);
+            height: 100vh;
+            position: fixed;
+            left: 0;
+            top: 0;
+            display: flex;
+            flex-direction: column;
+            padding: 24px;
+            box-sizing: border-box;
+            border-right: 1px solid var(--border-color);
+            z-index: 3000;
+            overflow-y: auto;
+            scrollbar-width: thin;
+            scrollbar-color: #ddd transparent;
+            transition: width 0.3s ease, padding 0.3s ease;
+        }
+
+        .sidebar.collapsed {
+            width: var(--sidebar-collapsed-width);
+            padding: 24px 12px;
+        }
+
+        .sidebar::-webkit-scrollbar {
+            width: 6px;
+        }
+        .sidebar::-webkit-scrollbar-thumb {
+            background-color: #ddd;
+            border-radius: 3px;
+        }
+
+        .sidebar-toggle-btn {
+            position: absolute;
+            top: 25px;
+            right: 20px;
+            cursor: pointer;
+            font-size: 24px;
+            color: var(--text-gray);
+            z-index: 3002;
+            transition: right 0.3s ease;
+        }
+        
+        .sidebar.collapsed .sidebar-toggle-btn {
+            right: 50%;
+            transform: translateX(50%);
+        }
+
+        .sidebar-logo {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid var(--border-color);
+            min-height: 50px;
+            position: relative;
+        }
+
+        .sidebar-logo img {
+            max-width: 100px;
+            height: auto;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .sidebar-logo img {
+            opacity: 0;
+            pointer-events: none;
+            display: none;
+        }
+
+        .nav-links {
+            list-style: none;
+            padding: 0;
+            margin: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            flex: 1;
+        }
+
+        .nav-links li {
+            width: 100%;
+        }
+
+        .nav-section-label {
+            font-size: 11px;
+            font-weight: 700;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 0.8px;
+            margin-top: 16px;
+            margin-bottom: 8px;
+            padding-left: 12px;
+            display: block;
+            white-space: nowrap;
+            transition: opacity 0.2s;
+        }
+
+        .sidebar.collapsed .nav-section-label {
+            display: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-light-gray);
+            font-weight: 500;
+            font-size: 14px;
+            display: flex;
+            align-items: center;
+            padding: 12px 16px;
+            border-radius: 12px;
+            transition: all 0.2s ease;
+            position: relative;
+            white-space: nowrap;
+            overflow: hidden;
+        }
+
+        .nav-links a i {
+            font-size: 22px;
+            margin-right: 14px;
+            color: var(--text-gray);
+            transition: margin 0.3s ease, color 0.2s;
+            min-width: 22px;
+        }
+
+        .sidebar.collapsed .nav-links a {
+            justify-content: center;
+            padding: 12px;
+        }
+        
+        .sidebar.collapsed .nav-links a i {
+            margin-right: 0;
+        }
+        
+        .sidebar.collapsed .nav-links a span {
+            display: none;
+        }
+
+        .nav-links a:hover {
+            background-color: var(--secondary-bg);
+            color: var(--text-dark);
+        }
+        
+        .nav-links a:hover i {
+            color: var(--primary-color);
+        }
+
+        .nav-links a.active {
+            background-color: var(--active-bg);
+            color: var(--active-text);
+            font-weight: 700;
+        }
+        
+        .nav-links a.active i {
+            color: var(--active-text);
+        }
+
+        .sidebar-footer {
+            margin-top: 20px;
+        }
+
+        .user-card {
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
+            padding: 16px;
+            border-radius: 16px;
+            color: white;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+            box-shadow: 0 10px 20px rgba(198, 40, 40, 0.2);
+            transition: padding 0.3s;
+            overflow: hidden;
+        }
+
+        .sidebar.collapsed .user-card {
+            padding: 12px;
+            align-items: center;
+            background: var(--primary-color);
+        }
+
+        .user-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .sidebar.collapsed .user-info {
+            gap: 0;
+            justify-content: center;
+        }
+
+        .user-avatar {
+            width: 36px;
+            height: 36px;
+            background: rgba(255,255,255,0.2);
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 18px;
+            flex-shrink: 0;
+        }
+
+        .user-details {
+            display: flex;
+            flex-direction: column;
+            white-space: nowrap;
+        }
+
+        .sidebar.collapsed .user-details {
+            display: none;
+        }
+
+        .user-name {
+            font-size: 14px;
+            font-weight: 700;
+        }
+
+        .user-role {
+            font-size: 11px;
+            opacity: 0.8;
+        }
+
+        .logout-link {
+            background: rgba(255,255,255,0.1);
+            color: white;
+            text-decoration: none;
+            padding: 8px;
+            border-radius: 8px;
+            font-size: 12px;
+            text-align: center;
+            font-weight: 600;
+            transition: background 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 6px;
+        }
+
+        .sidebar.collapsed .logout-link span {
+            display: none;
+        }
+        
+        .sidebar.collapsed .logout-link {
+            padding: 8px 0;
+            margin-top: 5px;
+        }
+
+        .logout-link:hover {
+            background: rgba(255,255,255,0.2);
+        }
+
+        /* === MAIN CONTENT ADJUSTMENT === */
+        main, .mailbox-main {
+            margin-left: var(--sidebar-width) !important;
+            width: auto !important;
+            max-width: 100% !important;
+            padding: 30px;
+            box-sizing: border-box;
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            transition: margin-left 0.3s ease;
+        }
+        
+        main.expanded, .mailbox-main.expanded {
+            margin-left: var(--sidebar-collapsed-width) !important;
+        }
+
+        footer {
+            margin-top: auto;
+            background-color: var(--secondary-bg);
+            padding: 10px 0;
+            text-align: center;
+            color: #999;
+            font-size: 0.75rem;
+            width: 100%;
+            box-sizing: border-box;
+        }
+
+        /* === ORIGINAL MAILBOX STYLES (Dipertahankan) === */
         .nav-links li a.active-mailbox {
             font-weight: 700 !important;
             color: #C62828 !important;
@@ -124,7 +448,136 @@
             max-height: 90vh;
             overflow-y: auto;
         }
+
+        /* === UTILITY CLASSES === */
+        .hidden { display: none !important; }
+        .start-btn {
+            background-color: var(--primary-color);
+            color: white;
+            padding: 10px 20px;
+            border-radius: 8px;
+            border: none;
+            cursor: pointer;
+            font-weight: 600;
+            transition: background-color 0.3s;
+        }
+        .start-btn:hover {
+            background-color: var(--primary-hover);
+        }
+        .full-width { width: 100%; }
+        
+        .modal {
+            display: none;
+            position: fixed;
+            z-index: 1000;
+            left: 0;
+            top: 0;
+            width: 100%;
+            height: 100%;
+            background-color: rgba(0,0,0,0.5);
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .modal:not(.hidden) {
+            display: flex;
+        }
+
+        .modal-content {
+            background-color: white;
+            padding: 2rem;
+            border-radius: 12px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.2);
+            position: relative;
+            width: 500px;
+            max-width: 90%;
+        }
+
+        .modal-close-btn {
+            position: absolute;
+            top: 1rem;
+            right: 1.5rem;
+            font-size: 1.5rem;
+            cursor: pointer;
+            color: #999;
+        }
+        
+        .form-group { margin-bottom: 1rem; }
+        .form-group label { display: block; margin-bottom: 0.5rem; font-weight: 600; }
+        .form-group input, .form-group select, .form-group textarea {
+            width: 100%; padding: 0.8rem; border: 1px solid #ddd; border-radius: 6px;
+            font-family: inherit;
+        }
+        
+        .modal-actions {
+            display: flex;
+            justify-content: flex-end;
+            gap: 1rem;
+            margin-top: 1.5rem;
+            padding-top: 1rem;
+            border-top: 1px solid #eee;
+        }
+        
+        .btn-secondary {
+            background-color: #f5f5f5;
+            color: #333;
+            border: 1px solid #ddd;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .submit-btn, .login-btn {
+            background-color: var(--primary-color);
+            color: white;
+            border: none;
+            padding: 8px 16px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .folder-item {
+            padding: 10px 15px;
+            margin-bottom: 5px;
+            cursor: pointer;
+            border-radius: 6px;
+            color: var(--text-light-gray);
+            font-weight: 500;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .folder-item:hover {
+            background-color: var(--secondary-bg);
+            color: var(--text-dark);
+        }
+        
+        .folder-item.active {
+            background-color: var(--active-bg);
+            color: var(--active-text);
+            font-weight: 700;
+        }
     </style>
+    
+    <script>
+    function toggleSidebar() {
+        const sidebar = document.querySelector('.sidebar');
+        const main = document.querySelector('.mailbox-main');
+        const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+        
+        sidebar.classList.toggle('collapsed');
+        main.classList.toggle('expanded');
+        
+        if (sidebar.classList.contains('collapsed')) {
+            toggleBtn.className = 'bx bx-right-arrow-alt';
+        } else {
+            toggleBtn.className = 'bx bx-menu';
+        }
+    }
+    </script>
 </head>
 <body data-user-id="{{ current_user.id }}">
 
@@ -135,47 +588,115 @@
         }
     </script>
     
-    <nav class="navbar">
-        <div class="nav-logo">
-            <a 
-                href="#" 
-                onclick="navGoToHome(); return false;"
-            >
-                <img 
-                    src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" 
-                    alt="Logo"
-                >
+    <!-- SIDEBAR NAVIGATION -->
+    <nav class="sidebar">
+        <div class="sidebar-toggle-btn" onclick="toggleSidebar()">
+            <i class='bx bx-menu'></i>
+        </div>
+
+        <div class="sidebar-logo">
+            <a href="{{ url_for('dashboard') }}">
+                <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo IFG">
             </a>
         </div>
-        <ul class="nav-links">
-            <li><a href="{{ url_for('dashboard') }}">Home</a></li> 
-            <li class="nav-dropdown-container">
-                <a href="#" class="nav-dropbtn" id="nav-analisis-parent">Analisis Dokumen <span style="font-size: 0.7em;">▼</span></a>
-                <div class="nav-dropdown-content">
-                    <a href="#" onclick="goToDashboardFeature('#folder-management')">Folder</a>
-                    <a href="#" onclick="goToDashboardFeature('#proofreading')">Proofread</a>
-                    <a href="{{ url_for('log_analysis_page') }}">Log Analisis</a>
-                </div>
-            </li>
-            <li class="nav-dropdown-container">
-                <a href="#" class="nav-dropbtn">Tindak Lanjut <span style="font-size: 0.7em;">▼</span></a>
-                <div class="nav-dropdown-content">
-                    <a href="{{ url_for('monitoring_ams_page') }}">Rekap Monitoring</a>
-                    <a href="{{ url_for('ams_temuan_page') }}">Temuan</a>
-                    <a href="{{ url_for('ams_reminder_page') }}">Reminder</a>
-                    <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">TL Tidak Setuju</a>
-                    <a href="{{ url_for('ams_auditors_page') }}">Auditors</a>
-                </div>
-            </li>
-            <li><a href="{{ url_for('mailbox_page') }}" class="active-mailbox">Email</a></li>
-            <li><a href="{{ url_for('library_page') }}">Library</a></li>
-        </ul>
         
-        <div class="nav-extra">
-            <span class="nav-user-greeting">Halo, {{ current_user.fullname }} ({{ current_user.label }})</span>
-            <a href="{{ url_for('logout') }}" class="logout-btn">Logout</a>
+        <ul class="nav-links">
+            <li>
+                <a href="{{ url_for('dashboard') }}">
+                    <i class='bx bxs-home-alt-2'></i>
+                    <span>Dashboard</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Analisis Dokumen</span>
+            
+            <li>
+                <a href="{{ url_for('dashboard') }}#folder-management">
+                    <i class='bx bxs-folder'></i>
+                    <span>Folder Saya</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('dashboard') }}#fitur">
+                    <i class='bx bxs-magic-wand'></i>
+                    <span>Proofread & Tools</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('log_analysis_page') }}">
+                    <i class='bx bxs-time-five'></i>
+                    <span>Log Analisis</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Tindak Lanjut</span>
+
+            <li>
+                <a href="{{ url_for('monitoring_ams_page') }}">
+                    <i class='bx bxs-bar-chart-alt-2'></i>
+                    <span>Rekap Monitoring</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_temuan_page') }}">
+                    <i class='bx bxs-file-find'></i>
+                    <span>Temuan</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_reminder_page') }}">
+                    <i class='bx bxs-bell-ring'></i>
+                    <span>Reminder</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">
+                    <i class='bx bxs-x-circle'></i>
+                    <span>TL Tidak Setuju</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('ams_auditors_page') }}">
+                    <i class='bx bxs-user-badge'></i>
+                    <span>Auditors</span>
+                </a>
+            </li>
+
+            <span class="nav-section-label">Lainnya</span>
+
+            <li>
+                <!-- MENU INI YANG AKTIF (Email) -->
+                <a href="{{ url_for('mailbox_page') }}" class="active">
+                    <i class='bx bxs-envelope'></i>
+                    <span>Email</span>
+                </a>
+            </li>
+            <li>
+                <a href="{{ url_for('library_page') }}">
+                    <i class='bx bxs-book-bookmark'></i>
+                    <span>Library</span>
+                </a>
+            </li>
+        </ul>
+
+        <div class="sidebar-footer">
+            <div class="user-card">
+                <div class="user-info">
+                    <div class="user-avatar">
+                        <i class='bx bxs-user'></i>
+                    </div>
+                    <div class="user-details">
+                        <span class="user-name">{{ current_user.fullname }}</span>
+                        <span class="user-role">{{ current_user.label }}</span>
+                    </div>
+                </div>
+                <a href="{{ url_for('logout') }}" class="logout-link">
+                    <i class='bx bx-log-out'></i> <span>Logout</span>
+                </a>
+            </div>
         </div>
     </nav>
+
     <main class="mailbox-main">
         <h1>Kotak Surat SKAI IFG</h1>
         
@@ -185,7 +706,7 @@
                     <i class="fas fa-paper-plane" style="margin-right: 8px;"></i> Kirim Email
                 </button>
                 
-                <ul id="folder-list">
+                <ul id="folder-list" style="list-style: none; padding: 0; margin: 0;">
                     <li class="folder-item active" data-folder="sent">
                         <i class="fas fa-share-square"></i> Sent Items
                     </li>
@@ -199,7 +720,7 @@
                     <h3 id="list-title" style="margin-bottom: 0.5rem;">Sent Items</h3>
                 </div>
                 <div id="message-list-container" style="overflow-x: auto; flex-grow: 1;">
-                    <table id="message-list-table">
+                    <table id="message-list-table" style="width: 100%; border-collapse: collapse;">
                         <thead>
                             <tr>
                                 <th>No</th>
@@ -216,11 +737,12 @@
             </div>
         </div>
     </main>
+    
     <footer>
         <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
     </footer>
 
-    <div id="compose-modal" class="modal hidden" style="z-index: 2000;">
+    <div id="compose-modal" class="modal hidden" style="z-index: 3005;">
         <div class="modal-content">
             <span class="modal-close-btn" id="compose-modal-close-btn">&times;</span>
             <h3>Kirim Pesan Baru</h3>
@@ -253,7 +775,7 @@
                             <i class="fas fa-sliders-h"></i> Customize Body Email
                         </button>
                         
-                        <button type="button" id="ai-generate-btn" class="analyze-btn" style="flex: 0 0 150px;">
+                        <button type="button" id="ai-generate-btn" class="start-btn" style="flex: 0 0 150px; background-color: var(--info);">
                             <i class="fas fa-magic"></i> Generate Draft
                         </button>
                     </div>
@@ -282,13 +804,13 @@
     <div id="custom-message-modal" class="modal hidden" style="z-index: 9999;">
         <div class="modal-content custom-message-box" style="max-width:400px; text-align:center; padding:2rem; border-radius: 12px;">
             <span class="modal-close-btn" onclick="document.getElementById('custom-message-modal').classList.add('hidden')">&times;</span> 
-            <h3 id="custom-message-title" style="border-bottom: none; margin-bottom: 10px; color: var(--primary);">Pesan</h3>   
+            <h3 id="custom-message-title" style="border-bottom: none; margin-bottom: 10px; color: var(--primary-color);">Pesan</h3>   
             <p id="custom-message-text" style="text-align: center; margin-top: 1rem; margin-bottom: 2rem;"></p>
             <button onclick="document.getElementById('custom-message-modal').classList.add('hidden')" class="login-btn full-width" style="width: 100%; padding: 10px;">OK</button>
         </div>
     </div>
 
-    <div id="preview-send-modal" class="modal hidden" style="z-index: 2001;">
+    <div id="preview-send-modal" class="modal hidden" style="z-index: 3005;">
         <div class="modal-content" style="max-width: 700px;">
             <span class="modal-close-btn" id="preview-modal-close-btn">&times;</span>
             <h3 style="color: var(--info);">Pratinjau Pesan Internal</h3>
@@ -313,10 +835,10 @@
         </div>
     </div>
 
-    <div id="ai-options-modal" class="modal hidden" style="z-index: 2100;"> 
+    <div id="ai-options-modal" class="modal hidden" style="z-index: 3005;"> 
         <div class="modal-content" style="max-width: 500px;">
             <span class="modal-close-btn" id="ai-options-close-btn">&times;</span>
-            <h3 style="color: var(--primary); border-bottom: 2px solid var(--border-light); padding-bottom: 10px;">
+            <h3 style="color: var(--primary-color); border-bottom: 2px solid var(--border-light); padding-bottom: 10px;">
                 <i class="fas fa-sliders-h"></i> Kustomisasi Email
             </h3>
             
