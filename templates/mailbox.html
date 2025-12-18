@@ -560,23 +560,47 @@
             color: var(--active-text);
             font-weight: 700;
         }
+
+        .no-transition {
+            transition: none !important;
+        }
     </style>
     
     <script>
-    function toggleSidebar() {
-        const sidebar = document.querySelector('.sidebar');
-        const main = document.querySelector('.mailbox-main');
-        const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
-        
-        sidebar.classList.toggle('collapsed');
-        main.classList.toggle('expanded');
-        
-        if (sidebar.classList.contains('collapsed')) {
-            toggleBtn.className = 'bx bx-right-arrow-alt';
-        } else {
-            toggleBtn.className = 'bx bx-menu';
+    document.addEventListener("DOMContentLoaded", function() {
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('main');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+            const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
+
+            if (isCollapsed) {
+                sidebar.classList.add('no-transition');
+                main.classList.add('no-transition');
+                sidebar.classList.add('collapsed');
+                main.classList.add('expanded');
+                if(toggleBtn) toggleBtn.className = 'bx bx-right-arrow-alt';
+                setTimeout(() => {
+                    sidebar.classList.remove('no-transition');
+                    main.classList.remove('no-transition');
+                }, 100); 
+            }
+        });
+
+        function toggleSidebar() {
+            const sidebar = document.querySelector('.sidebar');
+            const main = document.querySelector('main');
+            const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+            sidebar.classList.toggle('collapsed');
+            main.classList.toggle('expanded');
+            const isCollapsed = sidebar.classList.contains('collapsed');
+            localStorage.setItem('sidebar-collapsed', isCollapsed);
+            
+            if (isCollapsed) {
+                toggleBtn.className = 'bx bx-right-arrow-alt';
+            } else {
+                toggleBtn.className = 'bx bx-menu';
+            }
         }
-    }
     </script>
 </head>
 <body data-user-id="{{ current_user.id }}">
