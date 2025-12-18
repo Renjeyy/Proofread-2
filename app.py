@@ -86,7 +86,7 @@ try:
         raise ValueError("GOOGLE_API_KEY tidak ditemukan di file .env")
     
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('	gemini-3-flash-preview') 
+    model = genai.GenerativeModel('gemini-3-flash-preview') 
 except Exception as e:
     print(f"Error saat mengkonfigurasi Google AI: {e}")
 
@@ -2330,7 +2330,7 @@ def api_upload_ams_image():
         3. Jika kolom berupa persentase (%), AMBIL ANGKA JUMLAHNYA SAJA yang ada di sebelahnya.
         """
 
-        model = genai.GenerativeModel('	gemini-3-flash-preview') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
+        model = genai.GenerativeModel('gemini-3-flash-preview') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
         track_gemini_usage()
         
         print("[DEBUG] Mengirim ke Gemini...")
@@ -3206,7 +3206,7 @@ def api_upload_tl_image():
         PENTING: Output HANYA JSON Array. Jangan pakai markdown.
         """
         
-        model = genai.GenerativeModel('	gemini-3-flash-preview')
+        model = genai.GenerativeModel('gemini-3-flash-preview')
         track_gemini_usage()
         response = model.generate_content([prompt, img])
         cleaned = response.text.replace('```json', '').replace('```', '').strip()
@@ -4668,7 +4668,7 @@ def api_generate_dashboard_insight():
     """
 
     try:
-        model = genai.GenerativeModel('	gemini-3-flash-preview') 
+        model = genai.GenerativeModel('gemini-3-flash-preview') 
         track_gemini_usage()
         response = model.generate_content(prompt)
         
@@ -4682,3 +4682,4 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
