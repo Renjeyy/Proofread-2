@@ -1000,6 +1000,48 @@ def _analyze_comparison(file1, file2):
                 })
     return comparison_results
 
+@app.route('/register', methods=['GET', 'POST'])
+def register():
+    if current_user.is_authenticated:
+        return redirect(url_for('dashboard'))
+    
+    if request.method == 'POST':
+        fullname = request.form.get('fullname')
+        username = request.form.get('username')
+        password = request.form.get('password')
+        confirm_password = request.form.get('confirm_password')
+        label = request.form.get('label') 
+
+        if not fullname or not username or not password or not confirm_password or not label:
+            flash('Semua kolom wajib diisi.', 'error')
+            return redirect(url_for('register'))
+            
+        if password != confirm_password:
+            flash('Password dan Konfirmasi Password tidak cocok.', 'error')
+            return redirect(url_for('register'))
+
+        existing_user = User.query.filter_by(username=username).first()
+        if existing_user:
+            flash('Username sudah digunakan. Silakan pilih username lain.', 'error')
+            return redirect(url_for('register'))
+            
+        try:
+            new_user = User(username=username, fullname=fullname, label=label)
+            new_user.set_password(password)
+            db.session.add(new_user)
+            db.session.commit()
+            
+            flash('Akun berhasil dibuat! Silakan login.', 'success')
+            return redirect(url_for('login'))
+            
+        except Exception as e:
+            db.session.rollback()
+            print(f"Error Register: {e}")
+            flash('Terjadi kesalahan saat membuat akun. Coba lagi nanti.', 'error')
+            return redirect(url_for('register'))
+            
+    return render_template('register.html')
+
 @app.route('/laporan_bulanan/<int:session_id>')
 @login_required
 def laporan_bulanan_page(session_id):
@@ -4612,5 +4654,4 @@ def api_generate_dashboard_insight():
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
 
 if __name__ == '__main__':
-
     app.run(debug=True, port=5000)
