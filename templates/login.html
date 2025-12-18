@@ -9,6 +9,9 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <!-- Tambahkan FontAwesome untuk ikon CAPTCHA -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
     <style>
         * {
             box-sizing: border-box;
@@ -197,21 +200,28 @@
             box-shadow: 0 6px 15px rgba(255, 193, 7, 0.3);
         }
         
-        .forgot-password {
-            text-align: right;
-            margin-top: 10px;
+        .action-links {
+            display: flex;
+            justify-content: space-between;
+            margin-top: 15px;
+            font-size: 0.85rem;
         }
 
-        .forgot-password a {
+        .action-links a {
             color: #aaa;
-            font-size: 0.85rem;
             text-decoration: none;
             transition: color 0.2s;
+            cursor: pointer;
         }
 
-        .forgot-password a:hover {
+        .action-links a:hover {
             color: #FFC107;
             text-decoration: underline;
+        }
+        
+        .create-account-link {
+            font-weight: 600;
+            color: #FFC107 !important;
         }
 
         .info-box {
@@ -274,7 +284,6 @@
             text-shadow: 0 1px 5px rgba(0,0,0,0.3);
         }
 
-        /* Modal Styles (Tetap sama) */
         .modal-overlay {
             position: fixed; top: 0; left: 0; width: 100%; height: 100%;
             background: rgba(0, 0, 0, 0.7); z-index: 2000;
@@ -284,7 +293,7 @@
         }
         .modal-overlay.active { opacity: 1; pointer-events: all; }
         
-        .cookie-modal {
+        .cookie-modal, .register-modal {
             background: #2c2c2c; 
             color: #fff;
             padding: 35px;
@@ -297,24 +306,86 @@
             transition: transform 0.3s ease;
             position: relative;
         }
-        .modal-overlay.active .cookie-modal { transform: translateY(0); }
-        .cookie-header { display: flex; align-items: center; gap: 10px; margin-bottom: 20px; border-bottom: 1px solid #444; padding-bottom: 15px; text-align: center; }
-        .cookie-header h3 { font-size: 1.4rem; color: #FFC107; font-weight: 700; margin: 0; text-align: center;}
+
+        .register-modal {
+            width: 500px; 
+            max-height: 90vh; 
+            overflow-y: auto; 
+        }
+        
+        .register-modal::-webkit-scrollbar { width: 6px; }
+        .register-modal::-webkit-scrollbar-track { background: #2c2c2c; }
+        .register-modal::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        .register-modal::-webkit-scrollbar-thumb:hover { background: #FFC107; }
+
+        .modal-overlay.active .cookie-modal, 
+        .modal-overlay.active .register-modal { transform: translateY(0); }
+        
+        .cookie-header, .register-header { 
+            display: flex; align-items: center; gap: 10px; margin-bottom: 20px; 
+            border-bottom: 1px solid #444; padding-bottom: 15px; text-align: center; justify-content: center;
+        }
+        .cookie-header h3, .register-header h3 { font-size: 1.4rem; color: #FFC107; font-weight: 700; margin: 0; }
+        
         .cookie-content p { font-size: 0.95rem; line-height: 1.6; color: #ccc; margin-bottom: 15px; text-align: justify; }
         .cookie-content strong { color: #fff; }
+        
         .cookie-close { position: absolute; top: 20px; right: 20px; font-size: 1.5rem; color: #888; cursor: pointer; transition: color 0.2s; }
         .cookie-close:hover { color: #fff; }
+        
         .btn-continue { background-color: #FFC107; color: #333; border: none; padding: 12px 25px; border-radius: 6px; font-weight: 700; cursor: pointer; float: right; margin-top: 10px; transition: background 0.2s; }
         .btn-continue:hover { background-color: #ffca28; }
 
-        /* Language Modal Specifics */
+        .register-form .form-group { margin-bottom: 15px; }
+        .register-form .form-control { background-color: #3a3a3a; border-color: #555; }
+        .register-form .form-control:focus { background-color: #444; border-color: #FFC107; }
+
+        .captcha-container {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            background-color: #3a3a3a;
+            border: 1px solid #555;
+            border-radius: 8px;
+            padding: 10px;
+            margin-bottom: 15px;
+        }
+        .captcha-code {
+            font-family: 'Courier New', monospace;
+            font-size: 1.5rem;
+            font-weight: bold;
+            color: #fff;
+            letter-spacing: 5px;
+            text-decoration: line-through;
+            user-select: none; 
+            background: linear-gradient(45deg, #2c2c2c, #444);
+            padding: 5px 15px;
+            border-radius: 4px;
+        }
+        .captcha-refresh {
+            color: #FFC107;
+            cursor: pointer;
+            font-size: 1.2rem;
+            padding: 5px;
+            transition: transform 0.2s;
+        }
+        .captcha-refresh:hover { transform: rotate(180deg); }
+        .captcha-input { width: 100%; margin-top: 5px; }
+
+        .register-form input[list].form-control::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+        .register-form input[list].form-control::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
         .language-list { display: flex; flex-direction: column; gap: 10px; }
         .language-option { padding: 15px; background: #333; border: 1px solid #555; border-radius: 8px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: all 0.2s; }
         .language-option:hover { background: #444; border-color: #FFC107; }
         .language-option.selected { background: rgba(255, 193, 7, 0.1); border-color: #FFC107; color: #FFC107; font-weight: 600; }
         .check-icon { color: #FFC107; font-size: 1.2rem; }
-
-        /* MEDIA QUERIES KHUSUS UNTUK TAMPILAN RAPI DI LAPTOP (ZOOM 100%) */
         @media (max-width: 1366px), (max-height: 800px) {
             .login-left { padding: 20px 30px; }
             .brand-header { margin-bottom: 20px; gap: 15px; }
@@ -380,7 +451,8 @@
 
                     <button type="submit" class="login-btn" data-i18n="login_btn">LOG IN</button>
                     
-                    <div class="forgot-password">
+                    <div class="action-links">
+                        <a href="#" onclick="openRegisterModal(); return false;" class="create-account-link" data-i18n="create_account">Buat akun baru</a>
                         <a href="#" data-i18n="forgot_pass">Lupa password?</a>
                     </div>
                 </form>
@@ -442,16 +514,62 @@
         </div>
     </div>
 
+    <div id="register-modal" class="modal-overlay">
+        <div class="register-modal">
+            <span class="cookie-close" onclick="closeRegisterModal()">&times;</span>
+            <div class="register-header">
+                <h3>Buat Akun Baru</h3>
+            </div>
+            <form action="{{ url_for('register') }}" method="POST" class="register-form" onsubmit="return validateRegisterForm()">
+                <div class="form-group">
+                    <input type="text" id="reg_fullname" name="fullname" class="form-control" placeholder="Nama Lengkap" required autocomplete="off">
+                </div>
+
+                <div class="form-group">
+                    <input type="text" id="reg_username" name="username" class="form-control" placeholder="Username" required autocomplete="off">
+                </div>
+                
+                <div class="form-group">
+                    <input type="text" name="label" id="reg_label" class="form-control" list="unit-options" placeholder="Pilih atau Ketik Divisi / Unit" required autocomplete="off">
+                    <datalist id="unit-options">
+                        <option value="Audit">
+                        <option value="Advisory">
+                        <option value="CoE">
+                    </datalist>
+                </div>
+
+                <div class="form-group">
+                    <input type="password" id="reg_password" name="password" class="form-control" placeholder="Password" required>
+                </div>
+
+                <div class="form-group">
+                    <input type="password" id="reg_confirm_password" name="confirm_password" class="form-control" placeholder="Konfirmasi Password" required>
+                </div>
+
+                <div class="form-group">
+                    <div class="captcha-container">
+                        <span id="captcha-code" class="captcha-code"></span>
+                        <i class="fas fa-sync-alt captcha-refresh" onclick="generateCaptcha()" title="Refresh Captcha"></i>
+                    </div>
+                    <input type="text" id="captcha-input" class="form-control captcha-input" placeholder="Masukkan kode captcha di atas" required autocomplete="off">
+                    <small id="captcha-error" style="color: #FF5252; display: none; margin-top: 5px;">Kode Captcha salah!</small>
+                </div>
+
+                <button type="submit" class="login-btn">DAFTAR SEKARANG</button>
+            </form>
+        </div>
+    </div>
+
     {% with messages = get_flashed_messages(with_categories=true) %}
         {% if messages %}
             {% for category, message in messages %}
                 <script>
                     document.addEventListener('DOMContentLoaded', function() {
                         Swal.fire({
-                            icon: 'error',
-                            title: 'Login Gagal',
+                            icon: '{{ category }}' === 'success' ? 'success' : 'error',
+                            title: '{{ category }}' === 'success' ? 'Berhasil' : 'Gagal',
                             text: '{{ message }}',
-                            confirmButtonText: 'Coba Lagi',
+                            confirmButtonText: 'OK',
                             confirmButtonColor: '#FFC107',
                             background: '#333',
                             color: '#fff'
@@ -463,7 +581,6 @@
     {% endwith %}
 
     <script>
-        // Dictionary Bahasa
         const translations = {
             id: {
                 welcome_title: "Selamat Datang",
@@ -472,6 +589,7 @@
                 password_placeholder: "Password",
                 login_btn: "LOG IN",
                 forgot_pass: "Lupa password?",
+                create_account: "Buat akun baru",
                 first_time: "Baru pertama kali di sini?",
                 help_text_1: "Jika Anda terkendala login atau belum memiliki akun, silakan menghubungi Administrator SKAI atau kirim email ke",
                 hero_title: "Satuan Kerja Audit Internal",
@@ -493,9 +611,10 @@
                 password_placeholder: "Password",
                 login_btn: "LOG IN",
                 forgot_pass: "Forgot password?",
+                create_account: "Create new account",
                 first_time: "First time here?",
                 help_text_1: "If you have trouble logging in or do not have an account, please contact the SKAI Administrator or send an email to",
-                hero_title: "Internal Audit Unit",
+                hero_title: "Satuan Kerja Audit Internal",
                 hero_subtitle: "Indonesia Financial Group",
                 cookies_notice_link: "Cookies Notice",
                 cookies_title: "Cookies Notice",
@@ -508,6 +627,47 @@
                 select_language: "Select Language"
             }
         };
+
+        let currentCaptcha = "";
+
+        function generateCaptcha() {
+            const characters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+            let captcha = '';
+            for (let i = 0; i < 6; i++) {
+                captcha += characters.charAt(Math.floor(Math.random() * characters.length));
+            }
+            currentCaptcha = captcha;
+            document.getElementById('captcha-code').innerText = captcha;
+            document.getElementById('captcha-input').value = '';
+            document.getElementById('captcha-error').style.display = 'none';
+        }
+
+        function validateRegisterForm() {
+            const userCaptcha = document.getElementById('captcha-input').value;
+            const password = document.getElementById('reg_password').value;
+            const confirmPassword = document.getElementById('reg_confirm_password').value;
+            if (password !== confirmPassword) {
+                Swal.fire({
+                    icon: 'error',
+                    title: 'Validasi Gagal',
+                    text: 'Password dan Konfirmasi Password tidak cocok!',
+                    confirmButtonColor: '#FFC107',
+                    background: '#333',
+                    color: '#fff'
+                });
+                return false;
+            }
+
+            if (userCaptcha !== currentCaptcha) {
+                document.getElementById('captcha-error').style.display = 'block';
+                const input = document.getElementById('captcha-input');
+                input.style.borderColor = '#FF5252';
+                setTimeout(() => { input.style.borderColor = '#555'; }, 2000);
+                return false;
+            }
+            
+            return true;
+        }
 
         function openCookieModal() {
             document.getElementById('cookie-modal').classList.add('active');
@@ -523,11 +683,16 @@
             document.getElementById('language-modal').classList.remove('active');
         }
 
+        function openRegisterModal() {
+            generateCaptcha(); 
+            document.getElementById('register-modal').classList.add('active');
+        }
+        function closeRegisterModal() {
+            document.getElementById('register-modal').classList.remove('active');
+        }
+
         function selectLanguage(text, code) {
-            // Update link text
             document.getElementById('language-link').innerHTML = text + ' &#9662;';
-            
-            // Update modal visual selection
             document.querySelectorAll('.language-option').forEach(el => {
                 el.classList.remove('selected');
                 el.querySelector('.check-icon').style.display = 'none';
@@ -536,11 +701,7 @@
             const selectedEl = document.getElementById('lang-' + code);
             selectedEl.classList.add('selected');
             selectedEl.querySelector('.check-icon').style.display = 'block';
-
-            // Apply Translations
             const content = translations[code];
-            
-            // Update Text Content
             document.querySelectorAll('[data-i18n]').forEach(el => {
                 const key = el.getAttribute('data-i18n');
                 if (content[key]) {
@@ -548,7 +709,6 @@
                 }
             });
 
-            // Update Placeholders
             document.querySelectorAll('[data-i18n-placeholder]').forEach(el => {
                 const key = el.getAttribute('data-i18n-placeholder');
                 if (content[key]) {

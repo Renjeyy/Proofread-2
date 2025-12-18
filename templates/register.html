@@ -1,0 +1,356 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Register - Audit Management System</title>
+    <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Poppins', sans-serif;
+        }
+
+        body {
+            height: 100vh;
+            display: flex;
+            overflow: hidden; 
+            background-color: #f5f5f5;
+        }
+
+        .login-container {
+            display: flex;
+            width: 100%;
+            height: 100%;
+        }
+
+        .login-left {
+            width: 35%;
+            background-color: #2c2c2c;
+            display: flex;
+            flex-direction: column;
+            justify-content: center; 
+            align-items: center;
+            padding: 4vh 40px; 
+            color: #fff;
+            position: relative;
+            box-shadow: 10px 0 30px rgba(0,0,0,0.2);
+            z-index: 10;
+            overflow-y: auto; 
+            height: 100vh;
+        }
+
+        .login-left::-webkit-scrollbar { width: 6px; }
+        .login-left::-webkit-scrollbar-track { background: #2c2c2c; }
+        .login-left::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
+        .login-left::-webkit-scrollbar-thumb:hover { background: #FFC107; }
+
+        .login-right {
+            width: 65%;
+            background-image: url("{{ url_for('static', filename='6e4e7b60-a9c1-4069-a82f-8bc252b8ed0c.webp') }}"); 
+            background-size: cover;
+            background-position: center;
+            position: relative;
+        }
+
+        .login-right::before {
+            content: '';
+            position: absolute;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: linear-gradient(135deg, rgba(0,0,0,0.4) 0%, rgba(20, 20, 20, 0.4) 100%);
+        }
+
+        .building-outline {
+            position: absolute;
+            bottom: 0;
+            right: 50px;
+            width: 70%;
+            height: 80%;
+            background-image: url("{{ url_for('static', filename='building_outline.png') }}");
+            background-size: contain;
+            background-repeat: no-repeat;
+            background-position: bottom right;
+            opacity: 0.9;
+            z-index: 1;
+        }
+        .brand-header {
+            margin-bottom: 2vh; 
+            display: flex;
+            align-items: center;
+            gap: 20px; 
+            width: 100%;
+            max-width: 500px; 
+            justify-content: center;
+        }
+
+        .login-logo {
+            height: clamp(50px, 6vh, 70px); 
+            width: auto;
+            text-align: center;
+        }
+        
+        .brand-text {
+            border-left: 4px solid #666; 
+            padding-left: 20px; 
+            min-height: clamp(50px, 6vh, 70px); 
+            display: flex;
+            flex-direction: column;
+            justify-content: center;
+            text-align: center;
+        }
+
+        .brand-title {
+            font-size: clamp(2rem, 3vw, 2.5rem); 
+            font-weight: 800;
+            color: #FFC107;
+            line-height: 0.9; 
+            letter-spacing: 1px;
+        }
+        
+        .brand-subtitle {
+            font-size: clamp(0.8rem, 0.9vw, 1rem); 
+            color: #ddd;
+            margin-top: 5px;
+            font-weight: 500;
+            letter-spacing: 0.5px;
+        }
+
+        .login-form-wrapper {
+            width: 100%;
+            max-width: 450px; 
+            margin: auto 0; 
+        }
+
+        .welcome-text {
+            margin-bottom: 2vh; 
+            text-align: center;
+        }
+
+        .welcome-text h2 {
+            font-size: clamp(1.5rem, 2.5vw, 2rem); 
+            font-weight: 700;
+            margin-bottom: 5px;
+            color: #fff;
+        }
+
+        .welcome-text p {
+            font-size: 0.95rem;
+            color: #bbb;
+            line-height: 1.4;
+        }
+
+        .form-group {
+            margin-bottom: 15px;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px; 
+            background-color: #444;
+            border: 1px solid #555;
+            border-radius: 8px;
+            color: #fff;
+            font-size: 0.9rem; 
+            outline: none;
+            transition: all 0.3s;
+        }
+        
+        /* Style khusus untuk input dengan datalist agar panah dropdown muncul di beberapa browser */
+        input[list].form-control::-webkit-calendar-picker-indicator {
+            filter: invert(1);
+            opacity: 0.6;
+            cursor: pointer;
+        }
+        input[list].form-control::-webkit-calendar-picker-indicator:hover {
+            opacity: 1;
+        }
+
+        .form-control::placeholder { color: #888; }
+
+        .form-control:focus {
+            background-color: #505050;
+            border-color: #FFC107;
+            box-shadow: 0 0 0 3px rgba(255, 193, 7, 0.1);
+        }
+
+        .login-btn {
+            width: 100%;
+            padding: 12px; 
+            background-color: #FFC107;
+            color: #333;
+            border: none;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-weight: 700;
+            cursor: pointer;
+            transition: all 0.3s;
+            margin-top: 10px;
+            letter-spacing: 1px;
+            box-shadow: 0 4px 10px rgba(255, 193, 7, 0.2);
+            text-transform: uppercase;
+        }
+
+        .login-btn:hover {
+            background-color: #ffca28;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(255, 193, 7, 0.3);
+        }
+        
+        .login-link {
+            text-align: center;
+            margin-top: 20px;
+            font-size: 0.9rem;
+            color: #bbb;
+        }
+
+        .login-link a {
+            color: #FFC107;
+            text-decoration: none;
+            font-weight: 600;
+            transition: color 0.2s;
+        }
+
+        .login-link a:hover {
+            color: #fff;
+            text-decoration: underline;
+        }
+
+        .hero-text {
+            position: absolute;
+            bottom: 60px;
+            right: 60px;
+            text-align: right;
+            color: white;
+            z-index: 2;
+        }
+        
+        .hero-text h3 {
+            font-size: 2.5rem;
+            font-weight: 700;
+            text-shadow: 0 2px 10px rgba(0,0,0,0.3);
+            margin-bottom: 5px;
+        }
+
+        .hero-text p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+            font-weight: 300;
+            text-shadow: 0 1px 5px rgba(0,0,0,0.3);
+        }
+
+        @media (max-width: 1366px), (max-height: 800px) {
+            .login-left { padding: 20px 30px; }
+            .brand-header { margin-bottom: 20px; gap: 15px; }
+            .form-control { padding: 10px 12px; font-size: 0.85rem; }
+            .login-btn { padding: 10px; font-size: 0.95rem; }
+        }
+
+        @media (max-width: 1200px) {
+            .login-left { width: 40%; }
+            .login-right { width: 60%; }
+        }
+
+        @media (max-width: 900px) {
+            .login-left { width: 50%; }
+            .login-right { width: 50%; }
+        }
+
+        @media (max-width: 768px) {
+            .login-container { flex-direction: column; }
+            .login-left { width: 100%; height: auto; min-height: 100vh; padding: 40px 30px; justify-content: center; overflow-y: visible; }
+            .login-right { display: none; } 
+            .login-form-wrapper { max-width: 400px; margin: 0; }
+        }
+    </style>
+</head>
+<body>
+
+    <main class="login-container">
+        <section class="login-left">
+            <div class="login-form-wrapper">
+                <div class="brand-header">
+                    <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo IFG" class="login-logo">
+                    <div class="brand-text">
+                        <div class="brand-title">AMS</div>
+                        <div class="brand-subtitle">Audit Management System</div>
+                    </div>
+                </div>
+
+                <div class="welcome-text">
+                    <h2>Buat Akun Baru</h2>
+                    <p>Lengkapi data diri Anda untuk mendaftar.</p>
+                </div>
+
+                <form method="POST">
+                    <div class="form-group">
+                        <input type="text" id="fullname" name="fullname" class="form-control" placeholder="Nama Lengkap" required autocomplete="off">
+                    </div>
+
+                    <div class="form-group">
+                        <input type="text" id="username" name="username" class="form-control" placeholder="Username" required autocomplete="off">
+                    </div>
+                    
+                    <div class="form-group">
+                        <!-- Ganti select dengan input list agar bisa custom -->
+                        <input type="text" name="label" id="label" class="form-control" list="unit-options" placeholder="Pilih atau Ketik Divisi / Unit" required autocomplete="off">
+                        <datalist id="unit-options">
+                            <option value="Audit">
+                            <option value="Advisory">
+                            <option value="CoE">
+                        </datalist>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" id="password" name="password" class="form-control" placeholder="Password" required>
+                    </div>
+
+                    <div class="form-group">
+                        <input type="password" id="confirm_password" name="confirm_password" class="form-control" placeholder="Konfirmasi Password" required>
+                    </div>
+
+                    <button type="submit" class="login-btn">DAFTAR</button>
+                    
+                    <div class="login-link">
+                        Sudah punya akun? <a href="{{ url_for('login') }}">Login di sini</a>
+                    </div>
+                </form>
+            </div>
+        </section>
+
+        <aside class="login-right">
+            <div class="building-outline"></div> 
+            <div class="hero-text">
+                <h3>Satuan Kerja Audit Internal</h3>
+                <p>Indonesia Financial Group</p>
+            </div>
+        </aside>
+    </main>
+
+    {% with messages = get_flashed_messages(with_categories=true) %}
+        {% if messages %}
+            {% for category, message in messages %}
+                <script>
+                    document.addEventListener('DOMContentLoaded', function() {
+                        Swal.fire({
+                            icon: '{{ category }}' === 'success' ? 'success' : 'error',
+                            title: '{{ category }}' === 'success' ? 'Berhasil' : 'Gagal',
+                            text: '{{ message }}',
+                            confirmButtonText: 'OK',
+                            confirmButtonColor: '#FFC107',
+                            background: '#333',
+                            color: '#fff'
+                        });
+                    });
+                </script>
+            {% endfor %}
+        {% endif %}
+    {% endwith %}
+
+</body>
+</html>
