@@ -1230,35 +1230,37 @@ def library_page():
 def api_library_list():
     try:
         shelf_id = request.args.get('shelf_id')
-        
-        # Query dasar: Filter berdasarkan user yang login
+
         query = LibraryFile.query.filter_by(user_id=current_user.id)
-        
-        # Jika ada shelf_id, filter lagi
+
         if shelf_id:
             query = query.filter_by(shelf_id=shelf_id)
-            
-        files = query.all()
+
+        files = query.order_by(LibraryFile.upload_date.desc()).all()
         
         data = []
         for f in files:
+            tgl = f.upload_date.strftime('%d %b %Y') if f.upload_date else "Baru"
+            
             data.append({
                 'id': f.id,
-                'title': f.title,
-                'category': f.category,
-                'summary': f.summary,
-                'cluster': f.cluster,
+                'title': f.title or "Tanpa Judul",
+                'category': f.category or "-",
+                'summary': f.summary or "-",
+                'cluster': f.cluster or "-",
                 'url': f.file_url,
-                'upload_date': f.upload_date.strftime('%d %b %Y'),
-                'type': f.file_type,
+                'upload_date': tgl,
+                'type': f.file_type or "FILE",
                 'shelf_id': f.shelf_id
             })
             
         return jsonify(data), 200
 
     except Exception as e:
-        print(f"[ERROR LIBRARY LIST] {e}")
-        return jsonify({"error": str(e)}), 500
+        print(f"[CRITICAL ERROR LIBRARY LIST] {str(e)}")
+        import traceback
+        traceback.print_exc()
+        return jsonify({"error": "Terjadi kesalahan server saat memuat data."}), 500
 
 @app.route('/api/library/upload', methods=['POST'])
 @login_required
@@ -4723,3 +4725,4 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
