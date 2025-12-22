@@ -1248,7 +1248,7 @@ def api_library_list():
                 'category': f.category or "-",
                 'summary': f.summary or "-",
                 'cluster': f.cluster or "-",
-                'url': f.file_url,
+                "url": url_for('api_library_view', file_id=f.id, filename=f.filename)
                 'upload_date': tgl,
                 'type': f.file_type or "FILE",
                 'shelf_id': f.shelf_id
@@ -4725,4 +4725,5 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
 
