@@ -518,7 +518,10 @@ def proofread_with_gemini(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
         pattern = re.compile(r"\[SALAH\]\s*(.*?)\s*->\s*\[BENAR\]\s*(.*?)\s*->\s*\[KALIMAT\]\s*(.*?)\s*(\n|$)", re.IGNORECASE | re.DOTALL)
         found_errors = pattern.findall(response.text)
         return [{"salah": salah.strip(), "benar": benar.strip(), "kalimat": kalimat.strip()} for salah, benar, kalimat, _ in found_errors]
@@ -585,7 +588,10 @@ def analyze_document_by_section(original_text, revised_text):
     """
     try:
         track_gemini_usage()
-        response = client.model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
         response_text = response.text.strip()
         response_text = re.sub(r'```json\s*|\s*```', '', response_text)
         analysis_result = json.loads(response_text)
@@ -637,7 +643,10 @@ def analyze_context_difference(original_sentence, revised_sentence):
 
     try:
         track_gemini_usage()
-        response = client.model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
         response_text = response.text.strip()
         try:
             analysis_result = json.loads(response_text)
@@ -700,7 +709,10 @@ def analyze_document_coherence(full_text):
     {full_text}
     """
     try:
-        response = client.model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
         pattern = re.compile(
             r"\[TOPIK UTAMA\]\s*(.*?)\s*->\s*\[TEKS ASLI\]\s*(.*?)\s*->\s*\[SARAN REVISI\]\s*(.*?)\s*(?:->\s*\[CATATAN\]\s*(.*?)\s*)?(\n|$)", 
             re.IGNORECASE | re.DOTALL
@@ -753,7 +765,10 @@ def get_structural_recommendations(full_text):
     {full_text}
     """
     try:
-        response = client.model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
         cleaned_response = re.sub(r'[—–]', '-', response.text.strip()) 
         cleaned_response = re.sub(r'```json\s*|\s*```', '', cleaned_response)
         return json.loads(cleaned_response)
@@ -788,7 +803,10 @@ def review_document_comprehensive(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
         raw_response = response.text.strip()
         cleaned_text = re.sub(r'^```json\s*', '', raw_response)
         cleaned_text = re.sub(r'^```\s*', '', cleaned_text)
