@@ -6,7 +6,6 @@
     <title>Visualisasi Data Monitoring Audit</title>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />
-    <!-- Tambahkan Boxicons -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/chartjs-plugin-datalabels@2.0.0"></script>
@@ -57,7 +56,6 @@
             box-shadow: 0 6px 15px rgba(0,0,0,0.15);
         }
 
-        /* Styles untuk Download Modal Cards */
         .download-option-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
@@ -116,17 +114,14 @@
             background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
             border: none;
         }
-
         .download-option-card.full-dash .icon-box {
             background: rgba(255,255,255,0.2);
             color: white;
         }
-
         .download-option-card.full-dash span {
             color: white;
             font-size: 1rem;
         }
-
         .download-option-card.full-dash:hover {
             box-shadow: 0 10px 25px rgba(198, 40, 40, 0.4);
         }
@@ -187,11 +182,7 @@
         .dropdown-item:last-child { border-bottom: none; }
         .dropdown-item:hover { background-color: #fff5f5; color: #C62828; font-weight: 600; }
         .dropdown-item.selected { background-color: #ffebee; color: #C62828; font-weight: 600; }
-        .dropdown-divider {
-            background: #f8f9fa; color: #999; font-size: 0.75rem;
-            font-weight: 700; padding: 8px; text-align: center; letter-spacing: 1px;
-        }
-
+        
         .refresh-btn {
             padding: 0 25px; height: 46px;
             background: #333; color: white;
@@ -271,8 +262,11 @@
         }
 
         .stat-item {
-            padding: 12px 0; border-bottom: 1px solid #f0f0f0;
-            display: flex; justify-content: space-between; align-items: center;
+            padding: 15px 0; 
+            border-bottom: 1px solid #f0f0f0;
+            display: flex; 
+            justify-content: space-between; 
+            align-items: center;
         }
         .stat-item:last-child { border-bottom: none; }
         .stat-label { font-weight: 600; color: #555; font-size: 0.9rem; }
@@ -282,14 +276,30 @@
             display: flex; 
             flex-direction: row;
             align-items: center;
-            gap: 12px;
+            gap: 15px; 
         }
-        .stat-value { font-size: 0.95rem; font-weight: 700; color: #333; }
+        
+        .stat-value { 
+            font-size: 0.95rem; 
+            font-weight: 700; 
+            color: #333; 
+            display: flex; 
+            align-items: center; 
+            gap: 8px;
+        }
         
         .stat-change { 
-            font-size: 0.75rem; padding: 4px 8px; border-radius: 6px; 
-            display: inline-block; font-weight: 600; 
+            font-size: 0.75rem; 
+            padding: 6px 12px; 
+            border-radius: 6px; 
+            display: inline-flex; 
+            justify-content: center;
+            align-items: center;
+            font-weight: 600; 
+            box-sizing: border-box;
+            white-space: nowrap;
         }
+        
         .change-up-good { color: #155724; background: #d4edda; } 
         .change-down-good { color: #155724; background: #d4edda; } 
         .change-up-bad { color: #721c24; background: #f8d7da; } 
@@ -334,20 +344,6 @@
             transition: background 0.2s; box-shadow: 0 2px 5px rgba(33, 150, 243, 0.2);
         }
         .btn-show-all-radar:hover { background-color: #1976D2; }
-
-        .modal-overlay {
-            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
-            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 2000;
-            display: flex; justify-content: center; align-items: center;
-            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
-        }
-        .modal-overlay.active { opacity: 1; pointer-events: all; }
-        .modal-box {
-            background: white; padding: 25px; border-radius: 16px; width: 400px; max-width: 90%;
-            box-shadow: 0 20px 50px rgba(0,0,0,0.1); transform: translateY(20px); transition: transform 0.3s ease;
-        }
-        .modal-overlay.active .modal-box { transform: translateY(0); }
-        .modal-box.large { width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; }
         
         .radar-grid {
             display: grid; grid-template-columns: repeat(auto-fill, minmax(280px, 1fr)); gap: 20px; padding: 10px;
@@ -375,16 +371,84 @@
         
         .fb-good { background: #e8f5e9; border: 1px solid #81c784; color: #1b5e20; }
         .fb-good .fb-title { color: #2e7d32; }
-        
         .fb-warn { background: #fff8e1; border: 1px solid #ffcc80; color: #e65100; }
         .fb-warn .fb-title { color: #f57f17; }
-        
         .fb-bad { background: #ffebee; border: 1px solid #ef9a9a; color: #b71c1c; }
         .fb-bad .fb-title { color: #c62828; }
 
+        .modal-overlay {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: rgba(0,0,0,0.4); backdrop-filter: blur(4px); z-index: 2000;
+            display: flex; justify-content: center; align-items: center;
+            opacity: 0; pointer-events: none; transition: opacity 0.3s ease;
+        }
+        .modal-overlay.active { opacity: 1; pointer-events: all; }
+        .modal-box {
+            background: white; padding: 25px; border-radius: 16px; width: 400px; max-width: 90%;
+            box-shadow: 0 20px 50px rgba(0,0,0,0.1); transform: translateY(20px); transition: transform 0.3s ease;
+        }
+        .modal-overlay.active .modal-box { transform: translateY(0); }
+        .modal-box.large { width: 90%; max-width: 1200px; max-height: 90vh; overflow-y: auto; }
+        
+        .period-form-container { display: flex; flex-direction: column; gap: 15px; padding: 10px 0; }
+        .period-form-label { font-weight: 600; color: #333; font-size: 0.9rem; margin-bottom: 5px; display: block; }
+        .period-form-select {
+            width: 100%; padding: 10px; border-radius: 8px; border: 1px solid #ddd;
+            background: #fcfcfc; font-family: 'Poppins', sans-serif; font-size: 0.9rem;
+            color: #444; transition: all 0.2s;
+        }
+        .period-form-select:focus { border-color: #C62828; background: #fff; box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.1); }
+        .period-btn-group { display: flex; gap: 10px; justify-content: flex-end; margin-top: 20px; border-top: 1px solid #eee; padding-top: 20px; }
+        .period-btn { padding: 8px 20px; border-radius: 8px; font-weight: 500; font-size: 0.9rem; cursor: pointer; border: none; transition: 0.2s; }
+        .period-btn-cancel { background: #f0f0f0; color: #555; }
+        .period-btn-cancel:hover { background: #e0e0e0; }
+        .period-btn-save { background: #333; color: white; }
+        .period-btn-save:hover { background: #000; }
+        .hidden-input { display: none; }
+
+        .alert-box-content {
+            text-align: center;
+            padding: 30px 25px;
+            width: 380px;
+        }
+        .alert-icon-wrapper {
+            font-size: 3.5rem;
+            color: #C62828; 
+            margin-bottom: 15px;
+            animation: pulseAlert 1.5s infinite ease-in-out;
+        }
+        .alert-title {
+            font-size: 1.2rem;
+            font-weight: 700;
+            color: #1a1a1a;
+            margin-bottom: 10px;
+        }
+        .alert-message {
+            font-size: 0.95rem;
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 25px;
+        }
+        .alert-btn {
+            padding: 10px 25px;
+            background-color: #C62828;
+            color: white;
+            border: none;
+            border-radius: 30px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            cursor: pointer;
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3);
+            transition: all 0.2s;
+        }
+        .alert-btn:hover {
+            background-color: #b71c1c;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(198, 40, 40, 0.4);
+        }
+
         @keyframes fadeIn { from { opacity: 0; transform: translate(-50%, -10px); } to { opacity: 1; transform: translate(-50%, 0); } }
-        @keyframes dots { 0%, 20% { content: '.'; } 40% { content: '..'; } 60% { content: '...'; } 80%, 100% { content: ''; } }
-        .loading-dots:after { content: '.'; animation: dots 1.5s steps(5, end) infinite; }
+        @keyframes pulseAlert { 0% { transform: scale(1); } 50% { transform: scale(1.1); } 100% { transform: scale(1); } }
     </style>
 </head>
 <body>
@@ -424,12 +488,7 @@
             
             <div class="filter-group">
                 <label>Filter Periode</label>
-                <div class="custom-dropdown" id="dropdown-period">
-                    <div class="dropdown-btn" id="btn-period" data-value="all">Semua Waktu</div>
-                    <div class="dropdown-content" id="list-period">
-                        <div class="dropdown-item selected" onclick="selectOption('btn-period', 'list-period', 'all', 'Semua Waktu', false)">Semua Waktu</div>
-                    </div>
-                </div>
+                <button id="btn-period-trigger" class="dropdown-btn" onclick="openPeriodModal()">Semua Waktu</button>
             </div>
 
             <div class="filter-group">
@@ -517,7 +576,6 @@
                     <button class="btn-show-all-radar" style="position: absolute; right: 0; padding: 6px 14px; font-size: 0.8rem;" onclick="openPerfModal()">View All</button>
                 </div>
                 <div id="perf-grid-container" class="radar-grid">
-                    <!-- Cards will be injected here -->
                 </div>
                 <div id="perf-interpretation" style="margin-top: 20px; font-size: 0.9rem; color: #444; text-align: justify; background: #f8f9fa; padding: 15px; border-radius: 8px; border-left: 4px solid #4CAF50;">
                     <p style="margin:0; text-align:center; color:#888;">Memuat interpretasi...</p>
@@ -526,7 +584,6 @@
         </div>
     </div>
 
-    <!-- MODAL DOWNLOAD DASHBOARD -->
     <div class="modal-overlay" id="download-modal">
         <div class="modal-box" style="width: 500px; max-width: 90%;">
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px; border-bottom:1px solid #eee; padding-bottom:10px;">
@@ -535,7 +592,7 @@
             </div>
             <div class="download-option-grid">
                 <div class="download-option-card" onclick="downloadChart('trendLineChart', 'Trend_Chart.jpg')">
-                    <div class="icon-box"><i class='bx bx-bar-chart-alt-2'></i></div>
+                    <div class="icon-box"><i class='bx bx-line-chart'></i></div>
                     <span>Trend Chart</span>
                 </div>
                 <div class="download-option-card" onclick="downloadChart('divergingChart', 'Change_Chart.jpg')">
@@ -550,6 +607,39 @@
                     <div class="icon-box"><i class='bx bxs-dashboard'></i></div>
                     <span>Download Full Dashboard (JPG)</span>
                 </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="modal-overlay" id="period-modal">
+        <div class="modal-box">
+            <div style="font-size:1.2rem; font-weight:700; color: #333; margin-bottom:15px; text-align: center;">Filter Periode</div>
+            <div class="period-form-container">
+                <div>
+                    <label class="period-form-label">Pilih Berdasarkan</label>
+                    <select id="modal-filter-type" class="period-form-select" onchange="updatePeriodInputs()">
+                        <option value="all">Semua Waktu</option>
+                        <option value="year">Tahun</option>
+                        <option value="month">Bulan</option>
+                        <option value="quarter">Triwulan</option>
+                    </select>
+                </div>
+
+                <div id="modal-input-year-container" class="hidden-input">
+                    <label class="period-form-label">Pilih Tahun</label>
+                    <select id="modal-filter-year" class="period-form-select" onchange="updateSpecificOptions()">
+                    </select>
+                </div>
+
+                <div id="modal-input-specific-container" class="hidden-input">
+                    <label id="modal-specific-label" class="period-form-label">Opsi Spesifik</label>
+                    <select id="modal-filter-specific" class="period-form-select">
+                    </select>
+                </div>
+            </div>
+            <div class="period-btn-group">
+                <button class="period-btn period-btn-cancel" onclick="closePeriodModal()">Batal</button>
+                <button class="period-btn period-btn-save" onclick="applyPeriodFilter()">Simpan Perubahan</button>
             </div>
         </div>
     </div>
@@ -597,6 +687,16 @@
         </div>
     </div>
 
+    <div class="modal-overlay" id="custom-alert-modal">
+        <div class="modal-box alert-box-content">
+            <div class="alert-icon-wrapper" id="alert-icon-container">
+            </div>
+            <h3 class="alert-title" id="alert-title">Judul</h3>
+            <p class="alert-message" id="alert-message">Pesan peringatan.</p>
+            <button onclick="closeCustomAlert()" class="alert-btn">Mengerti</button>
+        </div>
+    </div>
+
     <script>
         let allData = [];
         let globalChartLabels = [], globalDataSelesai = [], globalDataBJT = [], globalDataOut = [], globalDataTDD = [], globalCategory = "";
@@ -607,9 +707,41 @@
         let radarAuditeeSelected = null;
         let fullPerfData = []; 
 
+        let globalFilterState = {
+            type: 'all',
+            year: null,
+            specific: null
+        };
+
         Chart.register(ChartDataLabels);
 
-        // --- DOWNLOAD MODAL LOGIC ---
+        function showCustomAlert(message, title = "Perhatian", type = "warning") {
+            const modal = document.getElementById('custom-alert-modal');
+            const titleEl = document.getElementById('alert-title');
+            const msgEl = document.getElementById('alert-message');
+            const iconContainer = document.getElementById('alert-icon-container');
+
+            titleEl.textContent = title;
+            msgEl.textContent = message;
+
+            if (type === 'error') {
+                iconContainer.innerHTML = "<i class='bx bx-x-circle'></i>";
+                iconContainer.style.color = "#C62828"; 
+            } else if (type === 'info') {
+                iconContainer.innerHTML = "<i class='bx bx-info-circle'></i>";
+                iconContainer.style.color = "#2196F3"; 
+            } else {
+                iconContainer.innerHTML = "<i class='bx bx-error-circle'></i>";
+                iconContainer.style.color = "#FF9800"; 
+            }
+
+            modal.classList.add('active');
+        }
+
+        function closeCustomAlert() {
+            document.getElementById('custom-alert-modal').classList.remove('active');
+        }
+
         function openDownloadModal() {
             document.getElementById('download-modal').classList.add('active');
         }
@@ -621,47 +753,40 @@
         function downloadChart(canvasId, fileName) {
             const canvas = document.getElementById(canvasId);
             if (!canvas) {
-                alert("Chart tidak ditemukan.");
+                showCustomAlert("Chart tidak ditemukan.", "Error", "error");
                 return;
             }
             
-            // Cari judul chart dari elemen HTML terdekat
             let title = "";
             const card = canvas.closest('.chart-card') || canvas.closest('.radar-item');
             if (card) {
                 const h3 = card.querySelector('h3');
-                const h4 = card.querySelector('h4'); // Untuk radar items di modal
+                const h4 = card.querySelector('h4'); 
                 if (h3) title = h3.innerText;
                 else if (h4) title = h4.innerText;
             }
 
-            // Setup canvas sementara
             const tempCanvas = document.createElement('canvas');
             const tempCtx = tempCanvas.getContext('2d');
             
-            // Tambahkan ruang untuk judul di atas
             const titleHeight = title ? 50 : 0;
             const padding = 20;
             
             tempCanvas.width = canvas.width;
             tempCanvas.height = canvas.height + titleHeight;
 
-            // Fill background putih
             tempCtx.fillStyle = '#FFFFFF';
             tempCtx.fillRect(0, 0, tempCanvas.width, tempCanvas.height);
 
-            // Gambar Judul
             if (title) {
-                // Scaling font size based on canvas width roughly, or fixed size usually works for standard charts
                 const fontSize = Math.max(12, Math.floor(tempCanvas.width / 40)); 
-                tempCtx.font = `${fontSize}px Poppins, sans-serif`; // Hapus 'bold'
+                tempCtx.font = `${fontSize}px Poppins, sans-serif`; 
                 tempCtx.fillStyle = '#1a1a1a';
                 tempCtx.textAlign = 'center';
                 tempCtx.textBaseline = 'middle';
                 tempCtx.fillText(title, tempCanvas.width / 2, titleHeight / 2);
             }
 
-            // Gambar Chart asli
             tempCtx.drawImage(canvas, 0, titleHeight);
 
             const link = document.createElement('a');
@@ -677,10 +802,8 @@
             const originalBackground = dashboard.style.background;
             dashboard.style.background = "#f0f2f5"; 
 
-            // Tutup modal dulu biar gak ikut ke screenshot
             closeDownloadModal();
 
-            // Sedikit delay agar modal benar-benar hilang sebelum capture
             setTimeout(() => {
                 html2canvas(dashboard, {
                     ignoreElements: (element) => {
@@ -699,7 +822,6 @@
             }, 300);
         }
 
-        // --- DROPDOWN LOGIC ---
         function toggleDropdown(id) {
             const allDropdowns = document.getElementsByClassName("dropdown-content");
             for (let i = 0; i < allDropdowns.length; i++) {
@@ -709,7 +831,7 @@
         }
 
         window.onclick = function(event) {
-            if (!event.target.matches('.dropdown-btn')) {
+            if (!event.target.matches('.dropdown-btn') && !event.target.matches('#btn-period-trigger')) {
                 const dropdowns = document.getElementsByClassName("dropdown-content");
                 for (let i = 0; i < dropdowns.length; i++) {
                     if (dropdowns[i].classList.contains('show')) dropdowns[i].classList.remove('show');
@@ -734,9 +856,8 @@
 
             if (isTypeFilter) {
                 localStorage.removeItem('btn-auditee');
-                localStorage.removeItem('btn-period');
-                localStorage.removeItem('trend_start');
-                localStorage.removeItem('trend_end');
+                globalFilterState = { type: 'all', year: null, specific: null };
+                updatePeriodTriggerButton();
                 populateSecondaryFilters();
             } else {
                 if (btnId === 'btn-radar-auditee') {
@@ -749,18 +870,15 @@
         }
 
         document.getElementById('btn-audit-type').addEventListener('click', () => toggleDropdown('list-audit-type'));
-        document.getElementById('btn-period').addEventListener('click', () => toggleDropdown('list-period'));
         document.getElementById('btn-auditee').addEventListener('click', () => toggleDropdown('list-auditee'));
         document.getElementById('btn-radar-auditee').addEventListener('click', () => toggleDropdown('list-radar-auditee'));
 
         document.getElementById('trend-range-start').addEventListener('change', (e) => { 
             trendStartPeriod = e.target.value; 
-            localStorage.setItem('trend_start', trendStartPeriod);
             updateCharts(true); 
         });
         document.getElementById('trend-range-end').addEventListener('change', (e) => { 
             trendEndPeriod = e.target.value; 
-            localStorage.setItem('trend_end', trendEndPeriod);
             updateCharts(true); 
         });
 
@@ -775,7 +893,7 @@
                 
                 if (allData.length === 0) {
                     typeBtn.textContent = 'Data Kosong';
-                    alert("Belum ada data monitoring audit.");
+                    showCustomAlert("Belum ada data monitoring audit.", "Info", "info");
                 } else {
                     initDashboard();
                 }
@@ -819,29 +937,6 @@
             const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
             const relevantData = allData.filter(d => d.audit_category === selectedType);
 
-            const periodList = document.getElementById('list-period');
-            periodList.innerHTML = '<div class="dropdown-item" onclick="selectOption(\'btn-period\', \'list-period\', \'all\', \'Semua Waktu\', false)">Semua Waktu</div>';
-            
-            const years = [...new Set(relevantData.map(d => d.periode.split('-')[0]))].sort().reverse();
-            if (years.length > 0) {
-                const div = document.createElement('div'); div.className = 'dropdown-divider'; div.textContent = '--- TAHUN ---'; periodList.appendChild(div);
-                years.forEach(y => {
-                    const d = document.createElement('div'); d.className = 'dropdown-item'; d.textContent = y;
-                    d.onclick = () => selectOption('btn-period', 'list-period', y, y, false);
-                    periodList.appendChild(d);
-                });
-            }
-            const months = [...new Set(relevantData.map(d => d.periode))].sort().reverse();
-            if (months.length > 0) {
-                const div = document.createElement('div'); div.className = 'dropdown-divider'; div.textContent = '--- BULAN ---'; periodList.appendChild(div);
-                months.forEach(p => {
-                    const label = relevantData.find(d => d.periode === p)?.periode_label || p;
-                    const d = document.createElement('div'); d.className = 'dropdown-item'; d.textContent = label;
-                    d.onclick = () => selectOption('btn-period', 'list-period', p, label, false);
-                    periodList.appendChild(d);
-                });
-            }
-
             const auditeeList = document.getElementById('list-auditee');
             const uniqueAuditees = [...new Set(relevantData.map(d => d.auditee))].sort();
             auditeeList.innerHTML = '<div class="dropdown-item" onclick="selectOption(\'btn-auditee\', \'list-auditee\', \'all\', \'Semua Auditee\', false)">Semua Auditee</div>';
@@ -850,18 +945,6 @@
                 d.onclick = () => selectOption('btn-auditee', 'list-auditee', a, a, false);
                 auditeeList.appendChild(d);
             });
-
-            let savedPeriod = localStorage.getItem('btn-period');
-            let targetPeriod = 'all', targetPeriodText = 'Semua Waktu';
-            if (isInit && savedPeriod && (years.includes(savedPeriod) || months.includes(savedPeriod))) {
-                targetPeriod = savedPeriod;
-                if(savedPeriod.length === 4) targetPeriodText = savedPeriod;
-                else targetPeriodText = relevantData.find(d => d.periode === savedPeriod)?.periode_label || savedPeriod;
-            } else {
-                localStorage.setItem('btn-period', 'all');
-            }
-            const btnP = document.getElementById('btn-period');
-            btnP.textContent = targetPeriodText; btnP.setAttribute('data-value', targetPeriod);
 
             let savedAuditee = localStorage.getItem('btn-auditee');
             let targetAuditee = 'all', targetAuditeeText = 'Semua Auditee';
@@ -872,8 +955,153 @@
             }
             const btnA = document.getElementById('btn-auditee');
             btnA.textContent = targetAuditeeText; btnA.setAttribute('data-value', targetAuditee);
-
+            
             updateCharts();
+        }
+
+        function openPeriodModal() {
+            document.getElementById('period-modal').classList.add('active');
+            
+            document.getElementById('modal-filter-type').value = globalFilterState.type;
+            
+            const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
+            const relevantData = allData.filter(d => d.audit_category === selectedType);
+            const years = [...new Set(relevantData.map(d => d.periode.split('-')[0]))].sort().reverse();
+            
+            const yearSelect = document.getElementById('modal-filter-year');
+            yearSelect.innerHTML = '<option value="" disabled selected>Pilih Tahun</option>';
+            years.forEach(y => {
+                const opt = document.createElement('option');
+                opt.value = y;
+                opt.textContent = y;
+                yearSelect.appendChild(opt);
+            });
+
+            if(globalFilterState.year && years.includes(globalFilterState.year)) {
+                yearSelect.value = globalFilterState.year;
+            }
+
+            updatePeriodInputs();
+            
+            if (globalFilterState.type === 'month' || globalFilterState.type === 'quarter') {
+                updateSpecificOptions();
+                const specSelect = document.getElementById('modal-filter-specific');
+                if (globalFilterState.specific) {
+                    specSelect.value = globalFilterState.specific;
+                }
+            }
+        }
+
+        function closePeriodModal() {
+            document.getElementById('period-modal').classList.remove('active');
+        }
+
+        function updatePeriodInputs() {
+            const type = document.getElementById('modal-filter-type').value;
+            const yearContainer = document.getElementById('modal-input-year-container');
+            const specContainer = document.getElementById('modal-input-specific-container');
+            
+            if (type === 'all') {
+                yearContainer.classList.add('hidden-input');
+                specContainer.classList.add('hidden-input');
+            } else {
+                yearContainer.classList.remove('hidden-input');
+                if (type === 'year') {
+                    specContainer.classList.add('hidden-input');
+                } else {
+                    specContainer.classList.remove('hidden-input');
+                    updateSpecificOptions();
+                }
+            }
+        }
+
+        function updateSpecificOptions() {
+            const type = document.getElementById('modal-filter-type').value;
+            const year = document.getElementById('modal-filter-year').value;
+            const specSelect = document.getElementById('modal-filter-specific');
+            const specLabel = document.getElementById('modal-specific-label');
+            
+            specSelect.innerHTML = '';
+            
+            if (!year) {
+                specSelect.innerHTML = '<option value="">Pilih Tahun Dahulu</option>';
+                return;
+            }
+
+            if (type === 'month') {
+                specLabel.textContent = "Pilih Bulan";
+                const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
+                const relevantData = allData.filter(d => d.audit_category === selectedType && d.periode.startsWith(year));
+                const months = [...new Set(relevantData.map(d => d.periode.split('-')[1]))].sort();
+                
+                const monthNames = {
+                    '01':'Januari','02':'Februari','03':'Maret','04':'April','05':'Mei','06':'Juni',
+                    '07':'Juli','08':'Agustus','09':'September','10':'Oktober','11':'November','12':'Desember'
+                };
+
+                if (months.length === 0) {
+                    specSelect.innerHTML = '<option value="">Tidak ada data bulan</option>';
+                } else {
+                    months.forEach(m => {
+                        const opt = document.createElement('option');
+                        opt.value = m;
+                        opt.textContent = monthNames[m];
+                        specSelect.appendChild(opt);
+                    });
+                }
+            } else if (type === 'quarter') {
+                specLabel.textContent = "Pilih Triwulan";
+                const quarters = [
+                    {val: 'Q1', text: 'Triwulan I (Januari - Maret)'},
+                    {val: 'Q2', text: 'Triwulan II (April - Juni)'},
+                    {val: 'Q3', text: 'Triwulan III (Juli - September)'},
+                    {val: 'Q4', text: 'Triwulan IV (Oktober - Desember)'}
+                ];
+                quarters.forEach(q => {
+                    const opt = document.createElement('option');
+                    opt.value = q.val;
+                    opt.textContent = q.text;
+                    specSelect.appendChild(opt);
+                });
+            }
+        }
+
+        function applyPeriodFilter() {
+            const type = document.getElementById('modal-filter-type').value;
+            const year = document.getElementById('modal-filter-year').value;
+            const specific = document.getElementById('modal-filter-specific').value;
+
+            if (type !== 'all' && !year) {
+                showCustomAlert("Silakan pilih tahun terlebih dahulu.", "Filter Tidak Lengkap", "warning");
+                return;
+            }
+            if ((type === 'month' || type === 'quarter') && !specific) {
+                showCustomAlert("Silakan lengkapi pilihan spesifik (Bulan/Triwulan).", "Filter Tidak Lengkap", "warning");
+                return;
+            }
+
+            globalFilterState = { type, year, specific };
+            updatePeriodTriggerButton();
+            updateCharts();
+            closePeriodModal();
+        }
+
+        function updatePeriodTriggerButton() {
+            const btn = document.getElementById('btn-period-trigger');
+            const monthNames = {
+                '01':'Januari','02':'Februari','03':'Maret','04':'April','05':'Mei','06':'Juni',
+                '07':'Juli','08':'Agustus','09':'September','10':'Oktober','11':'November','12':'Desember'
+            };
+
+            if (globalFilterState.type === 'all') {
+                btn.textContent = "Semua Waktu";
+            } else if (globalFilterState.type === 'year') {
+                btn.textContent = `Tahun ${globalFilterState.year}`;
+            } else if (globalFilterState.type === 'month') {
+                btn.textContent = `${monthNames[globalFilterState.specific]} ${globalFilterState.year}`;
+            } else if (globalFilterState.type === 'quarter') {
+                btn.textContent = `${globalFilterState.specific} ${globalFilterState.year}`;
+            }
         }
 
         function generateRadarFeedback(s, b, o, t) {
@@ -913,37 +1141,64 @@
             if (!selectedType) return;
             globalCategory = selectedType;
 
-            const selectedPeriod = document.getElementById('btn-period').getAttribute('data-value');
             const selectedAuditee = document.getElementById('btn-auditee').getAttribute('data-value');
 
             let dataBase = allData.filter(d => d.audit_category === selectedType);
             if (selectedAuditee !== 'all') dataBase = dataBase.filter(d => d.auditee === selectedAuditee);
 
             const hasBPK = dataBase.some(d => d.type === 'bpk');
-
-            const periods = [...new Set(dataBase.map(d => d.periode))].sort();
             
+            let filteredPeriods = [];
+            const allPeriods = [...new Set(dataBase.map(d => d.periode))].sort();
+
+            if (globalFilterState.type === 'all') {
+                filteredPeriods = allPeriods;
+            } else if (globalFilterState.type === 'year') {
+                filteredPeriods = allPeriods.filter(p => p.startsWith(globalFilterState.year));
+            } else if (globalFilterState.type === 'month') {
+                const target = `${globalFilterState.year}-${globalFilterState.specific}`;
+                filteredPeriods = allPeriods.filter(p => p === target);
+            } else if (globalFilterState.type === 'quarter') {
+                let months = [];
+                if(globalFilterState.specific === 'Q1') months = ['01', '02', '03'];
+                else if(globalFilterState.specific === 'Q2') months = ['04', '05', '06'];
+                else if(globalFilterState.specific === 'Q3') months = ['07', '08', '09'];
+                else if(globalFilterState.specific === 'Q4') months = ['10', '11', '12'];
+                
+                filteredPeriods = allPeriods.filter(p => {
+                    const [y, m] = p.split('-');
+                    return y === globalFilterState.year && months.includes(m);
+                });
+            }
+
+            if (filteredPeriods.length === 0 && !trendOnly) {
+                showCustomAlert("Tidak ada data untuk periode yang dipilih.", "Data Kosong", "warning");
+                filteredPeriods = allPeriods; 
+            }
+
             if (!trendOnly) {
                 const sSel = document.getElementById('trend-range-start');
                 const eSel = document.getElementById('trend-range-end');
                 sSel.innerHTML = ''; eSel.innerHTML = '';
                 const getLabel = (p) => dataBase.find(d => d.periode === p)?.periode_label || p;
-                periods.forEach(p => {
+                
+                filteredPeriods.forEach(p => {
                     const l = getLabel(p);
                     sSel.add(new Option(l, p)); eSel.add(new Option(l, p));
                 });
                 
-                let savedStart = localStorage.getItem('trend_start');
-                let savedEnd = localStorage.getItem('trend_end');
-                let s = (savedStart && periods.includes(savedStart)) ? savedStart : periods[0];
-                let e = (savedEnd && periods.includes(savedEnd)) ? savedEnd : periods[periods.length - 1];
-                
-                if (s && e) { sSel.value = s; eSel.value = e; trendStartPeriod = s; trendEndPeriod = e; }
+                if (filteredPeriods.length > 0) {
+                    sSel.value = filteredPeriods[0];
+                    eSel.value = filteredPeriods[filteredPeriods.length - 1];
+                    trendStartPeriod = filteredPeriods[0];
+                    trendEndPeriod = filteredPeriods[filteredPeriods.length - 1];
+                }
             }
 
-            const cStart = trendStartPeriod || periods[0];
-            const cEnd = trendEndPeriod || periods[periods.length - 1];
-            const visiblePeriods = periods.filter(p => p >= cStart && p <= cEnd);
+            const cStart = trendStartPeriod || filteredPeriods[0];
+            const cEnd = trendEndPeriod || filteredPeriods[filteredPeriods.length - 1];
+            
+            const visiblePeriods = allPeriods.filter(p => p >= cStart && p <= cEnd && filteredPeriods.includes(p));
             const labels = visiblePeriods.map(p => dataBase.find(d => d.periode === p)?.periode_label || p);
 
             let dS = [], dB = [], dO = [], dT = [];
@@ -971,45 +1226,83 @@
             if(trendChart) trendChart.destroy();
             
             let barDatasets = [
-                { label: 'Selesai', data: dS, backgroundColor: '#4CAF50', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 },
-                { label: 'Belum Jatuh Tempo', data: dB, backgroundColor: '#EDB100', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 }, 
-                { label: 'Outstanding', data: dO, backgroundColor: '#F44336', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 }
+                {
+                    label: 'Selesai',
+                    data: dS,
+                    backgroundColor: '#4CAF50',
+                    borderColor: '#4CAF50',
+                    borderWidth: 1,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
+                },
+                {
+                    label: hasBPK ? 'Belum Sesuai / BJT' : 'Belum Jatuh Tempo',
+                    data: dB,
+                    backgroundColor: '#EDB100', 
+                    borderColor: '#EDB100',
+                    borderWidth: 1,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
+                },
+                {
+                    label: 'Outstanding',
+                    data: dO,
+                    backgroundColor: '#F44336', 
+                    borderColor: '#F44336',
+                    borderWidth: 1,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
+                }
             ];
-            
-            if(hasBPK) {    
-                barDatasets[1].label = 'Belum Sesuai / BJT'; 
-                barDatasets.push({ label: 'TDD', data: dT, backgroundColor: '#616161', borderRadius: 4, barPercentage: 0.7, categoryPercentage: 0.8 });
+
+            if(hasBPK) {
+                barDatasets.push({
+                    label: 'TDD',
+                    data: dT,
+                    backgroundColor: '#616161', 
+                    borderColor: '#616161',
+                    borderWidth: 1,
+                    barPercentage: 0.6,
+                    categoryPercentage: 0.8
+                });
             }
 
             trendChart = new Chart(ctxT, {
-                type: 'bar',
+                type: 'bar', 
                 data: {
                     labels: labels,
                     datasets: barDatasets
                 },
-                options: { 
-                    responsive: true, maintainAspectRatio: false, 
-                    plugins: { 
-                        legend: { 
+                options: {
+                    responsive: true, maintainAspectRatio: false,
+                    interaction: {
+                        mode: 'index',
+                        intersect: false,
+                    },
+                    plugins: {
+                        legend: {
                             position: 'bottom',
                             labels: {
-                                usePointStyle: true,
+                                usePointStyle: true, 
                                 padding: 20,
                                 font: { size: 11 }
                             }
-                        }, 
-                        datalabels: { 
+                        },
+                        tooltip: {
+                            usePointStyle: true,
+                        },
+                        datalabels: {
                             display: true,
+                            align: 'top', 
                             anchor: 'end',
-                            align: 'end',
-                            offset: -4,
-                            color: '#333',
-                            font: { size: 10, weight: 'bold' },
+                            offset: 4, 
+                            color: '#333', 
+                            font: { size: 11, weight: 'bold' },
                             formatter: (value) => value > 0 ? value : ''
-                        } 
+                        }
                     },
-                    scales: { 
-                        y: { 
+                    scales: {
+                        y: {
                             beginAtZero: true,
                             grid: {
                                 borderDash: [2, 2],
@@ -1023,26 +1316,21 @@
                         }
                     },
                     layout: {
-                        padding: { top: 20 }
+                        padding: { top: 30 } 
                     }
                 }
             });
 
             if (!trendOnly) {
-                updateModalDropdowns(periods, dataBase);
-                window.recalculateStatsData = dataBase;
-                updateLiveInsight(dataBase, periods);
+                updateModalDropdowns(visiblePeriods, dataBase);
+                window.recalculateStatsData = dataBase.filter(d => visiblePeriods.includes(d.periode));
+                updateLiveInsight(dataBase, visiblePeriods);
                 recalculateStats();
                 updatePerformanceChart();
             }
             if (trendOnly) return;
 
-            let dataAcc = [...dataBase];
-            if (selectedPeriod !== 'all') {
-                if (selectedPeriod.length === 4) dataAcc = dataAcc.filter(d => d.periode.startsWith(selectedPeriod));
-                else dataAcc = dataAcc.filter(d => d.periode === selectedPeriod);
-            }
-
+            let dataAcc = dataBase.filter(d => visiblePeriods.includes(d.periode));
             updateRadarChartInternal(dataAcc, selectedAuditee);
         }
 
@@ -1238,20 +1526,11 @@
                 controls.style.display = 'flex';
                 
                 const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
-                const selectedPeriodVal = document.getElementById('btn-period').getAttribute('data-value');
-
                 const categoryData = allData.filter(d => d.audit_category === selectedType);
                 const sortedPeriods = [...new Set(categoryData.map(d => d.periode))].sort();
                 
                 let isTrendSort = false;
                 let prevPeriod = null;
-                if (selectedPeriodVal !== 'all' && sortedPeriods.includes(selectedPeriodVal)) {
-                    const idx = sortedPeriods.indexOf(selectedPeriodVal);
-                    if (idx > 0) {
-                        prevPeriod = sortedPeriods[idx - 1];
-                        isTrendSort = true;
-                    }
-                }
 
                 const uAuditees = [...new Set(filteredData.map(d => d.auditee))];
                 
@@ -1269,23 +1548,6 @@
                     const currentRate = total > 0 ? (s / total) : 0;
 
                     let trendScore = 0;
-                    if (isTrendSort) {
-                        const prevData = categoryData.filter(d => d.auditee === aud && d.periode === prevPeriod);
-                        if (prevData.length > 0) {
-                            let sp = 0, tp = 0;
-                            prevData.forEach(d => {
-                                sp += (d.selesai || 0);
-                                if (d.type === 'bpk') {
-                                    tp += (d.selesai || 0) + (d.belum_sesuai || 0) + (d.belum_tl || 0) + (d.tdd || 0);
-                                } else {
-                                    tp += (d.selesai || 0) + (d.tidak_selesai || 0) + (d.todo || 0);
-                                }
-                            });
-                            const prevRate = tp > 0 ? (sp / tp) : 0;
-                            trendScore = currentRate - prevRate;
-                        }
-                    }
-
                     return { name: aud, rate: currentRate, trend: trendScore };
                 });
 
@@ -1381,6 +1643,144 @@
             });
         }
         function closeRadarModal() { document.getElementById('radar-modal').classList.remove('active'); }
+
+        // --- NEW: REWRITTEN OPEN RADAR MODAL FUNCTION ---
+        function openRadarModal() {
+            const modal = document.getElementById('radar-modal');
+            const container = document.getElementById('all-radar-container');
+            container.innerHTML = '';
+
+            const selectedType = document.getElementById('btn-audit-type').getAttribute('data-value');
+            let dataBase = allData.filter(d => d.audit_category === selectedType);
+            
+            const allPeriods = [...new Set(dataBase.map(d => d.periode))].sort();
+            let filteredPeriods = [];
+
+            if (globalFilterState.type === 'all') {
+                filteredPeriods = allPeriods;
+            } else if (globalFilterState.type === 'year') {
+                filteredPeriods = allPeriods.filter(p => p.startsWith(globalFilterState.year));
+            } else if (globalFilterState.type === 'month') {
+                const target = `${globalFilterState.year}-${globalFilterState.specific}`;
+                filteredPeriods = allPeriods.filter(p => p === target);
+            } else if (globalFilterState.type === 'quarter') {
+                let months = [];
+                if(globalFilterState.specific === 'Q1') months = ['01', '02', '03'];
+                else if(globalFilterState.specific === 'Q2') months = ['04', '05', '06'];
+                else if(globalFilterState.specific === 'Q3') months = ['07', '08', '09'];
+                else if(globalFilterState.specific === 'Q4') months = ['10', '11', '12'];
+                
+                filteredPeriods = allPeriods.filter(p => {
+                    const [y, m] = p.split('-');
+                    return y === globalFilterState.year && months.includes(m);
+                });
+            }
+
+            if (filteredPeriods.length === 0) {
+                filteredPeriods = allPeriods; 
+            }
+
+            const dataAcc = dataBase.filter(d => filteredPeriods.includes(d.periode));
+
+            if (dataAcc.length === 0) {
+                container.innerHTML = '<p style="text-align:center;">Tidak ada data untuk ditampilkan.</p>';
+                modal.classList.add('active');
+                return;
+            }
+
+            const uAuditees = [...new Set(dataAcc.map(d => d.auditee))];
+            const auditeeStats = uAuditees.map(aud => {
+                const currentData = dataAcc.filter(d => d.auditee === aud);
+                let s=0, b=0, o=0, t=0;
+                let isBPK = false;
+                
+                currentData.forEach(d => {
+                    if (d.type === 'bpk') isBPK = true;
+                    s += (d.selesai || 0);
+                    if (d.type === 'bpk') {
+                        b += (d.belum_sesuai || 0);
+                        o += (d.belum_tl || 0);
+                        t += (d.tdd || 0);
+                    } else {
+                        b += (d.tidak_selesai || 0);
+                        o += (d.todo || 0);
+                    }
+                });
+                
+                const total = s + b + o + t;
+                const rate = total > 0 ? (s / total) : 0;
+                
+                return { name: aud, s, b, o, t, isBPK, rate };
+            });
+
+            auditeeStats.sort((a, b) => {
+                if (Math.abs(b.rate - a.rate) > 0.0001) return b.rate - a.rate; 
+                return a.name.localeCompare(b.name);
+            });
+
+            auditeeStats.forEach((stat, i) => {
+                const box = document.createElement('div');
+                box.className = 'radar-item';
+                
+                const feedbackHTML = generateRadarFeedback(stat.s, stat.b, stat.o, stat.t);
+
+                box.innerHTML = `
+                    <h4 style="margin-bottom:10px; padding-bottom:5px; border-bottom:1px solid #eee;">${stat.name}</h4>
+                    <div style="height:200px; position:relative;">
+                        <canvas id="radar-small-${i}"></canvas>
+                    </div>
+                    ${feedbackHTML} 
+                `;
+                container.appendChild(box);
+
+                setTimeout(() => {
+                    const ctx = document.getElementById(`radar-small-${i}`).getContext('2d');
+                    let labels = [], dataPoints = [];
+                    
+                    if (stat.isBPK) {
+                        labels = ['Selesai', 'Belum Sesuai', 'Belum TL', 'TDD'];
+                        dataPoints = [stat.s, stat.b, stat.o, stat.t];
+                    } else {
+                        labels = ['Selesai', 'Belum Jatuh Tempo', 'Outstanding'];
+                        dataPoints = [stat.s, stat.b, stat.o];
+                    }
+
+                    new Chart(ctx, {
+                        type: 'radar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: stat.name,
+                                data: dataPoints,
+                                fill: true,
+                                backgroundColor: 'rgba(54, 162, 235, 0.2)',
+                                borderColor: 'rgba(54, 162, 235, 1)',
+                                pointBackgroundColor: 'rgba(54, 162, 235, 1)',
+                                pointRadius: 2
+                            }]
+                        },
+                        options: {
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            plugins: {
+                                legend: { display: false },
+                                datalabels: { display: false } 
+                            },
+                            scales: {
+                                r: {
+                                    suggestedMin: 0,
+                                    ticks: { display: false }, 
+                                    grid: { color: '#f0f0f0' },
+                                    pointLabels: { font: { size: 9 } }
+                                }
+                            }
+                        }
+                    });
+                }, 0);
+            });
+
+            modal.classList.add('active');
+        }
 
         function updateLiveInsight(dataSource, periods) {
             const now = new Date();
@@ -1557,6 +1957,24 @@
                 ${v}
             `;
 
+            setTimeout(() => {
+                const badges = c.querySelectorAll('.stat-change');
+                let maxWidth = 0;
+                
+                badges.forEach(b => {
+                    b.style.width = 'auto';
+                    const w = b.getBoundingClientRect().width;
+                    if(w > maxWidth) maxWidth = w;
+                });
+
+                if(maxWidth > 0) {
+                    const finalW = Math.ceil(maxWidth) + 1; 
+                    badges.forEach(b => {
+                        b.style.width = finalW + 'px';
+                    });
+                }
+            }, 0);
+
             updateDivergingChart(s1, s2, hasTDD);
         }
         window.recalculateStats = recalculateStats;
@@ -1571,7 +1989,7 @@
             };
 
             let labels = ['Selesai', 'Belum Jatuh Tempo', 'Outstanding'];
-            let dataArr = [
+            let rawData = [
                 calcPct(s1.s, s2.s),
                 calcPct(s1.b, s2.b),
                 calcPct(s1.o, s2.o)
@@ -1580,9 +1998,11 @@
 
             if(hasTDD) {
                 labels.push('TDD');
-                dataArr.push(calcPct(s1.t, s2.t));
+                rawData.push(calcPct(s1.t, s2.t));
                 bgColors.push('#616161');
             }
+
+            let displayData = rawData.map(v => Math.abs(v));
 
             divergingChart = new Chart(ctxD, {
                 type: 'bar',
@@ -1590,7 +2010,7 @@
                     labels: labels,
                     datasets: [{
                         label: '% Perubahan',
-                        data: dataArr,
+                        data: displayData,
                         backgroundColor: bgColors,
                         borderRadius: 4
                     }]
@@ -1607,7 +2027,10 @@
                             }
                         },
                         datalabels: {
-                            color: '#fff',
+                            color: (ctx) => {
+                                const idx = ctx.dataIndex;
+                                return idx === 1 ? '#000' : '#fff';
+                            },
                             font: { weight: 'bold' },
                             formatter: (val) => val.toFixed(1) + '%'
                         }
@@ -1615,7 +2038,8 @@
                     scales: {
                         x: {
                             grid: { color: '#eee', borderDash: [2,2] },
-                            ticks: { callback: (v) => v + '%' }
+                            ticks: { callback: (v) => v + '%' },
+                            min: 0 
                         },
                         y: {
                             grid: { display: false }
@@ -1636,7 +2060,10 @@
         async function generateAIInsight() {
             const btn = document.getElementById('btn-generate-ai');
             const res = document.getElementById('ai-result');
-            if(!globalChartLabels.length) { alert("Data kosong."); return; }
+            if(!globalChartLabels.length) { 
+                showCustomAlert("Data kosong, tidak dapat melakukan analisis.", "Gagal Analisis", "error"); 
+                return; 
+            }
             btn.disabled = true; btn.innerHTML = 'Menganalisis...';
             res.innerHTML = '<p style="text-align:center;color:#666;">Sedang memproses...</p>';
             try {

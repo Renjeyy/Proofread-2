@@ -7,6 +7,7 @@
     
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png">
+    <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     
     <style>
         body { background-color: #f4f6f9; font-family: 'Poppins', sans-serif; color: #333; margin: 0; }
@@ -50,8 +51,8 @@
         }
         .assign-table { 
             width: 100%; 
-            border-collapse:
-            collapse; min-width: 2400px; 
+            border-collapse: collapse; 
+            min-width: 2400px; 
         }
         .assign-table th, .assign-table td { 
             padding: 12px 15px; 
@@ -83,124 +84,97 @@
             background-color: #e8f5e9; 
             color: #2e7d32; z-index: 11; 
         }
-        .pic-select { 
-            width: 100%; 
-            padding: 8px; 
-            border: 1px solid #ccc; 
-            border-radius: 4px; 
-            font-family: inherit; 
-            cursor: pointer;
-         }
-        .pic-select:focus {
-             border-color: #1976d2;
-             outline: none; 
-            }
-        .footer-spacer { 
-            height: 80px; 
+
+        /* --- STYLES UNTUK TOMBOL PILIH PIC --- */
+        .pic-wrapper {
+            display: flex; flex-direction: column; gap: 8px; align-items: stretch;
         }
+        .pic-display {
+            border: 1px solid #ccc; border-radius: 4px; padding: 8px; font-size: 0.85rem;
+            min-height: 38px; background: #fcfcfc; text-align: left;
+        }
+        .pic-display ol { margin: 0; padding-left: 20px; }
+        .pic-display li { margin-bottom: 2px; }
+        
+        .btn-pilih-pic-row {
+            background-color: #1976D2; color: white; border: none; padding: 8px; border-radius: 4px;
+            cursor: pointer; font-weight: 600; font-size: 0.85rem; width: 100%; transition: background 0.2s;
+        }
+        .btn-pilih-pic-row:hover { background-color: #1565C0; }
+
+        .footer-spacer { height: 80px; }
         .sticky-footer { 
-            position: fixed; 
-            bottom: 0; 
-            left: 0; 
-            width: 100%;
-            background: white; 
-            padding: 15px 0; 
-            border-top: 1px solid #ddd; 
-            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); 
-            z-index: 100; display: flex; 
+            position: fixed; bottom: 0; left: 0; width: 100%;
+            background: white; padding: 15px 0; border-top: 1px solid #ddd; 
+            box-shadow: 0 -2px 10px rgba(0,0,0,0.1); z-index: 100; display: flex; 
             justify-content: center; 
         }
-        .footer-content { 
-            width: 98%; 
-            display: flex; 
-            justify-content: 
-            flex-end; gap: 15px; 
-        }
+        .footer-content { width: 98%; display: flex; justify-content: flex-end; gap: 15px; }
         .btn-save-all { 
-            background-color: #2e7d32; 
-            color: white; 
-            padding: 12px 25px;
-            border: none; 
-            border-radius: 6px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            font-size: 1rem; 
+            background-color: #2e7d32; color: white; padding: 12px 25px;
+            border: none; border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; 
         }
-        .btn-save-all:hover { 
-            background-color: #1b5e20; 
-        }
+        .btn-save-all:hover { background-color: #1b5e20; }
         .btn-back { 
-            background-color: #fff; 
-            color: #555; 
-            border: 1px solid #ccc; 
-            padding: 12px 20px; 
-            border-radius: 6px; 
-            text-decoration: none; 
-            font-weight: 600; 
-            display: inline-block; 
+            background-color: #fff; color: #555; border: 1px solid #ccc; 
+            padding: 12px 20px; border-radius: 6px; text-decoration: none; 
+            font-weight: 600; display: inline-block; 
         }
-        .btn-back:hover { 
-            background-color: #f5f5f5; 
-        }
+        .btn-back:hover { background-color: #f5f5f5; }
+
+        /* --- MODAL STYLES --- */
         .modal { 
-            position: fixed; 
-            top: 0; left: 0; 
-            width: 100%; 
-            height: 100%; 
-            background-color: rgba(0, 0, 0, 0.5); 
-            display: flex; 
-            justify-content: center; 
-            align-items: center; 
-            z-index: 2000; 
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%; 
+            background-color: rgba(0, 0, 0, 0.5); display: flex; justify-content: center; 
+            align-items: center; z-index: 2000; 
         }
-        .hidden {
-             display: none !important; 
-        }
+        .hidden { display: none !important; }
+        
         .success-modal-content { 
-            background-color: white; 
-            padding: 30px; 
-            border-radius: 12px; 
-            text-align: center;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2); 
-            width: 90%; 
-            max-width: 400px; 
+            background-color: white; padding: 30px; border-radius: 12px; text-align: center;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.2); width: 90%; max-width: 400px; 
             animation: slideDown 0.3s ease-out; 
         }
-        .success-icon { 
-            font-size: 50px; 
-            color: #2e7d32; 
-            margin-bottom: 15px; 
-        }
-        .success-title { 
-            font-size: 1.4rem; 
-            font-weight: 700; color: #333; 
-            margin: 0 0 10px 0; 
-        }
-        .success-message { 
-            color: #666; 
-            margin-bottom: 25px; 
-            font-size: 0.95rem; 
-        }
+        .success-icon { font-size: 50px; color: #2e7d32; margin-bottom: 15px; }
+        .success-title { font-size: 1.4rem; font-weight: 700; color: #333; margin: 0 0 10px 0; }
+        .success-message { color: #666; margin-bottom: 25px; font-size: 0.95rem; }
         .btn-success-ok { 
-            background-color: #2e7d32; 
-            color: white; 
-            border: none; 
-            padding: 10px 30px; 
-            border-radius: 6px; 
-            font-weight: 600; 
-            cursor: pointer; 
-            font-size: 1rem; 
-            width: 100%; 
+            background-color: #2e7d32; color: white; border: none; padding: 10px 30px; 
+            border-radius: 6px; font-weight: 600; cursor: pointer; font-size: 1rem; width: 100%; 
         }
-        .btn-success-ok:hover { 
-            background-color: #1b5e20; 
+        .btn-success-ok:hover { background-color: #1b5e20; }
+
+        /* --- PIC SELECTION MODAL --- */
+        .pic-modal-content {
+            background-color: white; padding: 2rem; border-radius: 12px; width: 600px; max-width: 90%;
+            display: flex; flex-direction: column; max-height: 85vh; position: relative;
+            z-index: 3100;
         }
+        .modal-close-btn { position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer; color: #999; }
+        .modal-close-btn:hover { color: #333; }
+        
+        .pic-table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        .pic-table th, .pic-table td { padding: 10px 15px; border-bottom: 1px solid #eee; text-align: center; }
+        .pic-table th { background-color: #f9f9f9; font-weight: 600; color: #555; position: sticky; top: 0; z-index: 5; }
+        .pic-table tr:last-child td { border-bottom: none; }
+        .pic-table tr:hover { background-color: #f0f7ff; }
+        .pic-table input[type="checkbox"] { width: 16px; height: 16px; cursor: pointer; }
+        
+        .sortable { cursor: pointer; position: relative; }
+        .sortable:hover { background-color: #f1f1f1; }
+        .sort-icon { margin-left: 5px; font-size: 0.8em; color: #999; }
+        
+        .modal-actions { margin-top: 20px; display: flex; justify-content: flex-end; gap: 10px; }
+
         @keyframes slideDown { from { transform: translateY(-20px); opacity: 0; } to { transform: translateY(0); opacity: 1; } }
     </style>
 </head>
 <body>
 
     {% set allowed_pic_list = (reminder.pic_skai or '').split(',') | map('trim') | list %}
+    <script id="allowed-pics-data" type="application/json">
+        {{ allowed_pic_list | tojson }}
+    </script>
 
     <div class="assign-container">
         <div class="page-header">
@@ -261,24 +235,15 @@
                         <td style="text-align: center;">{{ row.dibuat_oleh or '-' }}</td>
 
                         <td class="col-sticky-right">
-                            <select class="pic-select pic-updater" data-row-id="{{ row.id }}">
-                                <option value="">-- Pilih PIC --</option>
+                            <div class="pic-wrapper">
+                                <input type="hidden" class="pic-hidden-value" data-row-id="{{ row.id }}" value="{{ row.pic_skai or '' }}">
                                 
-                                {% for user in users %}
-                                    {% if (user.username in allowed_pic_list) or (user.fullname in allowed_pic_list) %}
-                                        
-                                        {% set is_selected = '' %}
-                                        {% if row.pic_skai and user.username in row.pic_skai %}
-                                            {% set is_selected = 'selected' %}
-                                        {% endif %}
-                                        
-                                        <option value="{{ user.username }}" {{ is_selected }}>
-                                            {{ user.fullname }} ({{ user.label }})
-                                        </option>
-
-                                    {% endif %}
-                                {% endfor %}
-                            </select>
+                                <div class="pic-display" id="pic-display-{{ row.id }}">
+                                    <span style="color:#999; font-style:italic;">Memuat...</span>
+                                </div>
+                                
+                                <button type="button" class="btn-pilih-pic-row" data-id="{{ row.id }}">Pilih PIC</button>
+                            </div>
                         </td>
                     </tr>
                     {% else %}
@@ -311,27 +276,273 @@
         </div>
     </div>
 
+    <div id="pic-selection-modal" class="modal hidden">
+        <div class="pic-modal-content">
+            <span class="modal-close-btn" onclick="closePicModal()">&times;</span>
+            <h3 style="margin-bottom: 10px; color: #C62828;">Pilih PIC SKAI</h3>
+            <p style="margin-bottom: 15px; color: #666; font-size: 0.9rem;">Pilih satu atau lebih PIC yang bertanggung jawab.</p>
+            
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="search-pic-input" placeholder="Cari nama PIC..." 
+                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 0;">
+                <table class="pic-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"><input type="checkbox" id="select-all-pic"></th>
+                            <th data-sort-key="name" class="sortable pic-sort">Nama <span class="sort-icon"></span></th>
+                            <th data-sort-key="label" class="sortable pic-sort">Label <span class="sort-icon"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="pic-list-body">
+                        </tbody>
+                </table>
+            </div>
+
+            <div class="modal-actions">
+                <button type="button" class="btn-back" onclick="closePicModal()" style="border:1px solid #ccc; font-weight:normal; font-size:0.9rem;">Batal</button>
+                <button type="button" class="btn-save-all" id="save-pic-selection-btn" style="padding:10px 20px; font-size:0.9rem;">Simpan Pilihan</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        function redirectBack() {
-            window.location.href = "{{ url_for('ams_reminder_page') }}";
+        let allUsers = [];
+        let currentRowId = null;
+        let lastPicSortKey = 'name';
+        let lastPicSortDirection = 'asc';
+        
+        // Baca data allowed list dari tag script JSON
+        const allowedPicsData = document.getElementById('allowed-pics-data');
+        const ALLOWED_PICS = allowedPicsData ? JSON.parse(allowedPicsData.textContent) : [];
+
+        // Load users from backend
+        async function loadUsers() {
+            try {
+                const res = await fetch('/api/get_all_users');
+                if (res.ok) {
+                    const data = await res.json();
+                    
+                    // Filter berdasarkan daftar PIC yang diizinkan (dari Reminder)
+                    allUsers = data.filter(u => {
+                        return ALLOWED_PICS.includes(u.username) || ALLOWED_PICS.includes(u.fullname);
+                    });
+                    
+                    // Sort by name initially
+                    allUsers.sort((a, b) => a.fullname.localeCompare(b.fullname));
+
+                    // Init display for all rows
+                    document.querySelectorAll('.pic-hidden-value').forEach(input => {
+                        updatePicDisplay(input.dataset.rowId, input.value);
+                    });
+                }
+            } catch (e) {
+                console.error("Gagal load user", e);
+            }
         }
 
+        function updatePicDisplay(rowId, valueString) {
+            const displayEl = document.getElementById(`pic-display-${rowId}`);
+            if (!valueString) {
+                displayEl.innerHTML = '<span style="color:#999; font-style:italic;">Belum ada PIC</span>';
+                return;
+            }
+
+            const usernames = valueString.split(',').map(s => s.trim()).filter(s => s);
+            if (usernames.length === 0) {
+                displayEl.innerHTML = '<span style="color:#999; font-style:italic;">Belum ada PIC</span>';
+            } else if (usernames.length === 1) {
+                // Single PIC
+                const user = allUsers.find(u => u.username === usernames[0]);
+                displayEl.textContent = user ? user.fullname : usernames[0];
+            } else {
+                // Multiple PIC (Numbered List)
+                let html = '<ol>';
+                usernames.forEach(uname => {
+                    const user = allUsers.find(u => u.username === uname);
+                    html += `<li>${user ? user.fullname : uname}</li>`;
+                });
+                html += '</ol>';
+                displayEl.innerHTML = html;
+            }
+        }
+
+        // --- MODAL LOGIC ---
+        function openPicModalFor(rowId) {
+            currentRowId = rowId;
+            const currentVal = document.querySelector(`.pic-hidden-value[data-row-id="${rowId}"]`).value;
+            const currentSelection = currentVal ? currentVal.split(',').map(s => s.trim()) : [];
+
+            renderPicList(currentSelection);
+
+            // Reset search & select all
+            document.getElementById('search-pic-input').value = '';
+            document.getElementById('select-all-pic').checked = false;
+            sortPicTable(lastPicSortKey); // Default sort
+
+            document.getElementById('pic-selection-modal').classList.remove('hidden');
+        }
+
+        function renderPicList(currentSelection) {
+            const tbody = document.getElementById('pic-list-body');
+            tbody.innerHTML = '';
+
+            if (allUsers.length === 0) {
+                tbody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px; color:#999;">Tidak ada data PIC yang tersedia.</td></tr>';
+                return;
+            }
+
+            allUsers.forEach(u => {
+                const tr = document.createElement('tr');
+                tr.className = 'pic-list-item';
+                tr.dataset.username = u.username;
+                tr.dataset.name = u.fullname.toLowerCase();
+                tr.dataset.label = u.label.toLowerCase();
+
+                // Checkbox
+                const tdCheck = document.createElement('td');
+                const cb = document.createElement('input');
+                cb.type = 'checkbox';
+                cb.value = u.username;
+                cb.className = 'pic-item-checkbox';
+                if (currentSelection.includes(u.username)) cb.checked = true;
+                
+                // Click row to toggle
+                tr.onclick = (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        cb.checked = !cb.checked;
+                    }
+                };
+
+                tdCheck.appendChild(cb);
+                tr.appendChild(tdCheck);
+
+                // Name
+                const tdName = document.createElement('td');
+                tdName.textContent = u.fullname;
+                tr.appendChild(tdName);
+
+                // Label
+                const tdLabel = document.createElement('td');
+                tdLabel.textContent = u.label;
+                tr.appendChild(tdLabel);
+
+                tbody.appendChild(tr);
+            });
+        }
+
+        function sortPicTable(key) {
+            // Reset icons
+            document.querySelectorAll('.pic-table th.sortable').forEach(h => {
+                h.classList.remove('asc', 'desc');
+                h.querySelector('.sort-icon').textContent = '';
+            });
+
+            const isAscending = lastPicSortKey !== key || lastPicSortDirection === 'desc';
+            const direction = isAscending ? 'asc' : 'desc';
+            
+            const currentHeader = document.querySelector(`.pic-table th[data-sort-key="${key}"]`);
+            if (currentHeader) {
+                currentHeader.classList.add(direction);
+                currentHeader.querySelector('.sort-icon').textContent = isAscending ? '▲' : '▼';
+            }
+
+            const tbody = document.getElementById('pic-list-body');
+            const rows = Array.from(tbody.querySelectorAll('tr.pic-list-item'));
+
+            rows.sort((a, b) => {
+                const valA = a.dataset[key];
+                const valB = b.dataset[key];
+                if (valA < valB) return isAscending ? -1 : 1;
+                if (valA > valB) return isAscending ? 1 : -1;
+                return 0;
+            });
+
+            rows.forEach(row => tbody.appendChild(row));
+            
+            lastPicSortKey = key;
+            lastPicSortDirection = direction;
+        }
+
+        function closePicModal() {
+            document.getElementById('pic-selection-modal').classList.add('hidden');
+            currentRowId = null;
+        }
+
+        // --- EVENT LISTENERS ---
         document.addEventListener('DOMContentLoaded', () => {
+            loadUsers();
+
+            // EVENT DELEGATION
+            document.addEventListener('click', function(e) {
+                if (e.target.classList.contains('btn-pilih-pic-row')) {
+                    const id = e.target.getAttribute('data-id');
+                    openPicModalFor(id);
+                }
+            });
+
+            // Save Selection from Modal
+            document.getElementById('save-pic-selection-btn').addEventListener('click', () => {
+                if (currentRowId === null) return;
+                
+                const checkboxes = document.querySelectorAll('.pic-item-checkbox:checked');
+                const selectedUsernames = Array.from(checkboxes).map(cb => cb.value);
+                const newValue = selectedUsernames.join(',');
+
+                // Update hidden input & display
+                const hiddenInput = document.querySelector(`.pic-hidden-value[data-row-id="${currentRowId}"]`);
+                hiddenInput.value = newValue;
+                updatePicDisplay(currentRowId, newValue);
+
+                closePicModal();
+            });
+
+            // Search Filter
+            document.getElementById('search-pic-input').addEventListener('keyup', (e) => {
+                const term = e.target.value.toLowerCase();
+                document.querySelectorAll('#pic-list-body tr.pic-list-item').forEach(row => {
+                    const txtName = row.dataset.name;
+                    const txtLabel = row.dataset.label;
+                    row.style.display = (txtName.includes(term) || txtLabel.includes(term)) ? '' : 'none';
+                });
+            });
+
+            // Select All
+            document.getElementById('select-all-pic').addEventListener('change', (e) => {
+                document.querySelectorAll('.pic-item-checkbox').forEach(cb => {
+                    if (cb.closest('tr').style.display !== 'none') {
+                        cb.checked = e.target.checked;
+                    }
+                });
+            });
+
+            // Sorting Headers
+            document.querySelectorAll('.pic-table th.sortable').forEach(header => {
+                header.addEventListener('click', function() {
+                    const key = this.getAttribute('data-sort-key');
+                    sortPicTable(key);
+                });
+            });
+
+            // Save All Changes to Server
             const btnSave = document.getElementById('btn-save-changes');
             const successModal = document.getElementById('success-modal');
 
             if (btnSave) {
                 btnSave.addEventListener('click', async () => {
-                    const selects = document.querySelectorAll('.pic-updater');
+                    const inputs = document.querySelectorAll('.pic-hidden-value');
                     const updates = [];
-                    selects.forEach(sel => {
+                    inputs.forEach(inp => {
                         updates.push({
-                            id: sel.dataset.rowId,
-                            pic_skai: sel.value
+                            id: inp.dataset.rowId,
+                            pic_skai: inp.value
                         });
                     });
 
                     if (updates.length === 0) return;
+                    
                     btnSave.textContent = "Menyimpan...";
                     btnSave.disabled = true;
 
@@ -359,6 +570,10 @@
                 });
             }
         });
+
+        function redirectBack() {
+            window.location.href = "{{ url_for('ams_reminder_page') }}";
+        }
     </script>
 </body>
 </html>

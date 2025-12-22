@@ -1142,7 +1142,7 @@
             </div>
         </section>
 
-        {% if label == 'CoE' or label == 'Advisory' %}
+        {% if label == 'CoE' or label == 'Advisory' or label == 'Audit' %}
         
         <section class="data-table-container">
             <div class="list-header">
@@ -1830,7 +1830,6 @@
         </div>
     </div>
 
-    <script src="{{ url_for('static', filename='ams_reminder.js') }}?v=14"></script>
     <script>
         document.addEventListener('DOMContentLoaded', () => {
             
@@ -2025,136 +2024,135 @@
             }
 
             function renderTable(data, tbody) {
+                if (!tbody) return;
                 tbody.innerHTML = '';
-                if (!data.length) { tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:2rem; color:#999;">Belum ada data.</td></tr>'; return; }
+                
+                if (!data.length) {
+                    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:2rem; color:#999;">Belum ada data.</td></tr>';
+                    return;
+                }
+
                 data.forEach((item, index) => {
                     const tr = document.createElement('tr');
-                    const statusObj = getStatusStyle(item.status, item.is_overdue);
-                    const { col1, col2 } = getCompanyColumns(item.auditee);
                     
                     const picSkai = formatUserListHTML(item.pic_skai);
                     const picRem = formatUserListHTML(item.pic_reminder);
                     const picAud = formatUserListHTML(item.pic_auditee);
-                    
-                    let isPicReminder = false;
-                    if (item.pic_reminder) {
-                        const arr = Array.isArray(item.pic_reminder) 
-                            ? item.pic_reminder 
-                            : item.pic_reminder.split(',');
-                        
-                        isPicReminder = arr
-                            .map(s => s.trim())
-                            .includes(currentUsername);
-                    }
 
-                    const canRemind = isPicReminder || item.is_owner;
-                    const canInput = isPicReminder || item.is_owner;
-                    const canEditResponded = item.is_owner || item.is_current_user_pic;
-                    const { displaySisa, styleSisa } = calculateSLA(item.deadline_raw);
-                    const temuanBtn = getTemuanButton(item, canInput);
+                    let statusStyle = "background: #E8F5E9; color: #2E7D32;";
+                    if(item.is_overdue) statusStyle = "background: #FFEBEE; color: #C62828;";
+                    else if(item.sisa_hari === "0 hari") statusStyle = "background: #FFF9C4; color: #F57F17;";
 
                     let reminderLevelHtml = '';
-                    if (tbody.id === 'past-tbody') {
-                        const d1 = new Date(item.deadline_raw);
-                        d1.setHours(0,0,0,0);
-                        const d2 = new Date();
-                        d2.setHours(0,0,0,0);
-                        const diffTime = d2 - d1;
-                        const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+                    
+                    const d1 = new Date(item.deadline_raw);
+                    d1.setHours(0,0,0,0);
+                    const d2 = new Date(); 
+                    d2.setHours(0,0,0,0);
+                    const diffTime = d2 - d1;
+                    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
 
+                    if (!item.is_responded && item.is_overdue) {
                         let reminders = [];
-                        
-                        if (!item.is_responded) {
-                            const styleBase = "padding: 6px; width: 100%; box-sizing: border-box; font-size: 0.85em; font-weight: 700;";
-                            const styleYellow = "background-color: #FFFde7; color: #e65100;"; // Updated yellow style
-                            const styleRed = "background-color: #FFEBEE; color: #C62828;";
-                            
-                            if (diffDays > 0) {
-                                const isLate = diffDays > 5;
-                                const style = isLate ? styleRed : styleYellow;
-                                const border = (diffDays > 5) ? "border-bottom: 1px solid #ddd;" : "";
-                                reminders.push(`<div style="${styleBase} ${style} ${border}">1 (Pertama)</div>`);
-                            }
-                            if (diffDays > 5) {
-                                const isLate = diffDays > 10;
-                                const style = isLate ? styleRed : styleYellow;
-                                const border = (diffDays > 10) ? "border-bottom: 1px solid #ddd;" : "";
-                                reminders.push(`<div style="${styleBase} ${style} ${border}">2 (Kedua)</div>`);
-                            }
-                            if (diffDays > 10) {
-                                const isLate = diffDays > 15;
-                                const style = isLate ? styleRed : styleYellow;
-                                reminders.push(`<div style="${styleBase} ${style}">3 (Ketiga)</div>`);
-                            }
+                        const styleBase = "padding: 6px; width: 100%; box-sizing: border-box; font-size: 0.85em; font-weight: 700; border-radius: 4px; margin-bottom: 3px; text-align: center;";
+                        const styleActive = "background-color: #5CE65C; color: #000000; border: 1px solid #FFF59D;";
+                        const stylePassed = "background-color: #C62828; color: white; border: 1px solid #B71C1C;";
+
+                        // REMINDER 1 (Overdue > 0 hari)
+                        if (diffDays > 0) {
+                            // Jika sudah masuk Reminder 2 (>5 hari), maka Reminder 1 jadi Merah (Passed)
+                            // Jika belum, maka Reminder 1 tetap Kuning (Active)
+                            const style1 = (diffDays > 5) ? stylePassed : styleActive;
+                            reminders.push(`<div style="${styleBase} ${style1}">1 (Pertama)</div>`);
                         }
 
-                        reminderLevelHtml = `<td style="padding: 0; vertical-align: top; min-width: 130px;">
-                            <div style="display: flex; flex-direction: column; height: 100%;">
-                                ${reminders.join('')}
+                        if (diffDays > 5) {
+                            const style2 = (diffDays > 10) ? stylePassed : styleActive;
+                            reminders.push(`<div style="${styleBase} ${style2}">2 (Kedua)</div>`);
+                        }
+
+                        if (diffDays > 10) {
+                            reminders.push(`<div style="${styleBase} ${styleActive}">3 (Ketiga)</div>`);
+                        }
+                        
+                        reminderLevelHtml = `
+                            <td style="padding: 5px; vertical-align: top; min-width: 110px;">
+                                <div style="display: flex; flex-direction: column;">
+                                    ${reminders.join('')}
+                                </div>
+                            </td>
+                        `;
+                    } else {
+                        // Jika tidak overdue atau sudah direspon
+                        reminderLevelHtml = `<td>-</td>`;
+                    }
+
+                    let temuanBtn = `<span style="color:#999; font-size:0.8em;">-</span>`;
+                    
+                    if (item.visible_temuan_count > 0) {
+                        temuanBtn = `
+                            <a href="/view_linked_temuan/${item.id}" target="_blank" class="btn-view-temuan">
+                                View <span class="badge-count">${item.visible_temuan_count}</span>
+                            </a>`;
+                    } else if (item.is_owner || item.is_current_user_pic) {
+                        temuanBtn = `<button class="btn-input-temuan" onclick="openLinkModal(${item.id})">+ Input Temuan</button>`;
+                    }
+
+                    let actionButtons = '';
+                    if(item.is_owner) {
+                        actionButtons = `
+                            <div style="display:flex; gap:5px; justify-content:center;">
+                                <button class="action-btn btn-save" onclick="saveStatus(${item.id})">Save</button>
+                                <button class="action-btn btn-edit" onclick='openEdit(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
+                                <button class="action-btn btn-delete" onclick="deleteItem(${item.id})">Hapus</button>
                             </div>
-                        </td>`;
+                        `;
+                    } else if (item.is_current_user_pic) {
+                        actionButtons = `
+                            <div style="display:flex; gap:5px; justify-content:center;">
+                                <button class="action-btn btn-save" onclick="saveStatus(${item.id})">Save</button>
+                            </div>
+                        `;
+                    }
+
+                    let companyCol = ``;
+                    let auditeeCol = ``;
+                    if (item.auditee && item.auditee.startsWith("IFG - ")) {
+                        const unit = item.auditee.replace("IFG - ", "");
+                        companyCol = `<td class="col-company" style="text-align:center;"><span class="badge badge-company">IFG</span></td>`;
+                        auditeeCol = `<td class="col-auditee">${unit}</td>`;
+                    } else {
+                        companyCol = `<td class="col-company" style="text-align:center;"><span class="badge badge-company">${item.auditee || '-'}</span></td>`;
+                        auditeeCol = `<td class="col-auditee"></td>`;
                     }
 
                     tr.innerHTML = `
-                        <td>${index + 1}</td> ${col1} ${col2}
-                        <td class="col-pic" style="text-align:left; vertical-align:top;">${picAud}</td>
-                        <td class="col-pic" style="text-align:left; vertical-align:top;">${picSkai}</td>
-                        <td class="col-pic" style="text-align:left; vertical-align:top;">${picRem}</td>
-                        
-                        <td class="col-pic" style="text-align:center; vertical-align:middle;">
-                            <span style="font-weight: 600;">${item.creator_fullname || item.creator_name}</span> 
-                            <br>
-                            <span style="font-size: 0.8em; color: var(--text-muted);">${item.created_at}</span>
+                        <td>${index + 1}</td>
+                        ${companyCol}
+                        ${auditeeCol}
+                        <td class="col-pic" style="vertical-align:top; text-align: left;">${picAud}</td>
+                        <td class="col-pic" style="vertical-align:top; text-align: left;">${picSkai}</td>
+                        <td class="col-pic" style="vertical-align:top; text-align: left;">${picRem}</td>
+                        <td class="col-pic" style="text-align:center;">
+                            <strong>${item.creator_name}</strong><br>
+                            <small style="color:#777;">${item.created_at}</small>
                         </td>
+                        <td>${item.subject || '-'}</td>
+                        <td>${item.deadline}</td>
+                        <td><span class="status-badge" style="${statusStyle}">${item.status}</span></td>
+                        <td style="font-weight:bold; color:${item.is_overdue ? '#D32F2F' : '#2E7D32'}">${item.sisa_hari}</td>
                         
-                        <td>${item.subject || '-'}</td>  
-                        <td>${item.deadline || '-'}</td>
-                        <td><span class="status-badge" style="background:${statusObj.bg}; color:${statusObj.text};">${item.status}</span></td>
-                        <td style="${styleSisa}">${displaySisa}</td>
                         ${reminderLevelHtml}
+                        
                         <td class="col-temuan" style="text-align:center;">${temuanBtn}</td>
-                        
-                        <td class="col-checkbox">
-                            <input 
-                                type="checkbox" 
-                                id="remind-check-${item.id}" 
-                                ${!canRemind ? 'disabled' : ''} 
-                                style="transform: scale(1.5);" 
-                                ${item.is_reminded ? 'checked' : ''}
-                            >
+                        <td class="col-checkbox" style="text-align:center;">
+                            <input type="checkbox" id="remind-check-${item.id}" ${item.is_reminded ? 'checked' : ''} ${(!item.is_owner && !item.is_current_user_pic) ? 'disabled' : ''} style="transform: scale(1.5);">
                         </td>
-                        
-                        <td class="col-checkbox">
-                            <input 
-                                type="checkbox" 
-                                id="respon-check-${item.id}" 
-                                style="transform: scale(1.5);" 
-                                ${item.is_responded ? 'checked' : ''} 
-                                ${!canEditResponded ? 'disabled' : ''}
-                            >
+                        <td class="col-checkbox" style="text-align:center;">
+                            <input type="checkbox" id="respon-check-${item.id}" ${item.is_responded ? 'checked' : ''} ${(!item.is_owner && !item.is_current_user_pic) ? 'disabled' : ''} style="transform: scale(1.5);">
                         </td>
-                        <td>
-                            <div style="display:flex; gap:5px; justify-content:center;">
-                                <button 
-                                    class="action-btn btn-save" 
-                                    onclick="saveStatus(${item.id})"
-                                >
-                                    Save
-                                </button>
-                                <button 
-                                    class="action-btn btn-edit" 
-                                    onclick='openEdit(${JSON.stringify(item).replace(/'/g, "&#39;")})'  
-                                >
-                                    Edit
-                                </button>
-                                <button 
-                                    class="action-btn btn-delete" 
-                                    onclick="deleteItem(${item.id})"
-                                >
-                                    Hapus
-                                </button>
-                            </div>
-                        </td>`;
+                        <td>${actionButtons}</td>
+                    `;
                     tbody.appendChild(tr);
                 });
             }

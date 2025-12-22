@@ -1,4 +1,5 @@
 document.addEventListener('DOMContentLoaded', async () => {
+    // --- ELEMENT DEFINITIONS ---
     const addSessionBtn = document.getElementById('add-temuan-session-btn');
     const createModal = document.getElementById('create-temuan-modal');
     const closeCreateModal = document.getElementById('close-create-modal');
@@ -58,15 +59,32 @@ document.addEventListener('DOMContentLoaded', async () => {
     const btnConfirmDeleteComment = document.getElementById('btn-confirm-delete-comment');
     const btnCancelDeleteComment = document.getElementById('btn-cancel-delete-comment');
 
-    const showReportBtn = document.getElementById('show-report-table-btn');
-    const reportModal = document.getElementById('report-table-modal');
-    const downloadPngBtn = document.getElementById('download-report-png-btn');
+    const monthlyReportBtn = document.getElementById('monthly-report-btn');
+    const reportSelectionModal = document.getElementById('report-selection-modal');
+    const closeReportModal = document.getElementById('close-report-modal');
+    const cancelReportBtn = document.getElementById('cancel-report-btn');
+    const generateReportBtn = document.getElementById('generate-report-btn');
+    const reportAuditeeList = document.getElementById('report-auditee-list');
+    const selectAllAuditeesCb = document.getElementById('select-all-auditees');
+    const searchAuditeeInput = document.getElementById('search-auditee-report');
+
+    const btnOpenPicModal = document.getElementById('btn-open-pic-modal');
+    const picSelectionModal = document.getElementById('pic-selection-modal');
+    const closePicModalBtn = document.getElementById('close-pic-modal');
+    const cancelPicBtn = document.getElementById('cancel-pic-btn');
+    const savePicBtn = document.getElementById('save-pic-btn');
+    const picListBody = document.getElementById('pic-list-body');
+    const searchPicInput = document.getElementById('search-pic-input');
+    const selectAllPicCb = document.getElementById('select-all-pic');
+    const picDisplayArea = document.getElementById('pic-display-area');
+    const picSkaiHidden = document.getElementById('pic_skai_hidden');
 
     let currentSessionId = null;
     let currentSessionName = ""; 
     let rawExcelData = null;      
     let allData = [];
     let userMap = {};
+    let usersList = []; 
     
     let isEditing = false;
     let editRowId = null;
@@ -79,6 +97,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentUsers = [];
     let lastSortKey = 'label'; 
     let lastSortDirection = 'asc';
+    let lastPicSortKey = 'name';
+    let lastPicSortDirection = 'asc';
     let dynamicCutoffPrev = new Date(); 
     let dynamicCutoffCurr = new Date();
 
@@ -132,8 +152,6 @@ document.addEventListener('DOMContentLoaded', async () => {
 
         if (headerPrev) headerPrev.innerText = formatHeader(datePrev);
         if (headerCurr) headerCurr.innerText = formatHeader(dateCurr);
-        
-        console.log(`Headers Updated: Prev=${formatHeader(datePrev)} (H-1), Curr=${formatHeader(dateCurr)} (H)`);
     }
 
     async function initApp() {
@@ -279,14 +297,13 @@ document.addEventListener('DOMContentLoaded', async () => {
             });
         }
 
-        const monthlyReportBtn = document.getElementById('monthly-report-btn');
         if (monthlyReportBtn) {
             monthlyReportBtn.addEventListener('click', () => {
                 if (!currentSessionId) {
                     showCustomMessage("Silakan pilih sesi terlebih dahulu.");
                     return;
                 }
-                window.open(`/laporan_bulanan/${currentSessionId}`, '_blank');
+                openReportSelectionModal();
             });
         }
 
@@ -297,7 +314,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         document.querySelectorAll('.modal-close-btn, .cancel-btn').forEach(btn => {
-            if (btn.id !== 'cancel-data-btn' && btn.id !== 'btn-close-warning') {
+            if (btn.id !== 'cancel-data-btn' && btn.id !== 'btn-close-warning' && btn.id !== 'cancel-report-btn' && btn.id !== 'cancel-pic-btn') {
                 btn.addEventListener('click', (e) => {
                     const modal = e.target.closest('.modal');
                     if (modal) {
@@ -384,6 +401,82 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (excelInput) excelInput.addEventListener('change', handleFileSelect);
         if (processImportBtn) processImportBtn.addEventListener('click', processImportData);
         if (cancelSheetBtn) cancelSheetBtn.addEventListener('click', () => toggleModal('sheet-selection-modal', false));
+
+        if (selectAllAuditeesCb) {
+            selectAllAuditeesCb.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.auditee-report-cb');
+                checkboxes.forEach(cb => {
+                    if (cb.closest('li').style.display !== 'none') {
+                        cb.checked = e.target.checked;
+                    }
+                });
+            });
+        }
+
+        if (searchAuditeeInput) {
+            searchAuditeeInput.addEventListener('keyup', (e) => {
+                const term = e.target.value.toLowerCase();
+                const items = reportAuditeeList.querySelectorAll('li');
+                items.forEach(li => {
+                    const text = li.textContent.toLowerCase();
+                    li.style.display = text.includes(term) ? 'flex' : 'none';
+                });
+            });
+        }
+
+        if (generateReportBtn) {
+            generateReportBtn.addEventListener('click', () => {
+                const checkboxes = document.querySelectorAll('.auditee-report-cb:checked');
+                const selectedAuditees = Array.from(checkboxes).map(cb => cb.value);
+
+                if (selectedAuditees.length === 0) {
+                    alert("Harap pilih setidaknya satu Unit Kerja.");
+                    return;
+                }
+                const encodedAuditees = encodeURIComponent(selectedAuditees.join(','));
+                const url = `/laporan_bulanan/${currentSessionId}?auditees=${encodedAuditees}`;
+                
+                window.open(url, '_blank');
+                toggleModal('report-selection-modal', false);
+            });
+        }
+
+        if (closeReportModal) closeReportModal.addEventListener('click', () => toggleModal('report-selection-modal', false));
+        if (cancelReportBtn) cancelReportBtn.addEventListener('click', () => toggleModal('report-selection-modal', false));
+    
+        if(btnOpenPicModal) btnOpenPicModal.addEventListener('click', openPicModal);
+        if(closePicModalBtn) closePicModalBtn.addEventListener('click', closePicModal);
+        if(cancelPicBtn) cancelPicBtn.addEventListener('click', closePicModal);
+        if(savePicBtn) savePicBtn.addEventListener('click', savePicSelection);
+        
+        if(selectAllPicCb) {
+            selectAllPicCb.addEventListener('change', (e) => {
+                const checkboxes = document.querySelectorAll('.pic-item-checkbox');
+                checkboxes.forEach(cb => {
+                    if(cb.closest('tr').style.display !== 'none') {
+                        cb.checked = e.target.checked;
+                    }
+                });
+            });
+        }
+        
+        if(searchPicInput) {
+            searchPicInput.addEventListener('keyup', (e) => {
+                const term = e.target.value.toLowerCase();
+                const items = picListBody.querySelectorAll('tr');
+                items.forEach(row => {
+                    const txt = row.textContent.toLowerCase();
+                    row.style.display = txt.includes(term) ? '' : 'none';
+                });
+            });
+        }
+        
+        document.querySelectorAll('.pic-table th.pic-sort').forEach(header => {
+            header.addEventListener('click', function() {
+                const key = this.getAttribute('data-sort-key');
+                sortPicTable(key);
+            });
+        });
     }
 
     function toggleModal(modalId, show) {
@@ -510,7 +603,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (tableTitle) tableTitle.textContent = `Detail: ${sName}`;
         }
 
-        // Update Header Tabel Sesuai Nama Sesi
         updateDynamicHeaders(sName);
 
         advancedSearchDisplay.value = "";
@@ -567,11 +659,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         const colFilter = filterColumnSelect.value;
         const searchVal = advancedSearchValue.value; 
         if (!searchVal) { renderTable(allData); return; }
+
         const filtered = allData.filter(row => {
             if (colFilter === 'all') return true; 
             const rowVal = row[colFilter] ? String(row[colFilter]).trim() : "";
             return rowVal === searchVal; 
         });
+
+        if (filtered.length === 0) {
+            showCustomMessage("Data tidak ditemukan atau kriteria filter salah.");
+        }
+
         renderTable(filtered);
     }
 
@@ -579,10 +677,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (!temuanTbody) return;
         temuanTbody.innerHTML = '';
 
-        // Logic Status: Prioritas Utama = Marker Import Excel
         const getStatus = (tDateStr, cutoffDate, forceSelesai) => {
             if (forceSelesai) {
-                // Warna hijau sesuai Excel user
                 return '<span class="status-bjt" style="background-color: #d4edda; color: #155724; border-color: #c3e6cb;">Selesai</span>';
             }
 
@@ -596,6 +692,16 @@ document.addEventListener('DOMContentLoaded', async () => {
                 '<span class="status-os">OS</span>';
         };
 
+        const formatPICCell = (picString) => {
+            if (!picString) return '-';
+            const pics = picString.split(',').filter(p => p.trim() !== '');
+            if (pics.length > 1) {
+                const names = pics.map(p => userMap[p.trim()] || p.trim());
+                return `<ol style="padding-left: 15px; margin: 0; text-align: left;">${names.map(n => `<li>${n}</li>`).join('')}</ol>`;
+            }
+            return userMap[picString] || picString;
+        };
+
         if (dataList.length === 0) {
             temuanTbody.innerHTML = '<tr><td colspan="26" class="text-center" style="padding: 40px; color: #666;">Tidak ada data ditemukan.</td></tr>';
             return;
@@ -604,33 +710,25 @@ document.addEventListener('DOMContentLoaded', async () => {
         dataList.forEach(row => {
             const tr = document.createElement('tr');
 
-            // Deteksi Marker "Selesai" dari Import
             let rawControl = row.control || "";
             let isSelesaiExcel = false;
             
             if (rawControl.includes('$$FORCE_SELESAI$$')) {
                 isSelesaiExcel = true;
-                // Hapus marker agar tabel bersih
                 rawControl = rawControl.replace('$$FORCE_SELESAI$$', '').trim();
             }
 
             const targetDate = row.perubahan_target || row.target_penyelesaian;
 
-            // Panggil status dengan flag isSelesaiExcel
             const statusPrevHtml = getStatus(targetDate, dynamicCutoffPrev, isSelesaiExcel);
             const statusCurrHtml = getStatus(targetDate, dynamicCutoffCurr, isSelesaiExcel);
 
             const val = (v) => (v === null || v === undefined) ? '' : v;
             const num = (v) => (v === null || v === undefined) ? 0 : v;
 
-            const getPicName = (rawVal) => {
-                if (!rawVal) return '-';
-                return userMap[rawVal] || userMap[rawVal.trim()] || rawVal;
-            };
-
             tr.innerHTML = `
                 <td class="text-center">${val(row.no_aoi)}</td>
-                <td class="text-center">${getPicName(row.pic_skai)}</td>
+                <td class="text-center" style="white-space:nowrap; ${row.pic_skai && row.pic_skai.includes(',') ? 'text-align:left; vertical-align:top;' : ''}">${formatPICCell(row.pic_skai)}</td>
                 <td class="text-center">${val(row.jenis_aoi)}</td>
                 <td class="text-center">${val(row.klasifikasi)}</td>
                 <td class="text-center">${val(row.no_lha)}</td>
@@ -673,12 +771,162 @@ document.addEventListener('DOMContentLoaded', async () => {
         });
     }
 
+    function openReportSelectionModal() {
+        const uniqueAuditees = [...new Set(allData.map(item => item.auditee ? item.auditee.trim() : ""))].filter(a => a !== "").sort();
+
+        reportAuditeeList.innerHTML = '';
+        selectAllAuditeesCb.checked = false;
+        searchAuditeeInput.value = '';
+
+        if (uniqueAuditees.length === 0) {
+            reportAuditeeList.innerHTML = '<li style="text-align:center; color:#999; padding:20px;">Tidak ada data unit kerja.</li>';
+        } else {
+            uniqueAuditees.forEach(auditee => {
+                const li = document.createElement('li');
+                li.style.display = 'flex';
+                li.style.alignItems = 'center';
+                li.style.padding = '10px 15px';
+                
+                li.onclick = (e) => {
+                    if (e.target.type !== 'checkbox') {
+                        const cb = li.querySelector('input');
+                        cb.checked = !cb.checked;
+                    }
+                };
+
+                const checkbox = document.createElement('input');
+                checkbox.type = 'checkbox';
+                checkbox.value = auditee;
+                checkbox.className = 'auditee-report-cb';
+                checkbox.style.marginRight = '10px';
+                checkbox.style.cursor = 'pointer';
+
+                const span = document.createElement('span');
+                span.textContent = auditee;
+
+                li.appendChild(checkbox);
+                li.appendChild(span);
+                reportAuditeeList.appendChild(li);
+            });
+        }
+
+        toggleModal('report-selection-modal', true);
+    }
+
+    function openPicModal() {
+        document.getElementById('add-data-modal').classList.add('hidden');
+
+        picListBody.innerHTML = '';
+        searchPicInput.value = '';
+        selectAllPicCb.checked = false;
+        
+        let currentSelection = [];
+        if(picSkaiHidden.value) {
+            currentSelection = picSkaiHidden.value.split(',').map(s => s.trim());
+        }
+
+        if(usersList.length === 0) {
+            picListBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding:20px;">Memuat user...</td></tr>';
+            return; 
+        }
+
+        usersList.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.className = 'pic-list-item';
+            
+            tr.onclick = (e) => {
+                if(e.target.type !== 'checkbox') {
+                    const cb = tr.querySelector('input');
+                    cb.checked = !cb.checked;
+                }
+            };
+
+            const tdCheck = document.createElement('td');
+            const cb = document.createElement('input');
+            cb.type = 'checkbox';
+            cb.value = u.username;
+            cb.className = 'pic-item-checkbox';
+            if(currentSelection.includes(u.username)) cb.checked = true;
+            tdCheck.appendChild(cb);
+
+            const tdName = document.createElement('td');
+            tdName.textContent = u.fullname;
+            
+            const tdLabel = document.createElement('td');
+            tdLabel.textContent = u.label;
+
+            tr.appendChild(tdCheck);
+            tr.appendChild(tdName);
+            tr.appendChild(tdLabel);
+            
+            picListBody.appendChild(tr);
+        });
+
+        toggleModal('pic-selection-modal', true);
+        sortPicTable(lastPicSortKey); 
+    }
+
+    function sortPicTable(key) {
+        document.querySelectorAll('.pic-table th.sortable').forEach(h => {
+            h.classList.remove('asc', 'desc');
+            h.querySelector('.sort-icon').textContent = '';
+        });
+
+        const isAscending = lastPicSortKey !== key || lastPicSortDirection === 'desc';
+        const direction = isAscending ? 'asc' : 'desc';
+        const currentHeader = document.querySelector(`.pic-table th[data-sort-key="${key}"]`);
+        if (currentHeader) {
+            currentHeader.classList.add(direction);
+            currentHeader.querySelector('.sort-icon').textContent = isAscending ? '▲' : '▼';
+        }
+
+        const rows = Array.from(picListBody.querySelectorAll('tr'));
+        rows.sort((a, b) => {
+            const valA = a.children[key === 'name' ? 1 : 2].textContent.toLowerCase();
+            const valB = b.children[key === 'name' ? 1 : 2].textContent.toLowerCase();
+            if (valA < valB) return isAscending ? -1 : 1;
+            if (valA > valB) return isAscending ? 1 : -1;
+            return 0;
+        });
+
+        picListBody.innerHTML = '';
+        rows.forEach(row => picListBody.appendChild(row));
+
+        lastPicSortKey = key;
+        lastPicSortDirection = direction;
+    }
+
+    function closePicModal() {
+        toggleModal('pic-selection-modal', false);
+        document.getElementById('add-data-modal').classList.remove('hidden');
+    }
+
+    function savePicSelection() {
+        const checkboxes = document.querySelectorAll('.pic-item-checkbox:checked');
+        const selected = Array.from(checkboxes).map(cb => cb.value);
+        
+        picSkaiHidden.value = selected.join(',');
+        
+        if(selected.length === 0) {
+            picDisplayArea.textContent = "Belum ada PIC dipilih";
+        } else {
+            const names = selected.map(uname => userMap[uname] || uname);
+            picDisplayArea.textContent = names.join(', ');
+        }
+        
+        closePicModal();
+    }
+
     function openAddRowModal() {
         isEditing = false;
         editRowId = null;
         document.getElementById('add-data-form').reset();
         if(modalTitle) modalTitle.textContent = "Tambah Data Temuan";
         document.getElementById('current-session-id').value = currentSessionId;
+        
+        picSkaiHidden.value = "";
+        picDisplayArea.textContent = "Belum ada PIC dipilih";
+
         toggleModal('add-data-modal', true);
     }
 
@@ -696,7 +944,17 @@ document.addEventListener('DOMContentLoaded', async () => {
             const input = form.elements[key];
             if(input) input.value = rowData[key] || (key.includes('jml') || key === 'selesai' || key === 'os_bd' || key === 'belum_jt_bs' || key === 'tdd' ? 0 : '');
         });
-        if(form.elements['pic_skai']) form.elements['pic_skai'].value = rowData['pic_skai'] || '';
+
+        const picVal = rowData['pic_skai'] || "";
+        picSkaiHidden.value = picVal;
+        if(picVal) {
+            const parts = picVal.split(',').map(s=>s.trim());
+            const displayNames = parts.map(u => userMap[u] || u);
+            picDisplayArea.textContent = displayNames.join(', ');
+        } else {
+            picDisplayArea.textContent = "Belum ada PIC dipilih";
+        }
+
         toggleModal('add-data-modal', true);
     }
 
@@ -948,9 +1206,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         const sheetName = document.getElementById('excel-sheet-select').value;
         const worksheet = workbook.Sheets[sheetName];
 
-        // --- PERBAIKAN: Menggunakan sheet_to_json dengan raw: false untuk parsing nilai hasil perhitungan ---
         let rawData = XLSX.utils.sheet_to_json(worksheet, {header: 1, raw: false});
-        // --- END PERBAIKAN ---
 
         const cleanStr = (str) => {
             if (!str || typeof str !== 'string') return "";
@@ -1149,7 +1405,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setTimeout(() => {
             toggleModal('import-progress-modal', false);
             loadTemuanData(currentSessionId);
-            toggleModal('import-warning-modal', true); // Munculkan warning di sini
+            toggleModal('import-warning-modal', true); 
         }, 1000);
     }
 
@@ -1178,8 +1434,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const res = await fetch('/api/get_all_users');
             if (res.ok) {
-                const users = await res.json();
-                users.forEach(u => {
+                usersList = await res.json();
+                
+                usersList = usersList.filter(u => {
+                    const l = (u.label || '').toUpperCase();
+                    return l === 'COE' || l === 'ADVISORY' || l === 'AUDIT';
+                });
+                usersList.sort((a, b) => a.fullname.localeCompare(b.fullname));
+
+                usersList.forEach(u => {
                     if (u.username) userMap[u.username] = u.fullname;
                     if (u.id) userMap[u.id] = u.fullname;
                     if (u.fullname) userMap[u.fullname] = u.fullname;

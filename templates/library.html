@@ -7,6 +7,7 @@
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     
     <style>
         :root {
@@ -23,6 +24,8 @@
             --text-light-gray: #707EAE;
             --white: #FFFFFF;
             --border-color: #E0E5F2;
+            --shadow-soft: 0 20px 27px 0 rgba(0, 0, 0, 0.05);
+            --shadow-modal: 0 25px 50px -12px rgba(0, 0, 0, 0.25);
         }
 
         * {
@@ -37,8 +40,10 @@
             display: block; 
             min-height: 100vh;
             font-size: 0.9rem;
+            color: var(--text-dark);
         }
 
+        /* --- SIDEBAR STYLES --- */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--white);
@@ -63,23 +68,27 @@
             padding: 24px 12px;
         }
 
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .sidebar::-webkit-scrollbar-thumb {
-            background-color: #ddd;
-            border-radius: 3px;
-        }
-
         .sidebar-toggle-btn {
             position: absolute;
-            top: 25px;
+            top: 20px;
             right: 20px;
+            width: 35px;
+            height: 35px;
+            background: transparent;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
             cursor: pointer;
             font-size: 24px;
             color: var(--text-gray);
             z-index: 3002;
-            transition: right 0.3s ease;
+            transition: all 0.3s ease;
+        }
+        
+        .sidebar-toggle-btn:hover {
+            background-color: var(--secondary-bg);
+            color: var(--primary-color);
         }
         
         .sidebar.collapsed .sidebar-toggle-btn {
@@ -100,7 +109,7 @@
 
         .sidebar-logo img {
             max-width: 100px;
-            height: auto;
+            height: 100%;
             transition: opacity 0.2s;
         }
 
@@ -292,6 +301,7 @@
             background: rgba(255,255,255,0.2);
         }
 
+        /* --- MAIN CONTENT STYLES --- */
         main {
             margin-left: var(--sidebar-width) !important;
             width: auto !important;
@@ -319,6 +329,7 @@
             box-sizing: border-box;
         }
 
+        /* --- LIBRARY SPECIFIC STYLES --- */
         .library-container {
             padding: 0;
             width: 100%;
@@ -329,88 +340,109 @@
 
         .shelf-grid {
             display: grid;
-            grid-template-columns: repeat(3, 1fr);
-            gap: 25px;
+            grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+            gap: 30px;
             margin-top: 20px;
         }
 
         .shelf-card {
-            background: #fff;
-            border-radius: 16px;
-            padding: 25px;
-            box-shadow: 0 4px 15px rgba(0,0,0,0.05);
-            transition: transform 0.2s, box-shadow 0.2s;
-            border: 1px solid #E0E5F2;
+            background: #ffffff;
+            border: none;
+            border-radius: 24px;
+            padding: 30px 25px;
+            position: relative;
+            overflow: hidden;
+            transition: all 0.4s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+            box-shadow: var(--shadow-soft);
             display: flex;
             flex-direction: column;
             align-items: center;
             text-align: center;
-            position: relative;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        .shelf-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 6px;
+            background: linear-gradient(90deg, #C62828, #FF8A80);
         }
 
         .shelf-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 8px 25px rgba(0,0,0,0.1);
+            transform: translateY(-10px);
+            box-shadow: 0 20px 40px -10px rgba(198, 40, 40, 0.2);
         }
 
         .shelf-icon {
-            font-size: 50px;
-            color: var(--primary-color);
-            margin-bottom: 15px;
-            background: #FFEBEE;
-            padding: 15px;
+            width: 90px;
+            height: 90px;
+            background: linear-gradient(135deg, #FFEBEE 0%, #FFF 100%);
             border-radius: 50%;
-            width: 80px;
-            height: 80px;
+            font-size: 42px;
+            color: #C62828;
+            margin-bottom: 20px;
+            box-shadow: inset 0 0 20px rgba(198, 40, 40, 0.05);
+            border: 1px solid #FFCDD2;
             display: flex;
             align-items: center;
             justify-content: center;
         }
 
         .shelf-title {
-            font-size: 18px;
-            font-weight: 700;
-            color: var(--text-dark);
+            font-size: 20px;
+            font-weight: 800;
+            color: #2B3674;
+            letter-spacing: -0.5px;
             margin-bottom: 8px;
         }
 
         .shelf-count {
-            font-size: 13px;
-            color: var(--text-gray);
-            margin-bottom: 20px;
+            background: #F4F7FE;
+            padding: 6px 15px;
+            border-radius: 20px;
+            font-size: 12px;
+            color: #707EAE;
+            font-weight: 600;
+            margin-bottom: 25px;
         }
 
         .shelf-actions {
-            display: flex;
-            gap: 10px;
             width: 100%;
+            gap: 12px;
+            display: flex;
             margin-top: auto;
         }
 
         .btn-open-shelf {
             flex: 2;
-            background-color: #1565C0;
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.3);
+            border-radius: 12px;
+            padding: 12px;
+            font-weight: 700;
+            letter-spacing: 0.5px;
             color: white;
             border: none;
-            padding: 10px;
-            border-radius: 8px;
             cursor: pointer;
-            font-weight: 600;
             font-size: 14px;
-            transition: background 0.2s;
+            transition: transform 0.2s;
         }
 
         .btn-open-shelf:hover {
-            background-color: #0D47A1;
+            transform: scale(1.02);
+            box-shadow: 0 6px 15px rgba(198, 40, 40, 0.4);
         }
 
         .btn-delete-shelf {
             flex: 1;
-            background-color: #FFEBEE;
+            border-radius: 12px;
+            border: 2px solid #FFEBEE;
+            background: transparent;
             color: #C62828;
-            border: 1px solid #C62828;
             padding: 10px;
-            border-radius: 8px;
             cursor: pointer;
             font-weight: 600;
             font-size: 14px;
@@ -418,7 +450,8 @@
         }
 
         .btn-delete-shelf:hover {
-            background-color: #FFCDD2;
+            background: #FFEBEE;
+            border-color: #FFCDD2;
         }
 
         .hidden-view {
@@ -432,9 +465,9 @@
             margin-bottom: 20px;
             background: #fff;
             padding: 15px;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            border: 1px solid #e0e0e0;
+            border-radius: 16px;
+            box-shadow: var(--shadow-soft);
+            border: none;
             flex-wrap: wrap;
             gap: 15px;
         }
@@ -446,11 +479,20 @@
         }
 
         .lib-select, .lib-search {
-            padding: 8px 12px;
-            border: 1px solid #ddd;
-            border-radius: 4px;
+            padding: 10px 15px;
+            border: 1px solid #E0E5F2;
+            border-radius: 12px;
             font-size: 14px;
             outline: none;
+            background: #F4F7FE;
+            color: #2B3674;
+            transition: all 0.2s;
+        }
+        
+        .lib-select:focus, .lib-search:focus {
+            background: #fff;
+            border-color: #C62828;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
         }
 
         .lib-search { 
@@ -462,6 +504,7 @@
             text-decoration: none;
             font-size: 14px;
             cursor: pointer;
+            font-weight: 600;
         }
 
         .reset-link:hover { 
@@ -469,146 +512,190 @@
         }
 
         .library-table-wrapper {
-            background: #fff;
-            border-radius: 8px;
-            box-shadow: 0 2px 5px rgba(0,0,0,0.05);
-            overflow-x: auto;
+            background: transparent;
+            box-shadow: none;
+            overflow-x: visible; 
         }
 
         .library-table {
             width: 100%;
-            border-collapse: collapse;
+            border-collapse: separate;
+            border-spacing: 0 12px;
             font-size: 14px;
         }
 
-        .library-table thead {
-            background-color: #f9f9f9;
-            border-bottom: 2px solid #eee;
+        .library-table thead th {
+            background: transparent;
+            border: none;
+            font-size: 12px;
+            text-transform: uppercase;
+            color: #A3AED0;
+            letter-spacing: 0.5px;
+            padding: 15px;
+            text-align: center !important; 
+            font-weight: 700;
+            vertical-align: middle;
         }
 
-        .library-table th {
-            text-align: center;
-            padding: 15px;
-            font-weight: 600;
-            color: #333;
+        .library-table tbody tr {
+            background: #ffffff;
+            box-shadow: var(--shadow-soft);
+            border-radius: 16px;
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+        }
+
+        .library-table tbody tr:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 15px 30px rgba(0,0,0,0.08);
+            z-index: 2;
+            position: relative;
         }
 
         .library-table td {
-            padding: 15px;
-            border-bottom: 1px solid #eee;
+            border: none;
+            padding: 20px 15px;
+            font-size: 14px;
             vertical-align: middle;
-            color: #555;
-            text-align: center;
+            color: #2B3674;
+            text-align: center; 
         }
 
-        .library-table tr:hover { 
-            background-color: #fcfcfc; 
+        .library-table td:first-child {
+            border-top-left-radius: 16px;
+            border-bottom-left-radius: 16px;
+        }
+        .library-table td:last-child {
+            border-top-right-radius: 16px;
+            border-bottom-right-radius: 16px;
         }
 
-        .col-title, .col-summary {
-            text-align: justify !important;
+        .input-no-lemari {
+            border: none !important;
+            background: #F4F7FE !important;
+            border-radius: 8px !important;
+            padding: 8px !important;
+            color: #2B3674 !important;
+            font-weight: 700 !important;
+            text-align: center !important;
+            width: 80% !important;
+            transition: all 0.3s !important;
+        }
+
+        .input-no-lemari:focus {
+            background: #fff !important;
+            box-shadow: 0 0 0 2px #C62828 !important;
         }
 
         .col-title a {
-            color: #0277BD;
-            font-weight: 600;
-            text-decoration: none;
+            color: #2B3674;
             font-size: 15px;
-            display: block;
+            font-weight: 700;
+            transition: color 0.2s;
+            text-decoration: none;
         }
 
         .col-title a:hover { 
-            text-decoration: underline; 
+            color: #C62828;
         }
 
-        .col-category span {
-            color: #0277BD;
+        .jenis-btn {
+            border: none !important;
+            font-size: 12px !important;
+            font-weight: 600 !important;
+            padding: 8px 16px !important;
+            border-radius: 20px !important;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.05) !important;
+            transition: all 0.3s !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            gap: 6px !important;
             cursor: pointer;
+            justify-content: center;
+            min-width: 120px; 
         }
 
-        .file-type-badge {
-            display: inline-block;
-            padding: 3px 8px;
-            border-radius: 4px;
-            font-size: 11px;
-            font-weight: bold;
-            text-transform: uppercase;
-            color: #555;
-            background: #eee;
+        .jenis-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 4px 8px rgba(0,0,0,0.1) !important;
         }
 
         .action-buttons {
             display: flex;
             justify-content: center;
-            gap: 5px;
+            gap: 8px;
         }
 
-        .btn-view {
-            background-color: #0277BD;
-            color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 13px;
+        .btn-icon-action {
+            width: 35px;
+            height: 35px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
             border: none;
             cursor: pointer;
-            transition: background 0.2s;
+            transition: all 0.2s;
+            font-size: 18px;
         }
 
-        .btn-view:hover { 
-            background-color: #01579B; 
+        .btn-view-icon {
+            background: #E3F2FD;
+            color: #1565C0;
         }
-
-        .btn-delete {
-            background-color: #C62828;
+        .btn-view-icon:hover {
+            background: #1565C0;
             color: white;
-            padding: 6px 12px;
-            border-radius: 4px;
-            text-decoration: none;
-            font-size: 13px;
-            border: none;
-            cursor: pointer;
-            transition: background 0.2s;
         }
 
-        .btn-delete:hover { 
-            background-color: #B71C1C; 
+        .btn-delete-icon {
+            background: #FFEBEE;
+            color: #C62828;
+        }
+        .btn-delete-icon:hover {
+            background: #C62828;
+            color: white;
         }
 
         .btn-add-new {
             background-color: #C62828;
             color: white;
-            padding: 8px 16px;
-            border-radius: 4px;
+            padding: 10px 20px;
+            border-radius: 12px;
             border: none;
             cursor: pointer;
             font-weight: 600;
             display: flex;
             align-items: center;
-            gap: 5px;
+            gap: 8px;
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.2);
+            transition: all 0.2s;
         }
 
         .btn-add-new:hover { 
-            background-color: #B71C1C; 
+            background-color: #B71C1C;
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(198, 40, 40, 0.3);
         }
 
         .btn-back {
-            background-color: transparent;
-            color: #666;
+            background-color: white;
+            color: #2B3674;
             padding: 8px 16px;
-            border-radius: 4px;
-            border: 1px solid #ccc;
+            border-radius: 10px;
+            border: 1px solid #E0E5F2;
             cursor: pointer;
-            font-weight: 600;
+            font-weight: 700;
             display: flex;
             align-items: center;
             gap: 5px;
-            margin-right: 10px;
+            margin-right: 15px;
+            transition: all 0.2s;
         }
 
         .btn-back:hover {
-            background-color: #eee;
-            color: #333;
+            background-color: #F4F7FE;
+            border-color: #C62828;
+            color: #C62828;
         }
 
         .form-group { 
@@ -619,95 +706,127 @@
         .form-group label { 
             display: block; 
             margin-bottom: 8px; 
-            font-weight: 600; 
-            font-size: 0.95rem;
-            color: #333; 
+            font-weight: 700; 
+            font-size: 0.9rem;
+            color: #2B3674; 
         }
 
-        .form-group input, .form-group textarea {
+        .form-group input, .form-group textarea, .form-group select {
             width: 100%; 
-            padding: 10px 12px; 
-            border: 1px solid #ccc; 
-            border-radius: 6px;
+            padding: 12px 16px; 
+            border: 1px solid #E0E5F2; 
+            border-radius: 12px;
             font-size: 14px;
             box-sizing: border-box;
             font-family: inherit;
+            background: #fff;
+            color: #2B3674;
+            transition: all 0.2s;
         }
 
-        .form-group input:focus, .form-group textarea:focus {
+        .form-group input:focus, .form-group textarea:focus, .form-group select:focus {
             outline: none;
             border-color: #C62828;
+            box-shadow: 0 0 0 3px rgba(198, 40, 40, 0.1);
         }
 
-        .modal { display: none; position: fixed; top: 0; left: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); z-index: 3005; align-items: center; justify-content: center; }
-        .modal.active { display: flex; }
+        .modal { 
+            display: none; 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            width: 100%; 
+            height: 100%; 
+            background: rgba(43, 54, 116, 0.4); 
+            backdrop-filter: blur(5px);
+            z-index: 3005; 
+            align-items: center; 
+            justify-content: center; 
+            opacity: 0;
+            transition: opacity 0.3s ease;
+        }
+        
+        .modal.active { 
+            display: flex; 
+            opacity: 1;
+        }
+        
         .hidden { display: none !important; }
 
         .modal-content {
-            background-color: #fefefe;
-            margin: 5% auto;
-            padding: 30px;
-            border: 1px solid #888;
+            background-color: #ffffff;
+            margin: auto;
+            padding: 32px;
+            border: none;
             width: 90%; 
             max-width: 500px;
-            border-radius: 12px;
-            box-shadow: 0 4px 8px rgba(0,0,0,0.1);
-            max-height: 85vh;
+            border-radius: 24px;
+            box-shadow: var(--shadow-modal);
+            max-height: 90vh;
             overflow-y: auto;
             position: relative;
             box-sizing: border-box;
+            transform: scale(0.95);
+            transition: transform 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+        }
+        
+        .modal.active .modal-content {
+            transform: scale(1);
         }
 
         .modal-actions {
             display: flex;
             justify-content: space-between;
-            gap: 20px;
-            margin-top: 30px;
+            gap: 16px;
+            margin-top: 32px;
             width: 100%;
             box-sizing: border-box;
         }
 
         .modal-actions button {
             flex: 1;
-            width: 50%;
-            height: 48px;
-            padding: 0 !important;
-            margin: 0 !important;
+            height: 50px;
+            padding: 0 20px;
             display: flex;
             align-items: center;
             justify-content: center;
-            font-size: 16px;
-            font-weight: 600;
-            border-radius: 6px;
+            font-size: 15px;
+            font-weight: 700;
+            border-radius: 12px;
             cursor: pointer;
             border: none;
-            box-sizing: border-box;
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+        
+        .modal-actions button:active {
+            transform: scale(0.98);
         }
 
         .btn-secondary {
-            background-color: #6c757d; 
-            color: white;
+            background-color: #F4F7FE; 
+            color: #2B3674;
         }
 
         .btn-secondary:hover { 
-            background-color: #5a6268; 
+            background-color: #E0E5F2; 
         }
 
         .login-btn {
-            background-color: #C62828;
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
             color: white;
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.2);
         }
 
         .login-btn:hover { 
-            background-color: #B71C1C; 
+            box-shadow: 0 6px 15px rgba(198, 40, 40, 0.3);
+            transform: translateY(-1px);
         }
 
         .delete-modal-content {
             text-align: center;
-            padding: 30px;
-            border-radius: 12px;
+            padding: 40px;
+            border-radius: 24px;
             max-width: 400px;
-            animation: popIn 0.3s ease;
         }
 
         .delete-icon-wrapper {
@@ -718,7 +837,7 @@
             display: flex;
             align-items: center;
             justify-content: center;
-            margin: 0 auto 20px auto;
+            margin: 0 auto 24px auto;
         }
 
         .delete-icon { 
@@ -728,74 +847,278 @@
 
         .delete-title { 
             font-size: 1.5rem; 
-            color: #333; 
-            margin-bottom: 10px; 
-            font-weight: 700; 
+            color: #2B3674; 
+            margin-bottom: 12px; 
+            font-weight: 800; 
         }
 
         .delete-text { 
-            color: #666; 
-            margin-bottom: 25px; 
-            line-height: 1.5; 
+            color: #707EAE; 
+            margin-bottom: 32px; 
+            line-height: 1.6; 
+            font-size: 15px;
         }
 
         .delete-actions { 
             display: flex; 
-            gap: 15px; 
+            gap: 16px; 
             justify-content: center; 
             width: 100%;
         }
 
         .btn-cancel-modal, .btn-confirm-delete-modal {
             flex: 1;
-            height: 45px;
-            border-radius: 6px;
+            height: 50px;
+            border-radius: 12px;
             border: none;
-            font-weight: 600;
+            font-weight: 700;
             cursor: pointer;
             transition: 0.2s;
             font-size: 15px;
         }
 
         .btn-cancel-modal { 
-            background-color: #f0f0f0; 
-            color: #333; 
+            background-color: #F4F7FE; 
+            color: #2B3674; 
         }
 
         .btn-cancel-modal:hover { 
-            background-color: #e0e0e0; 
+            background-color: #E0E5F2; 
         }
 
         .btn-confirm-delete-modal { 
-            background-color: #C62828; 
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%); 
             color: white; 
-            box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2);
+            box-shadow: 0 4px 10px rgba(198, 40, 40, 0.2);
         }
 
         .btn-confirm-delete-modal:hover { 
-            background-color: #B71C1C; 
-            transform: translateY(-1px);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 15px rgba(198, 40, 40, 0.3);
         }
 
-        @keyframes popIn {
-            from { transform: scale(0.8); opacity: 0; }
-            to { transform: scale(1); opacity: 1; }
-        }
-        
         .modal-close-btn {
             position: absolute;
-            top: 15px;
-            right: 20px;
+            top: 24px;
+            right: 24px;
             font-size: 24px;
             cursor: pointer;
-            color: #999;
+            color: #A3AED0;
+            transition: color 0.2s;
+            background: #F4F7FE;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
         }
         .modal-close-btn:hover {
-            color: #333;
+            color: #C62828;
+            background: #FFEBEE;
         }
 
         .no-transition {
             transition: none !important;
+        }
+
+        .chip-option {
+            display: inline-block;
+            padding: 10px 20px;
+            border-radius: 20px;
+            background: #fff;
+            color: #2B3674;
+            font-weight: 600;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            border: 1px solid #E0E5F2;
+            margin: 5px;
+            box-shadow: 0 2px 5px rgba(0,0,0,0.03);
+        }
+
+        .chip-option:hover {
+            background: #E3F2FD;
+            border-color: #1565C0;
+            color: #1565C0;
+            transform: translateY(-2px);
+        }
+
+        .filter-value-btn {
+            background: #2B3674;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 12px;
+            border: none;
+            cursor: pointer;
+            font-size: 13px;
+            font-weight: 700;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .filter-value-btn:hover {
+            background: #1A237E;
+            transform: translateY(-1px);
+        }
+        .active-filter-tag {
+            background: #FFEBEE;
+            color: #C62828;
+            padding: 8px 16px;
+            border-radius: 12px;
+            font-size: 12px;
+            font-weight: 700;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .active-filter-tag i {
+            cursor: pointer;
+            font-size: 16px;
+        }
+        
+        #folder-preview-modal .modal-content {
+            max-width: 1000px; 
+            width: 95%;
+        }
+        
+        .preview-table-container {
+            max-height: 500px;
+            overflow-y: auto;
+            margin-bottom: 24px;
+            border: 1px solid #E0E5F2;
+            border-radius: 16px;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.02);
+        }
+        
+        .preview-table-container table {
+            margin: 0;
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        .preview-table-container th {
+            position: sticky;
+            top: 0;
+            background: #F4F7FE;
+            z-index: 10;
+            padding: 15px;
+            font-size: 12px;
+            color: #707EAE;
+            font-weight: 700;
+            text-transform: uppercase;
+            border-bottom: 1px solid #E0E5F2;
+        }
+        
+        .preview-table-container td {
+            padding: 12px 15px;
+            border-bottom: 1px solid #F0F3FA;
+            background: white;
+            vertical-align: middle;
+        }
+        
+        .preview-table-container tr:last-child td {
+            border-bottom: none;
+        }
+        
+        .preview-select {
+            width: 100%;
+            padding: 8px 12px;
+            border-radius: 8px;
+            border: 1px solid #E0E5F2;
+            background: white;
+            color: #2B3674;
+            font-size: 13px;
+            font-weight: 500;
+            outline: none;
+            cursor: pointer;
+        }
+        
+        .preview-select:focus {
+            border-color: #C62828;
+            box-shadow: 0 0 0 2px rgba(198, 40, 40, 0.1);
+        }
+
+        .btn-fill-detail {
+            background: #F4F7FE;
+            color: #2B3674;
+            border: 1px solid #E0E5F2;
+            padding: 10px 16px;
+            border-radius: 8px;
+            font-size: 13px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            width: 100%;
+            text-align: center;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-fill-detail:hover {
+            background: #E3F2FD;
+            border-color: #1565C0;
+            color: #1565C0;
+        }
+
+        .btn-fill-detail.filled {
+            background: #E8F5E9;
+            border-color: #4CAF50;
+            color: #2E7D32;
+        }
+
+        /* Custom Alert Styles */
+        .alert-modal-content {
+            text-align: center;
+            max-width: 400px;
+        }
+        .alert-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+        }
+        .alert-title {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: #2B3674;
+            margin-bottom: 10px;
+        }
+        .alert-message {
+            color: #707EAE;
+            margin-bottom: 25px;
+            line-height: 1.5;
+        }
+
+        /* GLOBAL SEARCH MODAL STYLES */
+        #global-search-modal .modal-content {
+            max-width: 1200px; 
+            width: 95%;
+        }
+
+        .file-upload-info {
+            display: none;
+            background: #F4F7FE;
+            border-radius: 12px;
+            padding: 12px 16px;
+            margin-bottom: 10px;
+            border: 1px solid #E0E5F2;
+            align-items: center;
+            justify-content: space-between;
+        }
+        
+        .file-upload-info.active {
+            display: flex;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        
+        .shelf-card {
+            animation: fadeIn 0.5s ease forwards;
         }
     </style>
     
@@ -823,15 +1146,21 @@
             const sidebar = document.querySelector('.sidebar');
             const main = document.querySelector('main');
             const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
+            
+            if(!sidebar || !main) return;
+
             sidebar.classList.toggle('collapsed');
             main.classList.toggle('expanded');
+            
             const isCollapsed = sidebar.classList.contains('collapsed');
-            localStorage.setItem('sidebar-collapsed', isCollapsed);
+            try {
+                localStorage.setItem('sidebar-collapsed', isCollapsed);
+            } catch(e) {}
             
             if (isCollapsed) {
-                toggleBtn.className = 'bx bx-right-arrow-alt';
+                if(toggleBtn) toggleBtn.className = 'bx bx-right-arrow-alt';
             } else {
-                toggleBtn.className = 'bx bx-menu';
+                if(toggleBtn) toggleBtn.className = 'bx bx-menu';
             }
         }
     </script>
@@ -954,11 +1283,28 @@
     <main>
         <div class="library-container">
             <div id="shelf-view">
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
-                    <h2 class="section-title" style="margin: 0; text-align: center; color: var(--text-dark);">Lemari Dokumen</h2>
-                    <button class="btn-add-new" onclick="openAddShelfModal()">
-                        <span>+</span> Buat Lemari Baru
-                    </button>
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 30px;">
+                    <div>
+                        <h2 class="section-title" style="margin: 0; color: var(--text-dark); font-size: 28px;">Lemari Dokumen</h2>
+                        <p style="margin: 5px 0 0 0; color: var(--text-gray);">Kelola dan organisir dokumen audit Anda.</p>
+                    </div>
+                    
+                    <div style="display: flex; gap: 12px; align-items: center;">
+                        <div style="position: relative;">
+                            <i class='bx bx-search' style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #A3AED0; font-size: 18px;"></i>
+                            <input type="text" placeholder="Cari Dokumen..." style="padding: 10px 10px 10px 38px; border: 1px solid #E0E5F2; border-radius: 12px; font-size: 14px; color: #2B3674; outline: none; background: #fff; width: 250px; transition: all 0.2s;" onfocus="this.style.borderColor='#C62828'; this.style.boxShadow='0 0 0 3px rgba(198, 40, 40, 0.1)'" onblur="this.style.borderColor='#E0E5F2'; this.style.boxShadow='none'" onkeydown="handleGlobalSearch(event)">
+                        </div>
+
+                        <input type="file" id="folder-input" webkitdirectory directory multiple style="display: none;" onchange="handleFolderSelect(this)">
+                        
+                        <button class="btn-add-new" style="background: white; color: #C62828; border: 2px solid #C62828; padding: 10px 24px;" onclick="triggerFolderUpload()">
+                            <i class='bx bxs-folder-open' style="font-size: 20px;"></i> Upload Folder
+                        </button>
+
+                        <button class="btn-add-new" onclick="openAddShelfModal()" style="padding: 10px 24px;">
+                            <i class='bx bx-plus' style="font-size: 20px;"></i> Buat Lemari Baru
+                        </button>
+                    </div>
                 </div>
                 
                 <div class="shelf-grid" id="shelf-grid-container">
@@ -966,31 +1312,46 @@
             </div>
 
             <div id="file-view" class="hidden-view">
-                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 20px;">
+                <div style="display: flex; justify-content: space-between; align-items: center; width: 100%; margin-bottom: 30px;">
                     <div style="display: flex; align-items: center;">
                         <button class="btn-back" onclick="backToShelves()">
                             <i class='bx bx-arrow-back'></i> Kembali
                         </button>
-                        <h2 class="section-title" style="margin: 0; text-align: left; color: var(--text-dark);" id="current-shelf-title">Nama Lemari</h2>
+                        <h2 class="section-title" style="margin: 0; text-align: left; color: var(--text-dark); font-size: 24px;" id="current-shelf-title">Nama Lemari</h2>
                     </div>
                     <button class="btn-add-new" onclick="openAddFileModal()">
-                        <span>+</span> Tambah File Baru
+                        <i class='bx bx-plus'></i> Tambah File Baru
                     </button>
                 </div>
 
                 <div class="library-toolbar">
                     <div class="toolbar-left">
-                        <select id="filter-category" class="lib-select" onchange="filterLibrary()">
-                            <option value="">All Categories</option>
-                        </select>
-                        <select id="filter-type" class="lib-select" onchange="filterLibrary()">
-                            <option value="">All Types</option>
-                        </select>
-                        <a href="#" class="reset-link" onclick="resetFilters()">↺ Reset</a>
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <span style="font-weight: 700; color: #2B3674; font-size: 14px;">FILTER:</span>
+                            <select id="filter-criteria" class="lib-select" onchange="handleFilterCriteriaChange()">
+                                <option value="">Semua</option>
+                                <option value="category">Kategori</option>
+                                <option value="type">Tipe File</option>
+                                <option value="cluster">Cluster</option>
+                            </select>
+                            
+                            <button id="filter-value-btn" class="filter-value-btn hidden" onclick="openFilterValueModal()">
+                                Pilih Opsi <i class='bx bx-chevron-down'></i>
+                            </button>
+
+                            <div id="active-filter-display" class="active-filter-tag hidden">
+                                <span id="active-filter-text"></span>
+                                <i class='bx bx-x' onclick="resetFilters()"></i>
+                            </div>
+
+                            <a href="#" class="reset-link" onclick="resetFilters()">Reset Filter</a>
+                        </div>
                     </div>
                     <div class="toolbar-right">
-                        <label for="search-library" style="color:#666; font-size:14px;">Search:</label>
-                        <input type="text" id="search-library" class="lib-search" placeholder="Cari judul atau ringkasan..." onkeyup="filterLibrary()">
+                        <div style="position: relative;">
+                            <i class='bx bx-search' style="position: absolute; left: 12px; top: 50%; transform: translateY(-50%); color: #A3AED0; font-size: 18px;"></i>
+                            <input type="text" id="search-library" class="lib-search" placeholder="Cari judul atau ringkasan..." style="padding-left: 38px; width: 300px;" onkeyup="filterLibrary()">
+                        </div>
                     </div>
                 </div>
 
@@ -998,18 +1359,18 @@
                     <table class="library-table" id="library-table">
                         <thead>
                             <tr>
-                                <th width="20%">Title</th>
-                                <th width="15%">Cluster by</th>
-                                <th width="35%">Summary</th>
-                                <th width="15%">Categories</th>
-                                <th width="10%">Size</th>
-                                <th width="10%">Type</th>
-                                <th width="10%">Action</th>
+                                <th width="25%" style="text-align: left !important; padding-left: 20px;">DOKUMEN</th>
+                                <th width="10%">NO. LEMARI</th>
+                                <th width="12%">CLUSTER</th>
+                                <th width="15%">JENIS LAPORAN</th>
+                                <th width="20%">RINGKASAN</th>
+                                <th width="10%">KATEGORI</th>
+                                <th width="8%">AKSI</th>
                             </tr>
                         </thead>
                         <tbody id="library-table-body">
                             <tr>
-                                <td colspan="7" style="padding: 30px;">Memuat data library...</td>
+                                <td colspan="7" style="padding: 40px; color: #A3AED0;">Memuat data library...</td>
                             </tr>
                         </tbody>
                     </table>
@@ -1025,8 +1386,7 @@
     <div id="add-shelf-modal" class="modal hidden">
         <div class="modal-content">
             <span class="modal-close-btn" onclick="closeAddShelfModal()">&times;</span>
-            <h3 style="margin-top:0; color: #C62828; text-align: center; font-size: 1.5rem; margin-bottom: 25px;">Buat Lemari Baru</h3>
-            <div style="border-bottom: 2px solid #C62828; margin-bottom: 25px; width: 100%;"></div>
+            <h3 style="margin-top:0; color: #2B3674; text-align: center; font-size: 20px; font-weight: 800; margin-bottom: 25px;">Buat Lemari Baru</h3>
             
             <form id="add-shelf-form" onsubmit="handleCreateShelf(event)">
                 <div class="form-group">
@@ -1035,7 +1395,7 @@
                 </div>
                 <div class="modal-actions">
                     <button type="button" class="btn-secondary" onclick="closeAddShelfModal()">Batal</button>
-                    <button type="submit" class="login-btn">Buat</button>
+                    <button type="submit" class="login-btn">Buat Sekarang</button>
                 </div>
             </form>
         </div>
@@ -1044,8 +1404,7 @@
     <div id="add-file-modal" class="modal hidden">
         <div class="modal-content">
             <span class="modal-close-btn" onclick="closeAddFileModal()">&times;</span>
-            <h3 style="margin-top:0; color: #C62828; text-align: center; font-size: 1.5rem; margin-bottom: 25px;">Upload File Baru</h3>
-            <div style="border-bottom: 2px solid #C62828; margin-bottom: 25px; width: 100%;"></div>
+            <h3 style="margin-top:0; color: #2B3674; text-align: center; font-size: 20px; font-weight: 800; margin-bottom: 25px;">Upload File Baru</h3>
             
             <form id="add-file-form" onsubmit="handleUploadFile(event)">
                 <div class="form-group">
@@ -1080,7 +1439,24 @@
                 
                 <div class="form-group">
                     <label>File</label>
-                    <input type="file" id="new-file-upload" required style="padding: 8px;">
+                    <div id="file-upload-info" class="file-upload-info">
+                        <div style="display: flex; align-items: center; gap: 12px;">
+                            <div style="width: 40px; height: 40px; background: #E3F2FD; border-radius: 8px; display: flex; align-items: center; justify-content: center; color: #1565C0; font-size: 20px;">
+                                <i class='bx bxs-file-blank' id="upload-file-icon"></i>
+                            </div>
+                            <div style="text-align: left;">
+                                <div id="upload-file-name" style="font-weight: 700; color: #2B3674; font-size: 13px;">nama-file.pdf</div>
+                                <div id="upload-file-meta" style="font-size: 11px; color: #707EAE;">PDF • 2.5 MB</div>
+                            </div>
+                        </div>
+                        <i class='bx bx-x' style="cursor: pointer; color: #C62828; font-size: 18px;" onclick="resetFileInput()"></i>
+                    </div>
+
+                    <div id="drop-area" style="position: relative; overflow: hidden; border: 2px dashed #E0E5F2; border-radius: 12px; padding: 20px; text-align: center; background: #F8FAFC; transition: all 0.2s;">
+                        <input type="file" id="new-file-upload" required style="position: absolute; top: 0; left: 0; width: 100%; height: 100%; opacity: 0; cursor: pointer;" onchange="handleSingleFileSelect(this)">
+                        <i class='bx bx-cloud-upload' style="font-size: 32px; color: #C62828;"></i>
+                        <p style="margin: 10px 0 0 0; font-size: 13px; color: #707EAE; font-weight: 600;">Klik atau seret file ke sini</p>
+                    </div>
                 </div>
                 
                 <div class="modal-actions">
@@ -1096,10 +1472,9 @@
             <div class="delete-icon-wrapper">
                 <span class="delete-icon">🗑️</span>
             </div>
-            <h3 class="delete-title">Hapus Item?</h3>
+            <h3 class="delete-title">Hapus Item Ini?</h3>
             <p class="delete-text">
-                Apakah Anda yakin ingin menghapus <strong id="delete-filename-display"></strong>? 
-                Tindakan ini tidak dapat dibatalkan.
+                Anda akan menghapus <strong id="delete-filename-display" style="color: #2B3674;"></strong>. <br>Tindakan ini tidak dapat dibatalkan.
             </p>
             <div class="delete-actions">
                 <button class="btn-cancel-modal" onclick="closeDeleteModal()">Batal</button>
@@ -1107,7 +1482,133 @@
             </div>
         </div>
     </div>
+
+    <div id="custom-alert-modal" class="modal hidden" style="z-index: 9999;">
+        <div class="modal-content alert-modal-content">
+            <div class="delete-icon-wrapper" id="alert-icon-wrapper">
+                <i class='bx' id="alert-icon" style="font-size: 40px;"></i>
+            </div>
+            <h3 class="alert-title" id="alert-title">Judul Alert</h3>
+            <p class="alert-message" id="alert-message">Pesan alert disini.</p>
+            <button class="login-btn" style="width: 100%;" onclick="closeCustomAlert()">OK, Mengerti</button>
+        </div>
+    </div>
+
+    <div id="folder-preview-modal" class="modal hidden">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeFolderPreviewModal()">&times;</span>
+            <div style="display: flex; align-items: center; gap: 15px; margin-bottom: 25px;">
+                <div style="width: 50px; height: 50px; background: #FFEBEE; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #C62828; font-size: 24px;">
+                    <i class='bx bxs-folder-open'></i>
+                </div>
+                <div>
+                    <h3 style="margin: 0; color: #2B3674; font-size: 20px; font-weight: 800;">Konfirmasi Upload Folder</h3>
+                    <p style="margin: 4px 0 0 0; color: #A3AED0; font-size: 13px;">Lengkapi detail untuk setiap file sebelum diunggah.</p>
+                </div>
+            </div>
+            
+            <div class="preview-table-container">
+                <table class="library-table">
+                    <thead>
+                        <tr>
+                            <th width="30%">Nama File</th>
+                            <th width="10%">Ukuran</th>
+                            <th width="25%">Lemari Tujuan</th>
+                            <th width="25%">Detail File</th>
+                            <th width="10%">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="folder-preview-body">
+                    </tbody>
+                </table>
+            </div>
     
+            <div class="modal-actions" style="display: flex; gap: 20px;">
+                <button type="button" class="btn-secondary" style="flex: 1;" onclick="closeFolderPreviewModal()">Batalkan</button>
+                <button type="button" class="login-btn" style="flex: 1;" onclick="processFolderUploadFinal()">
+                    <i class='bx bx-cloud-upload' style="margin-right: 8px;"></i> Upload Semua File
+                </button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="shelf-assign-modal" class="modal hidden" style="z-index: 3006;">
+        <div class="modal-content" style="max-width: 450px;">
+            <span class="modal-close-btn" onclick="closeShelfAssignModal()">&times;</span>
+            <h3 style="color: #2B3674; margin-bottom: 20px; font-weight: 800; text-align: center;">Buat Lemari Baru</h3>
+            
+            <div style="display: flex; gap: 10px; margin-bottom: 20px; background: #F8FAFC; padding: 10px; border-radius: 12px; border: 1px solid #E0E5F2;">
+                <input type="text" id="quick-new-shelf-name" class="lib-select" placeholder="Nama Lemari Baru..." style="flex: 1; border: none; background: transparent; padding: 0;">
+                <button class="filter-value-btn" style="padding: 6px 12px; font-size: 12px;" onclick="quickCreateShelf()">+ Buat</button>
+            </div>
+        </div>
+    </div>
+    
+    <div id="file-detail-modal" class="modal hidden" style="z-index: 3008;">
+        <div class="modal-content" style="max-width: 450px;">
+            <span class="modal-close-btn" onclick="closeFileDetailModal()">&times;</span>
+            <h3 style="color: #2B3674; margin-bottom: 20px; font-weight: 800;">Input Detail File</h3>
+            
+            <div class="form-group">
+                <label>Tipe Cluster</label>
+                <select id="modal-cluster-group" class="lib-select" style="width: 100%; margin-bottom: 15px;" onchange="updateModalClusterOptions()">
+                    <option value="" disabled selected>-- Pilih Tipe --</option>
+                    <option value="Internal">Internal</option>
+                    <option value="Eksternal">Eksternal</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Spesifik Cluster</label>
+                <select id="modal-cluster-specific" class="lib-select" style="width: 100%;" disabled>
+                    <option value="" disabled selected>-- Pilih Detail --</option>
+                </select>
+            </div>
+
+            <div class="form-group">
+                <label>Kategori</label>
+                <input type="text" id="modal-category" placeholder="Contoh: Policies, Reports, dll">
+            </div>
+
+            <div class="form-group">
+                <label>Ringkasan (Summary)</label>
+                <textarea id="modal-summary" rows="4" placeholder="Deskripsi singkat isi dokumen..."></textarea>
+            </div>
+    
+            <div class="modal-actions">
+                <button type="button" class="btn-secondary" onclick="closeFileDetailModal()">Batal</button>
+                <button type="button" class="login-btn" onclick="saveFileDetail()">Simpan</button>
+            </div>
+        </div>
+    </div>
+
+    <div id="global-search-modal" class="modal hidden" style="z-index: 9999;">
+        <div class="modal-content">
+            <span class="modal-close-btn" onclick="closeGlobalSearchModal()">&times;</span>
+            <h3 style="color: #2B3674; margin-bottom: 5px; font-size: 20px; font-weight: 800;">Hasil Pencarian</h3>
+            <p style="color: #A3AED0; font-size: 13px; margin-top: 0; margin-bottom: 25px;">Menampilkan hasil untuk: <strong id="search-keyword-display" style="color: #C62828;"></strong></p>
+            
+            <div class="preview-table-container">
+                <table class="library-table">
+                    <thead>
+                        <tr>
+                            <th width="20%" style="text-align: center !important;">DOKUMEN</th>
+                            <th width="12%">LEMARI (WEB)</th>
+                            <th width="8%">NO. LEMARI</th>
+                            <th width="10%">CLUSTER</th>
+                            <th width="12%">JENIS LAPORAN</th>
+                            <th width="20%">RINGKASAN</th>
+                            <th width="10%">KATEGORI</th>
+                            <th width="8%">AKSI</th>
+                        </tr>
+                    </thead>
+                    <tbody id="global-search-body">
+                        </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='library.js') }}"></script>
 </body>
 </html>

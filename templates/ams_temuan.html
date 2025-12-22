@@ -6,15 +6,12 @@
     <title>Monitoring Temuan</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
-    <!-- Tambahkan Boxicons untuk icon sidebar -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
     <script src="https://html2canvas.hertzen.com/dist/html2canvas.min.js"></script>
     
     <style>
-        /* === SIDEBAR & LAYOUT STYLES === */
         :root {
-            /* Warna Sidebar & Layout */
             --primary-color: #C62828;
             --primary-hover: #B71C1C;
             --primary-light: #FFEBEE;
@@ -28,332 +25,124 @@
             --text-light-gray: #707EAE;
             --white: #FFFFFF;
             --border-color: #E0E5F2;
-            
-            /* Warna Tabel Temuan Asli */
             --secondary-color: green;
             --text-color: #333;
             --bg-light: #f8f9fa;
         }
 
-        * {
-            box-sizing: border-box;
-        }
+        * { box-sizing: border-box; }
 
         body {
-            margin: 0;
-            padding: 0;
-            font-family: 'DM Sans', sans-serif;
-            background-color: var(--secondary-bg);
-            /* PERBAIKAN: Hapus display: flex pada body agar layout margin bekerja normal */
-            display: block; 
-            min-height: 100vh;
-            color: var(--text-color);
-            font-size: 0.9rem;
+            margin: 0; padding: 0; font-family: 'DM Sans', sans-serif;
+            background-color: var(--secondary-bg); display: block; 
+            min-height: 100vh; color: var(--text-color); font-size: 0.9rem;
         }
 
-        /* === SIDEBAR STYLES === */
         .sidebar {
-            width: var(--sidebar-width);
-            background: var(--white);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            padding: 24px;
-            box-sizing: border-box;
-            border-right: 1px solid var(--border-color);
-            z-index: 3000;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #ddd transparent;
+            width: var(--sidebar-width); background: var(--white); height: 100vh;
+            position: fixed; left: 0; top: 0; display: flex; flex-direction: column;
+            padding: 24px; box-sizing: border-box; border-right: 1px solid var(--border-color);
+            z-index: 3000; overflow-y: auto; scrollbar-width: thin; scrollbar-color: #ddd transparent;
             transition: width 0.3s ease, padding 0.3s ease;
         }
 
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-            padding: 24px 12px;
-        }
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-        .sidebar::-webkit-scrollbar-thumb {
-            background-color: #ddd;
-            border-radius: 3px;
-        }
+        .sidebar.collapsed { width: var(--sidebar-collapsed-width); padding: 24px 12px; }
+        .sidebar::-webkit-scrollbar { width: 6px; }
+        .sidebar::-webkit-scrollbar-thumb { background-color: #ddd; border-radius: 3px; }
 
         .sidebar-toggle-btn {
-            position: absolute;
-            top: 25px;
-            right: 20px;
-            cursor: pointer;
-            font-size: 24px;
-            color: var(--text-gray);
-            z-index: 3002;
-            transition: right 0.3s ease;
+            position: absolute; top: 25px; right: 20px; cursor: pointer;
+            font-size: 24px; color: var(--text-gray); z-index: 3002; transition: right 0.3s ease;
         }
-        
-        .sidebar.collapsed .sidebar-toggle-btn {
-            right: 50%;
-            transform: translateX(50%);
-        }
+        .sidebar.collapsed .sidebar-toggle-btn { right: 50%; transform: translateX(50%); }
 
         .sidebar-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            min-height: 50px;
-            position: relative;
+            display: flex; align-items: center; justify-content: center;
+            margin-bottom: 20px; padding-bottom: 20px; border-bottom: 1px solid var(--border-color);
+            min-height: 50px; position: relative;
         }
+        .sidebar-logo img { max-width: 100px; height: auto; transition: opacity 0.2s; }
+        .sidebar.collapsed .sidebar-logo img { opacity: 0; pointer-events: none; display: none; }
 
-        .sidebar-logo img {
-            max-width: 100px;
-            height: auto;
-            transition: opacity 0.2s;
-        }
-
-        .sidebar.collapsed .sidebar-logo img {
-            opacity: 0;
-            pointer-events: none;
-            display: none;
-        }
-
-        .nav-links {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
-        }
-
-        .nav-links li {
-            width: 100%;
-        }
+        .nav-links { list-style: none; padding: 0; margin: 0; display: flex; flex-direction: column; gap: 8px; flex: 1; }
+        .nav-links li { width: 100%; }
 
         .nav-section-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-gray);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-top: 16px;
-            margin-bottom: 8px;
-            padding-left: 12px;
-            display: block;
-            white-space: nowrap;
-            transition: opacity 0.2s;
+            font-size: 11px; font-weight: 700; color: var(--text-gray);
+            text-transform: uppercase; letter-spacing: 0.8px; margin-top: 16px; margin-bottom: 8px;
+            padding-left: 12px; display: block; white-space: nowrap; transition: opacity 0.2s;
         }
-
-        .sidebar.collapsed .nav-section-label {
-            display: none;
-        }
+        .sidebar.collapsed .nav-section-label { display: none; }
 
         .nav-links a {
-            text-decoration: none;
-            color: var(--text-light-gray);
-            font-weight: 500;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-            position: relative;
-            white-space: nowrap;
-            overflow: hidden;
+            text-decoration: none; color: var(--text-light-gray); font-weight: 500; font-size: 14px;
+            display: flex; align-items: center; padding: 12px 16px; border-radius: 12px;
+            transition: all 0.2s ease; position: relative; white-space: nowrap; overflow: hidden;
         }
-
         .nav-links a i {
-            font-size: 22px;
-            margin-right: 14px;
-            color: var(--text-gray);
-            transition: margin 0.3s ease, color 0.2s;
-            min-width: 22px;
+            font-size: 22px; margin-right: 14px; color: var(--text-gray);
+            transition: margin 0.3s ease, color 0.2s; min-width: 22px;
         }
+        .sidebar.collapsed .nav-links a { justify-content: center; padding: 12px; }
+        .sidebar.collapsed .nav-links a i { margin-right: 0; }
+        .sidebar.collapsed .nav-links a span { display: none; }
 
-        .sidebar.collapsed .nav-links a {
-            justify-content: center;
-            padding: 12px;
-        }
-        
-        .sidebar.collapsed .nav-links a i {
-            margin-right: 0;
-        }
-        
-        .sidebar.collapsed .nav-links a span {
-            display: none;
-        }
+        .nav-links a:hover { background-color: var(--secondary-bg); color: var(--text-dark); }
+        .nav-links a:hover i { color: var(--primary-color); }
+        .nav-links a.active { background-color: var(--active-bg); color: var(--active-text); font-weight: 700; }
+        .nav-links a.active i { color: var(--active-text); }
 
-        .nav-links a:hover {
-            background-color: var(--secondary-bg);
-            color: var(--text-dark);
-        }
-        
-        .nav-links a:hover i {
-            color: var(--primary-color);
-        }
-
-        .nav-links a.active {
-            background-color: var(--active-bg);
-            color: var(--active-text);
-            font-weight: 700;
-        }
-        
-        .nav-links a.active i {
-            color: var(--active-text);
-        }
-
-        .sidebar-footer {
-            margin-top: 20px;
-        }
-
+        .sidebar-footer { margin-top: 20px; }
         .user-card {
             background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
-            padding: 16px;
-            border-radius: 16px;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 10px 20px rgba(198, 40, 40, 0.2);
-            transition: padding 0.3s;
-            overflow: hidden;
+            padding: 16px; border-radius: 16px; color: white; display: flex;
+            flex-direction: column; gap: 10px; box-shadow: 0 10px 20px rgba(198, 40, 40, 0.2);
+            transition: padding 0.3s; overflow: hidden;
         }
-
-        .sidebar.collapsed .user-card {
-            padding: 12px;
-            align-items: center;
-            background: var(--primary-color);
-        }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-        }
-
-        .sidebar.collapsed .user-info {
-            gap: 0;
-            justify-content: center;
-        }
-
+        .sidebar.collapsed .user-card { padding: 12px; align-items: center; background: var(--primary-color); }
+        
+        .user-info { display: flex; align-items: center; gap: 12px; }
+        .sidebar.collapsed .user-info { gap: 0; justify-content: center; }
+        
         .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
+            width: 36px; height: 36px; background: rgba(255,255,255,0.2);
+            border-radius: 50%; display: flex; align-items: center; justify-content: center;
+            font-size: 18px; flex-shrink: 0;
         }
-
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            white-space: nowrap;
-        }
-
-        .sidebar.collapsed .user-details {
-            display: none;
-        }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 700;
-        }
-
-        .user-role {
-            font-size: 11px;
-            opacity: 0.8;
-        }
+        .user-details { display: flex; flex-direction: column; white-space: nowrap; }
+        .sidebar.collapsed .user-details { display: none; }
+        .user-name { font-size: 14px; font-weight: 700; }
+        .user-role { font-size: 11px; opacity: 0.8; }
 
         .logout-link {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            text-decoration: none;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            text-align: center;
-            font-weight: 600;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+            background: rgba(255,255,255,0.1); color: white; text-decoration: none;
+            padding: 8px; border-radius: 8px; font-size: 12px; text-align: center;
+            font-weight: 600; transition: background 0.2s; display: flex; align-items: center;
+            justify-content: center; gap: 6px;
         }
+        .sidebar.collapsed .logout-link span { display: none; }
+        .sidebar.collapsed .logout-link { padding: 8px 0; margin-top: 5px; }
+        .logout-link:hover { background: rgba(255,255,255,0.2); }
 
-        .sidebar.collapsed .logout-link span {
-            display: none;
-        }
-        
-        .sidebar.collapsed .logout-link {
-            padding: 8px 0;
-            margin-top: 5px;
-        }
-
-        .logout-link:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* === MAIN CONTENT ADJUSTMENT (PERBAIKAN UTAMA) === */
         main, .monitoring-main {
-            /* Margin kiri menyesuaikan lebar sidebar */
-            margin-left: var(--sidebar-width) !important; 
-            
-            /* Lebar otomatis mengisi sisa ruang */
-            width: auto !important; 
-            max-width: 100%;
-            
-            padding: 30px;
-            box-sizing: border-box;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: margin-left 0.3s ease;
+            margin-left: var(--sidebar-width) !important; width: auto !important; max-width: 100%;
+            padding: 30px; box-sizing: border-box; min-height: 100vh; display: flex;
+            flex-direction: column; transition: margin-left 0.3s ease;
         }
-        
-        main.expanded, .monitoring-main.expanded {
-            margin-left: var(--sidebar-collapsed-width) !important;
-        }
+        main.expanded, .monitoring-main.expanded { margin-left: var(--sidebar-collapsed-width) !important; }
 
         footer {
-            margin-top: auto;
-            background-color: var(--secondary-bg);
-            padding: 10px 0;
-            text-align: center;
-            color: #999;
-            font-size: 0.75rem;
-            width: 100%;
-            box-sizing: border-box;
+            margin-top: auto; background-color: var(--secondary-bg); padding: 10px 0;
+            text-align: center; color: #999; font-size: 0.75rem; width: 100%; box-sizing: border-box;
         }
 
-        /* === UTILITY CLASSES === */
         .hidden { display: none !important; }
         .start-btn {
-            background-color: var(--primary-color);
-            color: white;
-            padding: 10px 20px;
-            border-radius: 8px;
-            border: none;
-            cursor: pointer;
-            font-weight: 600;
-            transition: background-color 0.3s;
+            background-color: var(--primary-color); color: white; padding: 10px 20px;
+            border-radius: 8px; border: none; cursor: pointer; font-weight: 600; transition: background-color 0.3s;
         }
-        .start-btn:hover {
-            background-color: var(--primary-hover);
-        }
+        .start-btn:hover { background-color: var(--primary-hover); }
 
-        /* === TABLE & CONTENT STYLES ASLI (Dipertahankan) === */
         .temuan-table-wrapper {
             overflow-x: auto; max-width: 100%; border: 1px solid #e0e0e0; border-radius: 8px;
             box-shadow: 0 2px 8px rgba(0,0,0,0.05); background: white; margin-bottom: 20px;
@@ -363,249 +152,96 @@
         .temuan-table th { background-color: #f8f9fa; position: sticky; top: 0; z-index: 10; font-weight: 700; text-align: center; color: #444; box-shadow: 0 1px 1px rgba(0,0,0,0.1); }
 
         .th-identitas { background-color: #e3f2fd !important; color: #0d47a1; }
-        .th-rencana   { background-color: #fff3e0 !important; color: #e65100; }
-        .th-status    { background-color: #e8f5e9 !important; color: #1b5e20; }
-        .th-bpk       { background-color: #ffebee !important; color: #b71c1c; }
+        .th-rencana { background-color: #fff3e0 !important; color: #e65100; }
+        .th-status { background-color: #e8f5e9 !important; color: #1b5e20; }
+        .th-bpk { background-color: #ffebee !important; color: #b71c1c; }
 
-        .temuan-table th:last-child,
-        .temuan-table td:last-child {
-            position: sticky;
-            right: 0;
-            border-left: 2px solid #e0e0e0;
-            box-shadow: -2px 0 5px rgba(0,0,0,0.05);
+        .temuan-table th:last-child, .temuan-table td:last-child {
+            position: sticky; right: 0; border-left: 2px solid #e0e0e0; box-shadow: -2px 0 5px rgba(0,0,0,0.05);
         }
-
-        .temuan-table th:last-child {
-            z-index: 12;
-            background-color: #f8f9fa;
-        }
-
-        .temuan-table td:last-child {
-            z-index: 11;
-            background-color: #fff;
-        }
+        .temuan-table th:last-child { z-index: 12; background-color: #f8f9fa; }
+        .temuan-table td:last-child { z-index: 11; background-color: #fff; }
 
         .col-narrow { min-width: 80px; max-width: 100px; text-align: center; }
         .col-medium { min-width: 150px; max-width: 200px; text-align: center; }
         .col-wide { min-width: 350px; max-width: 600px; text-align: left; white-space: pre-wrap; }
-
         .col-history { min-width: 350px; max-width: 500px; vertical-align: top !important; background-color: #f3e5f5; padding: 5px !important; }
+        
         .history-mini-table { width: 100%; border-collapse: collapse; font-size: 0.75rem; background-color: rgba(255, 255, 255, 0.8); border-radius: 4px; overflow: hidden; }
         .history-mini-table thead th { background-color: greenyellow !important; color: black; font-weight: 600; padding: 4px 6px; text-align: center; border: none; position: static !important; z-index: auto !important;}
         .history-mini-table tbody td { border-bottom: 1px solid #e1bee7; padding: 4px 6px; color: #333; vertical-align: top !important; }
 
         .text-center { text-align: center !important; }
-        .text-left   { text-align: left !important; }
+        .text-left { text-align: left !important; }
         
-        .status-bjt {
-            color: #0d47a1;               
-            background-color: #e3f2fd;    
-            padding: 4px 10px;
-            border-radius: 20px;
-            font-weight: 600;
-            font-size: 0.85em;
-            border: 1px solid #bbdefb;    
-            display: inline-block;
-        }
+        .status-bjt { color: #0d47a1; background-color: #e3f2fd; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.85em; border: 1px solid #bbdefb; display: inline-block; }
         .status-os { color: #721c24; background-color: #f8d7da; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.85em; border: 1px solid #f5c6cb; display: inline-block; }
-        .status-selesai { 
-            color: #004085; 
-            background-color: #cce5ff; 
-            padding: 4px 10px; 
-            border-radius: 20px; 
-            font-weight: 600; 
-            font-size: 0.85em; 
-            border: 1px solid #b8daff; 
-            display: inline-block; 
-        }
+        .status-selesai { color: #004085; background-color: #cce5ff; padding: 4px 10px; border-radius: 20px; font-weight: 600; font-size: 0.85em; border: 1px solid #b8daff; display: inline-block; }
 
         .comment-list { display: flex; flex-direction: column; gap: 8px; }
-        .comment-card { background: #fff; border: 1px solid #ddd; border-left: 4px solid #2196f3; border-radius: 6px; padding: 8px 10px; position: relative; }
-        .comment-header { font-size: 0.7rem; color: #777; display: flex; justify-content: space-between; margin-bottom: 4px; }
-        .comment-user { font-weight: 700; color: #1565c0; }
-        .comment-content { font-size: 0.85rem; color: #333; white-space: pre-wrap; }
         .btn-delete-comment { position: absolute; top: 2px; right: 5px; background: none; border: none; color: #aaa; cursor: pointer; font-size: 16px; }
         .btn-delete-comment:hover { color: #d32f2f; }
         .btn-add-note-modern { display: flex; align-items: center; justify-content: center; width: 100%; padding: 6px; background: #f9f9f9; color: #666; border: 1px dashed #ccc; border-radius: 6px; cursor: pointer; font-size: 0.8rem; font-weight: 600; }
         .btn-add-note-modern:hover { background: #e3f2fd; border-color: #2196f3; color: #1976d2; }
         
-        .modal { z-index: 3005; /* Diatas sidebar */ }
-        
-        .box-layout-modal { 
-            width: 600px !important; 
-            max-width: 95vw; 
-            padding: 2.5rem !important; 
-            border-radius: 12px; 
-            max-height: 85vh; 
-            overflow-y: auto; 
-        }
-
-        .form-grid-wrapper { 
-            display: flex; 
-            flex-direction: column; 
-            gap: 8px; 
-            margin-bottom: 10px;
-        }
-
+        .modal { z-index: 3005; }
+        .box-layout-modal { width: 600px !important; max-width: 95vw; padding: 2.5rem !important; border-radius: 12px; max-height: 85vh; overflow-y: auto; }
+        .form-grid-wrapper { display: flex; flex-direction: column; gap: 8px; margin-bottom: 10px; }
         .form-group { margin-bottom: 0; }
-        .form-group label { 
-            display: block; 
-            margin-bottom: 6px; 
-            font-weight: 600; 
-            color: var(--text-color); 
-            font-size: 0.9rem; 
+        .form-group label { display: block; margin-bottom: 6px; font-weight: 600; color: var(--text-color); font-size: 0.9rem; }
+        .form-group input[type="text"], .form-group input[type="number"], .form-group input[type="date"], .form-group select, .custom-select {
+            width: 100%; height: 42px !important; padding: 0 12px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9rem; color: #333; box-sizing: border-box; display: block; background-color: white; outline: none;
         }
-
-        .form-group input[type="text"],
-        .form-group input[type="number"],
-        .form-group input[type="date"],
-        .form-group select,
-        .custom-select {
-            width: 100%;
-            height: 42px !important; 
-            padding: 0 12px;
-            border: 1px solid #ccc;
-            border-radius: 6px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.9rem;
-            color: #333;
-            box-sizing: border-box;
-            display: block;
-            background-color: white;
-            outline: none;
-        }
-
-        .form-group select {
-            -webkit-appearance: none;
-            -moz-appearance: none;
-            appearance: none;
-            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23333%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
-            background-repeat: no-repeat;
-            background-position: right 12px center;
-            background-size: 10px auto;
-            padding-right: 35px;
-            cursor: pointer;
-            padding-top: 0 !important;    
-            padding-bottom: 0 !important; 
-            line-height: 42px !important;
-        }
-
-        .form-group input:focus, .form-group select:focus {
-            border-color: #2196f3;
-            box-shadow: 0 0 0 2px rgba(33, 150, 243, 0.1);
-        }
-
-        .form-group textarea {
-            width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px;
-            font-family: 'Poppins', sans-serif; font-size: 0.9rem; box-sizing: border-box;
-        }
-        
+        .form-group textarea { width: 100%; padding: 10px 12px; border: 1px solid #ccc; border-radius: 6px; font-family: 'Poppins', sans-serif; font-size: 0.9rem; box-sizing: border-box; }
         .modal-actions { display: flex; justify-content: flex-end; gap: 10px; margin-top: 10px; }
         .cancel-btn { background: #fff; border: 1px solid #ccc; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; color: #555; }
         .login-btn { background: var(--primary-color); color: white; border: none; padding: 10px 20px; border-radius: 6px; cursor: pointer; font-weight: 600; }
+        
+        .search-popup-list { list-style: none; padding: 0; margin: 0; max-height: 400px; overflow-y: auto; border: 1px solid #eee; border-radius: 6px; }
+        .search-popup-list li { padding: 12px; border-bottom: 1px solid #f5f5f5; cursor: pointer; transition: background 0.2s; }
+        .search-popup-list li:hover { background-color: #e3f2fd; }
+        
+        .pic-input-wrapper {
+            display: flex; align-items: center; gap: 10px;
+        }
+        .pic-display-box {
+            flex: 1; min-height: 42px; border: 1px solid #ccc; border-radius: 6px; padding: 8px 12px;
+            background-color: #fcfcfc; font-size: 0.9rem; color: #555; display: flex; align-items: center;
+            overflow: hidden; white-space: nowrap; text-overflow: ellipsis;
+        }
+        .btn-pilih-pic {
+            background-color: #1976D2; color: white; border: none; border-radius: 6px; padding: 0 15px; height: 42px;
+            cursor: pointer; font-weight: 600; font-size: 0.85rem; transition: background 0.2s; white-space: nowrap;
+        }
+        .btn-pilih-pic:hover { background-color: #1565C0; }
 
-        .search-popup-list {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            max-height: 400px;
-            overflow-y: auto;
-            border: 1px solid #eee;
-            border-radius: 6px;
+        /* Styles untuk Modal Pilih PIC dengan Tabel */
+        .pic-table {
+            width: 100%; border-collapse: collapse; margin-top: 10px;
         }
-        .search-popup-list li {
-            padding: 12px;
-            border-bottom: 1px solid #f5f5f5;
-            cursor: pointer;
-            transition: background 0.2s;
+        .pic-table th, .pic-table td {
+            padding: 10px 15px; border-bottom: 1px solid #eee; text-align: left;
         }
-        .search-popup-list li:hover {
-            background-color: #e3f2fd;
+        .pic-table th {
+            background-color: #f9f9f9; font-weight: 600; color: #555; position: sticky; top: 0; z-index: 5;
         }
-        .search-popup-list li:last-child {
-            border-bottom: none;
+        .pic-table tr:last-child td { border-bottom: none; }
+        .pic-table tr:hover { background-color: #f0f7ff; }
+        .pic-table input[type="checkbox"] {
+            width: 16px; height: 16px; cursor: pointer;
         }
+        
+        .sortable { cursor: pointer; position: relative; }
+        .sortable:hover { background-color: #f1f1f1; }
+        .sort-icon { margin-left: 5px; font-size: 0.8em; color: #999; }
+        
+        .btn-delete-floating { position: absolute; top: 2px; right: 2px; background: none; border: none; color: #ef5350; cursor: pointer; font-size: 1.2em; font-weight: bold; padding: 0 4px; border-radius: 4px; opacity: 0.6; }
+        .btn-delete-floating:hover { color: #c62828; background-color: #ffebee; opacity: 1; }
 
-        .col-justify-middle {
-            text-align: justify !important;
-            vertical-align: middle !important;
-        }
-        .mini-comment-table th {
-            font-weight: 700;
-            text-transform: uppercase;
-            letter-spacing: 0.5px;
-        }
-
-        .mini-comment-table tr:last-child td {
-            border-bottom: none;
-        }
-
-        .btn-delete-comment-icon:hover {
-            color: #c62828 !important;
-            background-color: #ffebee !important;
-            border-radius: 50%;
-            width: 24px;
-            height: 24px;
-            display: inline-flex;
-            align-items: center;
-            justify-content: center;
-        }
-
-        .btn-delete-floating {
-            position: absolute;
-            top: 2px;
-            right: 2px;
-            background: none;
-            border: none;
-            color: #ef5350; 
-            cursor: pointer;
-            font-size: 1.2em;
-            font-weight: bold;
-            line-height: 1;
-            padding: 0 4px;
-            border-radius: 4px;
-            transition: all 0.2s;
-            opacity: 0.6; 
-        }
-
-        .btn-delete-floating:hover {
-            color: #c62828;
-            background-color: #ffebee;
-            opacity: 1;
-        }
-
-        /* STYLE KHUSUS UNTUK TABEL LAPORAN (REPORT TABLE) */
-        .report-table {
-            width: 100%;
-            border-collapse: collapse;
-            font-family: Arial, sans-serif;
-            font-size: 12px;
-            color: black;
-            border: 1px solid black;
-        }
-        .report-table th, .report-table td {
-            border: 1px solid black;
-            padding: 6px 10px;
-            vertical-align: middle;
-        }
-        .report-table thead th {
-            background-color: #C00000;
-            color: white;
-            font-weight: bold;
-            text-align: center;
-        }
-        .report-table tfoot th, .report-table tfoot td {
-            background-color: #C00000;
-            color: white;
-            font-weight: bold;
-            text-align: center;
-        }
-        .report-table tbody td {
-            background-color: white;
-        }
-        .no-transition {
-            transition: none !important;
-        }
+        .report-table { width: 100%; border-collapse: collapse; font-family: Arial, sans-serif; font-size: 12px; color: black; border: 1px solid black; }
+        .report-table th, .report-table td { border: 1px solid black; padding: 6px 10px; vertical-align: middle; }
+        .report-table thead th, .report-table tfoot th, .report-table tfoot td { background-color: #C00000; color: white; font-weight: bold; text-align: center; }
+        .no-transition { transition: none !important; }
     </style>
 
     <script>
@@ -649,122 +285,43 @@
 
     <input type="hidden" id="current-username" value="{{ current_user.fullname }}">
 
-    <!-- SIDEBAR NAVIGATION -->
     <nav class="sidebar">
         <div class="sidebar-toggle-btn" onclick="toggleSidebar()">
             <i class='bx bx-menu'></i>
         </div>
-
         <div class="sidebar-logo">
             <a href="{{ url_for('dashboard') }}">
                 <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo IFG">
             </a>
         </div>
-        
         <ul class="nav-links">
-            <li>
-                <a href="{{ url_for('dashboard') }}">
-                    <i class='bx bxs-home-alt-2'></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-
+            <li><a href="{{ url_for('dashboard') }}"><i class='bx bxs-home-alt-2'></i><span>Dashboard</span></a></li>
             <span class="nav-section-label">Analisis Dokumen</span>
-            
-            <li>
-                <a href="{{ url_for('dashboard') }}#folder-management">
-                    <i class='bx bxs-folder'></i>
-                    <span>Folder Saya</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('dashboard') }}#fitur">
-                    <i class='bx bxs-magic-wand'></i>
-                    <span>Proofread & Tools</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('log_analysis_page') }}">
-                    <i class='bx bxs-time-five'></i>
-                    <span>Log Analisis</span>
-                </a>
-            </li>
-
+            <li><a href="{{ url_for('dashboard') }}#folder-management"><i class='bx bxs-folder'></i><span>Folder Saya</span></a></li>
+            <li><a href="{{ url_for('dashboard') }}#fitur"><i class='bx bxs-magic-wand'></i><span>Proofread & Tools</span></a></li>
+            <li><a href="{{ url_for('log_analysis_page') }}"><i class='bx bxs-time-five'></i><span>Log Analisis</span></a></li>
             <span class="nav-section-label">Tindak Lanjut</span>
-
-            <li>
-                <a href="{{ url_for('monitoring_ams_page') }}">
-                    <i class='bx bxs-bar-chart-alt-2'></i>
-                    <span>Rekap Monitoring</span>
-                </a>
-            </li>
-            <li>
-                <!-- MENU INI YANG AKTIF (Temuan) -->
-                <a href="{{ url_for('ams_temuan_page') }}" class="active">
-                    <i class='bx bxs-file-find'></i>
-                    <span>Temuan</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('ams_reminder_page') }}">
-                    <i class='bx bxs-bell-ring'></i>
-                    <span>Reminder</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">
-                    <i class='bx bxs-x-circle'></i>
-                    <span>TL Tidak Setuju</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('ams_auditors_page') }}">
-                    <i class='bx bxs-user-badge'></i>
-                    <span>Auditors</span>
-                </a>
-            </li>
-
+            <li><a href="{{ url_for('monitoring_ams_page') }}"><i class='bx bxs-bar-chart-alt-2'></i><span>Rekap Monitoring</span></a></li>
+            <li><a href="{{ url_for('ams_temuan_page') }}" class="active"><i class='bx bxs-file-find'></i><span>Temuan</span></a></li>
+            <li><a href="{{ url_for('ams_reminder_page') }}"><i class='bx bxs-bell-ring'></i><span>Reminder</span></a></li>
+            <li><a href="{{ url_for('ams_tl_tidak_setuju_page') }}"><i class='bx bxs-x-circle'></i><span>TL Tidak Setuju</span></a></li>
+            <li><a href="{{ url_for('ams_auditors_page') }}"><i class='bx bxs-user-badge'></i><span>Auditors</span></a></li>
             <span class="nav-section-label">Lainnya</span>
-
-            <li>
-                <a href="{{ url_for('mailbox_page') }}">
-                    <i class='bx bxs-envelope'></i>
-                    <span>Email</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('library_page') }}">
-                    <i class='bx bxs-book-bookmark'></i>
-                    <span>Library</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('settings_page') }}">
-                    <i class='bx bxs-cog'></i>
-                    <span>Settings</span>
-                </a>
-            </li>
+            <li><a href="{{ url_for('mailbox_page') }}"><i class='bx bxs-envelope'></i><span>Email</span></a></li>
+            <li><a href="{{ url_for('library_page') }}"><i class='bx bxs-book-bookmark'></i><span>Library</span></a></li>
+            <li><a href="{{ url_for('settings_page') }}"><i class='bx bxs-cog'></i><span>Settings</span></a></li>
         </ul>
-
         <div class="sidebar-footer">
             <div class="user-card">
                 <div class="user-info">
-                    <div class="user-avatar">
-                        <i class='bx bxs-user'></i>
-                    </div>
-                    <div class="user-details">
-                        <span class="user-name">{{ current_user.fullname }}</span>
-                        <span class="user-role">{{ current_user.label }}</span>
-                    </div>
+                    <div class="user-avatar"><i class='bx bxs-user'></i></div>
+                    <div class="user-details"><span class="user-name">{{ current_user.fullname }}</span><span class="user-role">{{ current_user.label }}</span></div>
                 </div>
-                <a href="{{ url_for('logout') }}" class="logout-link">
-                    <i class='bx bx-log-out'></i> <span>Logout</span>
-                </a>
+                <a href="{{ url_for('logout') }}" class="logout-link"><i class='bx bx-log-out'></i> <span>Logout</span></a>
             </div>
         </div>
     </nav>
 
-    <!-- Gunakan kelas monitoring-main agar tetap sesuai dengan style spesifik Anda -->
     <main class="monitoring-main">
         <section class="monitoring-header">
             <h1>Daftar Temuan Audit</h1>
@@ -784,7 +341,6 @@
 
         <section id="search-filter-container" class="hidden" style="background: #fff; padding: 20px; border-radius: 8px; border: 1px solid #e0e0e0; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05);">
             <div style="display: flex; gap: 30px; align-items: flex-end;">
-                
                 <div style="flex: 0 0 250px;">
                     <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333; position: relative; top: 10px;">Filter by:</label>
                     <select id="filter-column-select" style="width: 100%; padding: 0 12px; border-radius: 6px; border: 1px solid #ccc; height:42px; box-sizing: border-box;">
@@ -797,12 +353,10 @@
                         <option value="pic_auditee">PIC Auditee</option>
                     </select>
                 </div>
-                
                 <div style="flex: 0 0 250px;"> 
                     <label style="display: block; font-weight: bold; margin-bottom: 8px; color: #333;">Advanced Search:</label>
                     <div style="position: relative; width: 100%;">
-                        <input type="text" id="advanced-search-display" readonly placeholder="Pilih Unique Values" 
-                               style="width: 100%; padding: 0 12px; border-radius: 6px; border: 1px solid #ccc; height:42px; line-height: 40px; box-sizing: border-box; cursor: pointer; background-color: white; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
+                        <input type="text" id="advanced-search-display" readonly placeholder="Pilih Unique Values" style="width: 100%; padding: 0 12px; border-radius: 6px; border: 1px solid #ccc; height:42px; line-height: 40px; box-sizing: border-box; cursor: pointer; background-color: white; text-overflow: ellipsis; overflow: hidden; white-space: nowrap;">
                         <input type="hidden" id="advanced-search-value"> 
                     </div>
                 </div>
@@ -813,13 +367,9 @@
             <div class="list-header" style="margin-bottom: 1rem; display: flex; justify-content: space-between; align-items: center;">
                 <h3 id="table-title" style="margin: 0;">Detail Temuan</h3>  
                 <div style="display: flex; gap: 10px;">
-                    <button id="monthly-report-btn" class="analyze-btn" style="background-color: #d32f2f; color: white;">
-                        &#128196; Laporan Bulanan
-                    </button>
+                    <button id="monthly-report-btn" class="analyze-btn" style="background-color: #d32f2f; color: white;">Laporan Bulanan</button>
                     <button id="share-session-btn" class="analyze-btn" style="background-color: #f57c00; color: white;">Share</button>            
-                    <button id="open-new-page-btn" class="analyze-btn" style="background-color: #5C6BC0; color: white;" onclick="openSessionInNewPage()">
-                        &#10066; Buka di halaman baru
-                    </button>
+                    <button id="open-new-page-btn" class="analyze-btn" style="background-color: #5C6BC0; color: white;" onclick="openSessionInNewPage()">Buka di halaman baru</button>
                     <input type="file" id="excel-import-input" accept=".xlsx, .xls" style="display: none;" />
                     <button id="import-excel-btn" class="analyze-btn" style="background-color: #00897b;">Import Excel</button>
                     <button id="add-row-btn" class="analyze-btn">Tambah Baris Data</button>
@@ -873,69 +423,74 @@
         </footer>
     </main>
 
-    <!-- SEMUA MODAL TETAP SAMA SEPERTI ASLINYA -->
     <div id="filter-value-modal" class="modal hidden" style="z-index: 2500;">
         <div class="modal-content" style="max-width: 500px; height: 600px; display: flex; flex-direction: column;">
             <span class="modal-close-btn" onclick="document.getElementById('filter-value-modal').classList.add('hidden')">&times;</span>
             <h3 style="margin-bottom: 15px; color: var(--primary-color);">Pilih Nilai</h3>
-            
             <div style="margin-bottom: 10px;">
-                <input type="text" id="popup-search-input" placeholder="Cari di list..." 
-                       style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
+                <input type="text" id="popup-search-input" placeholder="Cari di list..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px;">
             </div>
-
             <div style="flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 6px;">
-                <ul id="filter-value-list" class="search-popup-list">
-                </ul>
+                <ul id="filter-value-list" class="search-popup-list"></ul>
             </div>
-            
             <div style="margin-top: 10px; text-align: right;">
                 <button class="cancel-btn" onclick="document.getElementById('filter-value-modal').classList.add('hidden')">Tutup</button>
             </div>
         </div>
     </div>
 
-    <div id="share-session-modal" class="modal hidden" style="z-index: 2100;">
-        <div class="modal-content" style="max-width: 600px; padding: 2rem;">
-            <span class="modal-close-btn" id="close-share-modal">&times;</span>
-            <h3 style="color: #C62828; margin-bottom: 20px;">Share Sesi Temuan: <span id="share-session-name-display"></span></h3>
+    <div id="pic-selection-modal" class="modal hidden" style="z-index: 3100;">
+        <div class="modal-content" style="max-width: 600px; padding: 2rem; border-radius: 12px; display: flex; flex-direction: column; max-height: 85vh;">
+            <span class="modal-close-btn" id="close-pic-modal">&times;</span>
+            <h3 style="margin-bottom: 10px; color: #C62828;">Pilih PIC SKAI</h3>
+            <p style="margin-bottom: 15px; color: #666; font-size: 0.9rem;">Pilih satu atau lebih PIC yang bertanggung jawab.</p>
             
-            <div id="user-list-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;">
-                <table class="user-share-table">
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="search-pic-input" placeholder="Cari nama PIC..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            </div>
+
+            <div style="flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 0;">
+                <table class="pic-table">
                     <thead>
                         <tr>
-                            <th style="width: 50px;"><input type="checkbox" id="select-all-users"></th>
-                            <th data-sort-key="name" class="sortable">Nama <span class="sort-icon"></span></th>
-                            <th data-sort-key="label" class="sortable">Label <span class="sort-icon"></span></th>
+                            <th style="width: 50px;"><input type="checkbox" id="select-all-pic"></th>
+                            <th data-sort-key="name" class="sortable pic-sort">Nama <span class="sort-icon"></span></th>
+                            <th data-sort-key="label" class="sortable pic-sort">Label <span class="sort-icon"></span></th>
                         </tr>
                     </thead>
-                    <tbody id="user-table-body">
-                        </tbody>
+                    <tbody id="pic-list-body">
+                    </tbody>
                 </table>
             </div>
-            
-            <button type="button" class="login-btn" id="btn-submit-share" style="width: 100%; margin-top: 25px; padding: 12px;">Share Akses</button>
+
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button type="button" class="cancel-btn" id="cancel-pic-btn">Batal</button>
+                <button type="button" class="login-btn" id="save-pic-btn" style="background-color: #C62828;">Simpan Pilihan</button>
+            </div>
         </div>
     </div>
 
-    <div id="add-data-modal" class="modal hidden">
+    <div id="add-data-modal" class="modal hidden" style="z-index: 3005;">
         <div class="modal-content box-layout-modal">
             <span class="modal-close-btn" id="close-data-modal">&times;</span>
             <h3 style="text-align:center; color:#C62828; margin-bottom:20px;">Edit Data Temuan</h3>
             <form id="add-data-form">
                 <input type="hidden" id="current-session-id" name="session_id">
-                
                 <div class="form-grid-wrapper">
                     <div class="form-group">
                         <label>No AOI:</label>
                         <input type="text" name="no_aoi">
                     </div>
+                    
                     <div class="form-group">
                         <label>PIC SKAI:</label>
-                        <select name="pic_skai" id="pic-skai-select" class="custom-select">
-                            <option value="" selected>-- Pilih PIC SKAI --</option>
-                            </select>
+                        <div class="pic-input-wrapper">
+                            <div id="pic-display-area" class="pic-display-box">Belum ada PIC dipilih</div>
+                            <input type="hidden" name="pic_skai" id="pic_skai_hidden">
+                            <button type="button" id="btn-open-pic-modal" class="btn-pilih-pic">Pilih PIC</button>
+                        </div>
                     </div>
+
                     <div class="form-group"><label>Jenis AOI:</label><input type="text" name="jenis_aoi"></div>
                     <div class="form-group"><label>Klasifikasi:</label><input type="text" name="klasifikasi"></div>
                     <div class="form-group"><label>No LHA:</label><input type="text" name="no_lha"></div>
@@ -965,19 +520,35 @@
         </div>
     </div>
 
+    <div id="share-session-modal" class="modal hidden" style="z-index: 2100;">
+        <div class="modal-content" style="max-width: 600px; padding: 2rem;">
+            <span class="modal-close-btn" id="close-share-modal">&times;</span>
+            <h3 style="color: #C62828; margin-bottom: 20px;">Share Sesi Temuan: <span id="share-session-name-display"></span></h3>
+            <div id="user-list-container" style="max-height: 400px; overflow-y: auto; border: 1px solid #ddd; border-radius: 8px;">
+                <table class="user-share-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;"><input type="checkbox" id="select-all-users"></th>
+                            <th data-sort-key="name" class="sortable">Nama <span class="sort-icon"></span></th>
+                            <th data-sort-key="label" class="sortable">Label <span class="sort-icon"></span></th>
+                        </tr>
+                    </thead>
+                    <tbody id="user-table-body"></tbody>
+                </table>
+            </div>
+            <button type="button" class="login-btn" id="btn-submit-share" style="width: 100%; margin-top: 25px; padding: 12px;">Share Akses</button>
+        </div>
+    </div>
+
     <div id="create-temuan-modal" class="modal hidden">
         <div class="modal-content" style="max-width: 450px; padding: 25px; border-radius: 12px; background: white;">
             <span class="modal-close-btn" id="close-create-modal" style="position: absolute; top: 15px; right: 20px; font-size: 1.5rem; cursor: pointer;">&times;</span>
-            
             <h3 style="margin: 0 0 20px 0; color: #C62828; text-align: center; font-size: 1.4rem; font-weight: 700;">Buat Sesi Temuan Baru</h3>
-            
             <form id="create-temuan-form">
                 <div style="display: flex; flex-direction: column; gap: 12px;">
-                    
                     <div class="form-group" style="margin: 0;">
                         <label style="display: block; margin-bottom: 0px; font-weight: 600; color: #333; font-size: 0.9rem;">Jenis Audit:</label>
-                        <select name="jenis_audit" required 
-                                style="width: 100%; height: 45px; padding: 0 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; background-color: #fff; outline: none; cursor: pointer;">
+                        <select name="jenis_audit" required style="width: 100%; height: 45px; padding: 0 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; background-color: #fff; outline: none; cursor: pointer;">
                             <option value="" disabled selected>-- Pilih Jenis --</option>
                             <option value="Audit Internal">Audit Internal</option>
                             <option value="Audit Dengan Tujuan Tertentu">Audit Dengan Tujuan Tertentu</option>
@@ -990,24 +561,18 @@
                             <option value="Advisory">Advisory</option>
                         </select>
                     </div>
-
                     <div class="form-group" style="margin: 0;">
                         <label style="display: block; margin-bottom: 5px; font-weight: 600; color: #333; font-size: 0.9rem;">Nama Sesi / Penugasan:</label>
-                        <input type="text" name="session_name" required placeholder="Contoh: Audit Cabang X 2024" 
-                               style="width: 100%; height: 45px; padding: 0 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;">
+                        <input type="text" name="session_name" required placeholder="Contoh: Audit Cabang X 2024" style="width: 100%; height: 45px; padding: 0 12px; border: 1px solid #ccc; border-radius: 8px; font-size: 0.95rem; outline: none; box-sizing: border-box;">
                     </div>
                 </div>
-
                 <div style="margin-top: 15px; padding-top: 0px; border-top: 1px solid #eee;">
-                    <button type="submit" class="login-btn" 
-                            style="width: 100%; padding: 12px; font-size: 1rem; font-weight: 600; border-radius: 8px; background-color: #C62828; color: white; border: none; cursor: pointer; transition: background 0.3s;">
-                        Buat
-                    </button>
+                    <button type="submit" class="login-btn" style="width: 100%; padding: 12px; font-size: 1rem; font-weight: 600; border-radius: 8px; background-color: #C62828; color: white; border: none; cursor: pointer; transition: background 0.3s;">Buat</button>
                 </div>
             </form>
         </div>
     </div>
-    
+
     <div id="sheet-selection-modal" class="modal hidden">
         <div class="modal-content" style="max-width: 400px; padding: 2rem; border-radius: 12px; text-align: center;">
             <span class="modal-close-btn" id="close-sheet-modal">&times;</span>
@@ -1075,11 +640,12 @@
         </div>
     </div>
 
-    <div id="custom-message-modal" class="modal hidden">
-        <div class="modal-content custom-message-box" style="max-width: 400px; text-align: center; padding: 2rem; border-radius: 12px;">
-            <span class="modal-close-btn" onclick="document.getElementById('custom-message-modal').classList.add('hidden')">&times;</span>
-            <p id="custom-message-text" style="text-align: center; margin: 20px 0; font-size: 1rem; color: #333;"></p>
-            <button onclick="document.getElementById('custom-message-modal').classList.add('hidden')" class="login-btn full-width" style="width: 100%; padding: 10px;">OK</button>
+    <div id="custom-message-modal" class="modal hidden" style="z-index: 9999;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px; border-radius: 12px;">
+            <div style="font-size: 50px; color: #FF9800; margin-bottom: 15px;">&#9888;</div>
+            <h3 style="margin: 0 0 10px; color: #333;">Informasi</h3>
+            <p id="custom-message-text" style="font-size: 1rem; color: #555; margin-bottom: 25px; line-height: 1.5;"></p>
+            <button onclick="document.getElementById('custom-message-modal').classList.add('hidden')" class="login-btn" style="width: 100%; justify-content: center;">Mengerti</button>
         </div>
     </div>
 
@@ -1099,14 +665,36 @@
         </div>
     </div>
 
+    <div id="report-selection-modal" class="modal hidden" style="z-index: 2200;">
+        <div class="modal-content" style="max-width: 500px; padding: 2rem; border-radius: 12px; display: flex; flex-direction: column; max-height: 80vh;">
+            <span class="modal-close-btn" id="close-report-modal">&times;</span>
+            <h3 style="margin-bottom: 10px; color: var(--primary-color);">Pilih Unit Kerja</h3>
+            <p style="margin-bottom: 20px; color: #666; font-size: 0.9rem;">Pilih auditee yang ingin disertakan dalam laporan bulanan.</p>
+            <div style="margin-bottom: 15px;">
+                <input type="text" id="search-auditee-report" placeholder="Cari unit kerja..." style="width: 100%; padding: 10px; border: 1px solid #ccc; border-radius: 6px; box-sizing: border-box;">
+            </div>
+            <div style="flex: 1; overflow-y: auto; border: 1px solid #eee; border-radius: 8px; padding: 0;">
+                <div style="padding: 10px; border-bottom: 1px solid #eee; background: #f9f9f9; position: sticky; top: 0;">
+                    <label style="font-weight: 600; cursor: pointer; display: flex; align-items: center; gap: 8px;">
+                        <input type="checkbox" id="select-all-auditees"> Pilih Semua
+                    </label>
+                </div>
+                <ul id="report-auditee-list" class="search-popup-list" style="border: none; max-height: none;"></ul>
+            </div>
+            <div class="modal-actions" style="margin-top: 20px;">
+                <button type="button" class="cancel-btn" id="cancel-report-btn">Batal</button>
+                <button type="button" class="login-btn" id="generate-report-btn" style="background-color: #d32f2f;">Generate Laporan</button>
+            </div>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='ams_temuan.js') }}?v=9"></script>
+    <script src="{{ url_for('static', filename='ams_temuan.js') }}?v=12"></script>
     
     <script>
         function openSessionInNewPage() {
             const select = document.getElementById('temuan-session-select');
             const sessionId = select.value;
-
             if (!sessionId) {
                 if (typeof showCustomMessage === "function") {
                     showCustomMessage("Silakan pilih sesi terlebih dahulu.");
@@ -1120,28 +708,7 @@
         }
         
         document.addEventListener('DOMContentLoaded', async () => {
-            const picSkaiSelect = document.getElementById('pic-skai-select');
-            if(picSkaiSelect) {
-                try {
-                    const res = await fetch('/api/get_all_users');
-                    if(res.ok) {
-                        const users = await res.json();
-                        const filtered = users.filter(u => {
-                            const l = (u.label || '').toUpperCase();
-                            return l === 'COE' || l === 'ADVISORY' || l === 'AUDIT';
-                        });
-
-                        filtered.sort((a, b) => a.fullname.localeCompare(b.fullname));
-
-                        filtered.forEach(u => {
-                            const opt = document.createElement('option');
-                            opt.value = u.username; 
-                            opt.textContent = `${u.fullname} (${u.label})`;
-                            picSkaiSelect.appendChild(opt);
-                        });
-                    }
-                } catch(e) { console.error("Gagal load user", e); }
-            }
+            // Note: Inisialisasi user untuk filter/share dilakukan di ams_temuan.js
         });
     </script>
 </body>

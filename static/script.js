@@ -17,7 +17,6 @@ const shareModal = document.getElementById("share-modal");
 const folderSelectDropdown = document.getElementById("folder-select-dropdown");
 const folderHistoryDetail = document.getElementById("folder-history-detail");
 
-// --- HELPER FUNCTION BARU UNTUK SORTING ---
 function sortReviewData(data) {
     const priority = { 'Proofreading': 1, 'Koherensi': 2, 'Struktur': 3 };
     return data.sort((a, b) => {
@@ -44,8 +43,11 @@ function showCustomMessage(data, type = 'success', callback = null) {
 
     const titleElem = document.getElementById("custom-message-title");
     const textElem = document.getElementById("custom-message-text");
-    const detailsElem = document.getElementById("custom-message-details");
-    const okBtn = document.getElementById("custom-message-ok-btn");
+    
+    // Perbaikan: Cari elemen details dan tombol secara aman
+    const detailsElem = document.getElementById("custom-message-details"); 
+    // Perbaikan: Cari tombol di dalam modal karena di HTML tidak ada ID-nya
+    const okBtn = modal.querySelector('button.login-btn') || modal.querySelector('button'); 
 
     let title, message, details;
 
@@ -59,40 +61,64 @@ function showCustomMessage(data, type = 'success', callback = null) {
         details = null;
     }
 
-    titleElem.textContent = title;
+    if (titleElem) titleElem.textContent = title;
 
-    if (details && typeof details === 'object') {
-        let detailsHTML = '';
-        for (const key in details) {
-            detailsHTML += `
-                <p style="margin: 0.5rem 0; font-size: 1rem;">
-                    <strong>${key}:</strong> ${details[key]}
-                </p>
-            `;
+    // Logika aman untuk Details (Cek jika elemen ada)
+    if (detailsElem) {
+        if (details && typeof details === 'object') {
+            let detailsHTML = '';
+            for (const key in details) {
+                detailsHTML += `
+                    <p style="margin: 0.5rem 0; font-size: 1rem;">
+                        <strong>${key}:</strong> ${details[key]}
+                    </p>
+                `;
+            }
+            detailsElem.innerHTML = detailsHTML;
+            detailsElem.style.display = 'block';
+            if (textElem) textElem.style.display = 'none';
+        } else {
+            detailsElem.style.display = 'none';
+            if (textElem) {
+                textElem.textContent = message || '';
+                textElem.style.display = 'block';
+            }
         }
-        detailsElem.innerHTML = detailsHTML;
-        detailsElem.style.display = 'block';
-        textElem.style.display = 'none';
     } else {
-        detailsElem.style.display = 'none';
-        textElem.textContent = message || '';
-        textElem.style.display = 'block';
+        // Fallback jika detailsElem tidak ada di HTML
+        if (textElem) {
+            textElem.innerHTML = message || ''; 
+            if (details && typeof details === 'object') {
+                 // Gabungkan details ke textElem jika elemen details tidak ada
+                 let extraText = '<br><br>';
+                 for (const key in details) {
+                    extraText += `<b>${key}:</b> ${details[key]}<br>`;
+                 }
+                 textElem.innerHTML += extraText;
+            }
+            textElem.style.display = 'block';
+        }
     }
 
-    if (type === 'success') {
-        okBtn.style.backgroundColor = 'var(--success)';
-    } else if (type === 'error') {
-        okBtn.style.backgroundColor = 'var(--danger)';
-    } else {
-        okBtn.style.backgroundColor = 'var(--info)';
-    }
-
-    okBtn.onclick = () => {
-        modal.classList.add("hidden");
-        if (typeof callback === 'function') {
-            callback();
+    if (okBtn) {
+        if (type === 'success') {
+            okBtn.style.backgroundColor = '#4CAF50'; 
+        } else if (type === 'error') {
+            okBtn.style.backgroundColor = '#C62828'; 
+        } else {
+            okBtn.style.backgroundColor = '#1976D2'; 
         }
-    };
+
+        const newOkBtn = okBtn.cloneNode(true);
+        okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+
+        newOkBtn.onclick = () => {
+            modal.classList.add("hidden");
+            if (typeof callback === 'function') {
+                callback();
+            }
+        };
+    }
 
     modal.classList.remove("hidden");
 }
@@ -140,12 +166,10 @@ function showCustomConfirm(message, callback, title = 'Konfirmasi') {
 }
 
 function showError(message) {
-    // Implementasi sederhana alert jika div global error tidak ada
     showCustomMessage(message, 'error');
 }
 
 function clearError() {
-    // Tidak perlu implementasi kompleks jika menggunakan modal
 }
 
 async function loadUsersForDropdown() {
@@ -243,26 +267,33 @@ function createTable(data, headers, existingComments = [], actions = {}) {
         "apakah_ganti": "Ganti?", 
         "pic_proofread": "PIC", 
         "finalize": "Finalize",
-        "Sub-bab Asal": "Sub-bab Asal",
-        "Kalimat yang Menyimpang di dokumen lainnya": "Kalimat Menyimpang",
-        "Alasan": "Alasan"
+        "Sub-bab Referensi pada Dokumen asli": "Sub-bab Referensi (Asli)",
+        "Sub-bab Asal (Pada dokumen yang dibanding)": "Sub-bab Asal (Pembanding)",
+        "Kalimat Menyimpang (Dokumen yang dibanding)": "Kalimat Menyimpang",
+        "Alasan": "Alasan & Rekomendasi"
     };
 
     headers.forEach(header => {
         let thStyle = 'vertical-align: middle; text-align: center; padding: 12px; font-weight: bold; border: 1px solid #e0e0e0; background-color: #f8f9fa;'; 
         let headerText = customHeaders[header] || header;
 
-        if (["Ditemukan di Halaman", "Halaman", "apakah_ganti", "finalize", "lokasi"].includes(header)) {
-            thStyle += 'width: 80px;'; 
-        } 
-        else if (["pic_proofread", "kategori"].includes(header)) {
-            thStyle += 'min-width: 120px;'; 
-        } 
-        else if (["Kata/Frasa Salah", "Perbaikan Sesuai KBBI", "Kata yang Direvisi"].includes(header)) {
-            thStyle += 'min-width: 150px;';
+        if ([
+            "Sub-bab Referensi pada Dokumen asli",
+            "Sub-bab Asal (Pada dokumen yang dibanding)", 
+            "Kalimat Menyimpang (Dokumen yang dibanding)",
+            "Alasan", 
+            "penjelasan", "Pada Kalimat", "Kalimat Awal", "Kalimat Revisi"
+        ].includes(header)) {
+            thStyle += 'min-width: 300px;';
         }
-        else if (["masalah", "saran", "penjelasan", "Kalimat Awal", "Kalimat Revisi", "Pada Kalimat", "Kalimat yang Menyimpang di dokumen lainnya", "Alasan"].includes(header)) {
-            thStyle += 'min-width: 250px;'; 
+        else if (["lokasi", "masalah", "saran"].includes(header)) {
+            thStyle += 'min-width: 350px;'; 
+        }
+        else if (["pic_proofread", "finalize", "apakah_ganti", "Ditemukan di Halaman", "Halaman"].includes(header)) {
+            thStyle += 'width: 100px;';
+        }
+        else if (["Kata/Frasa Salah", "Perbaikan Sesuai KBBI", "Kata yang Direvisi", "kategori"].includes(header)) {
+            thStyle += 'min-width: 150px;';
         }
 
         head += `<th style="${thStyle}" class="header-${header.toLowerCase().replace(/[^a-z0-9]/g, '-')}">${headerText}</th>`;
@@ -281,21 +312,35 @@ function createTable(data, headers, existingComments = [], actions = {}) {
             let cellData = row[header] || "";
             let cellContent = '';
             
-            let tdStyle = 'vertical-align: middle; padding: 12px; border: 1px solid #e0e0e0; line-height: 1.6;'; 
-            let tdClasses = [];
+            let vAlign = 'top'; 
             
-            if (['masalah', 'saran', 'penjelasan', 'Alasan', 'Pada Kalimat', 'Kalimat yang Menyimpang di dokumen lainnya'].includes(header)) {
+            if ([
+                "Sub-bab Referensi pada Dokumen asli",
+                "Sub-bab Asal (Pada dokumen yang dibanding)",
+                "Kalimat Menyimpang (Dokumen yang dibanding)",
+                "masalah", "saran", "penjelasan", 
+                "Kata/Frasa Salah",
+                "Perbaikan Sesuai KBBI",
+                "Pada Kalimat",
+                "Ditemukan di Halaman",
+                "apakah_ganti",
+                "pic_proofread",
+                "finalize",
+                "lokasi",
+                "kategori"
+            ].includes(header)) {
+                vAlign = 'middle'; 
+            }
+
+            let tdStyle = `vertical-align: ${vAlign}; padding: 12px; border: 1px solid #e0e0e0; line-height: 1.6;`; 
+            
+            if (['penjelasan', 'Alasan', 'Kalimat Menyimpang (Dokumen yang dibanding)', 'Pada Kalimat', 'Kalimat Awal', 'Kalimat Revisi'].includes(header)) {
                 tdStyle += 'text-align: justify;'; 
-                tdClasses.push('konteks-kalimat-cell');
-            }
-            else if (['Kalimat Awal', 'Kalimat Revisi'].includes(header)) {
-                tdStyle += 'text-align: left;'; 
-                tdClasses.push('konteks-kalimat-cell');
-            }
-            else {
+            } else {
                 tdStyle += 'text-align: center;'; 
             }
 
+            // --- KONTEN CELL ---
             if ((header === "Kalimat Revisi") && Array.isArray(cellData)) {
                 cellContent = cellData.map(part => part.changed ? 
                     `<span class="diff-changed" style="background-color: #ffeef0; color: #b71c1c; font-weight: bold;">${part.text}</span>` : part.text
@@ -306,7 +351,8 @@ function createTable(data, headers, existingComments = [], actions = {}) {
                 if(cellData === 'Proofreading') badgeColor = '#4CAF50';
                 if(cellData === 'Koherensi') badgeColor = '#FF9800';
                 if(cellData === 'Struktur') badgeColor = '#2196F3';
-                cellContent = `<span style="background-color:${badgeColor}; color:white; padding:4px 8px; border-radius:12px; font-size:0.85em;">${cellData}</span>`;
+                // Gunakan display inline-block agar vertical align berfungsi baik
+                cellContent = `<span style="background-color:${badgeColor}; color:white; padding:6px 12px; border-radius:12px; font-size:0.85em; display:inline-block;">${cellData}</span>`;
             }
             else if (header === "apakah_ganti") {
                 const isChecked = savedAction.is_ganti ? 'checked' : '';
@@ -333,17 +379,25 @@ function createTable(data, headers, existingComments = [], actions = {}) {
                 }
             }
             else if (header === "Alasan" || header === "penjelasan") {
-                cellContent = cellData.replace(/\n/g, '<div style="margin-bottom: 13px;"></div>');
+                let text = cellData.replace(/\n/g, '<br>');
+                let parts = text.split(/Rekomendasi:/i);
+                
+                if (parts.length > 1) {
+                    cellContent = `
+                        <div style="margin-bottom: 10px;">${parts[0]}</div>
+                        <div style="padding: 12px; background-color: #E8F5E9; color: #1B5E20; border-left: 5px solid #4CAF50; border-radius: 4px; font-weight: 500;">
+                            <strong>Rekomendasi:</strong> ${parts[1]}
+                        </div>
+                    `;
+                } else {
+                    cellContent = text;
+                }
             }
             else {
                 cellContent = cellData;
             }
             
-            if (['apakah_ganti', 'pic_proofread', 'finalize', 'Ditemukan di Halaman', 'Halaman', 'lokasi', 'kategori'].includes(header)) {
-                tdClasses.push('action-cell-content');
-            }
-
-            body += `<td style="${tdStyle}" class="${tdClasses.join(' ')} table-cell-${header}">${cellContent}</td>`;
+            body += `<td style="${tdStyle}">${cellContent}</td>`;
         });
         body += "</tr>";
     });
@@ -371,14 +425,16 @@ function openResultsInNewTab(featureId) {
         title = "Hasil Analisis Proofreading";
     } else if (featureId === 'compare') {
         data = JSON.parse(sessionStorage.getItem('compareResults'));
-        headers = ["Sub-bab Asal", "Kalimat yang Menyimpang di dokumen lainnya", "Alasan"];
+        headers = [
+            "Sub-bab Referensi pada Dokumen asli", 
+            "Sub-bab Asal (Pada dokumen yang dibanding)", 
+            "Kalimat Menyimpang (Dokumen yang dibanding)", 
+            "Alasan"
+        ];
         title = "Hasil Perbandingan Dokumen";
     } else if (featureId === 'review') {
         data = JSON.parse(sessionStorage.getItem('reviewResults'));
-        
-        // PASTIKAN DATA DI SORT DI SINI JUGA
         if(data) data = sortReviewData(data);
-        
         headers = ["kategori", "masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
         title = "Hasil Reviu Dokumen Lengkap";
     }
@@ -402,79 +458,124 @@ function openResultsInNewTab(featureId) {
                 <meta charset="UTF-8">
                 <title>${title}</title>
                 <style>
-                    body { font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; padding: 20px; color: #333; }
-                    h2 { text-align: center; margin-bottom: 20px; color: #C62828; }
+                    body { 
+                        font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+                        padding: 30px; 
+                        color: #333; 
+                        background-color: #fff;
+                    }
+                    h2 { 
+                        text-align: center; 
+                        margin-bottom: 30px; 
+                        color: #C62828; 
+                        font-size: 24px;
+                    }
                     
-                    table { width: 100%; border-collapse: collapse; margin-bottom: 20px; }
-                    th { background-color: #f8f9fa; border: 1px solid #e0e0e0; padding: 12px; text-align: center; vertical-align: middle; }
-                    td { border: 1px solid #e0e0e0; padding: 10px; vertical-align: middle; }
-                    
-                    .highlight-error { background-color: yellow; font-weight: bold; }
-                    .diff-changed { background-color: #ffeef0; color: #b71c1c; font-weight: bold; }
-                    
-                    .finalize-save-btn {
-                        display: none; 
+                    /* --- PERBAIKAN UTAMA DI SINI --- */
+                    /* Menghilangkan scrollbar internal agar tabel tampil penuh */
+                    .results-table-wrapper {
+                        max-height: none !important;
+                        overflow: visible !important;
+                        border: none !important;
+                        box-shadow: none !important;
+                        height: auto !important;
                     }
 
-                    input[type="checkbox"] {
-                        pointer-events: none;
-                        width: 18px;
-                        height: 18px;
-                    }
-
-                    select {
-                        pointer-events: none;
-                        background: transparent;
-                        border: none;
-                        color: #333;
-                        font-size: inherit;
-                        font-family: inherit;
-                        appearance: none; 
-                        -webkit-appearance: none;
-                        padding: 0;
-                        text-align: center;
-                        width: 100%;
+                    table { 
+                        width: 100%; 
+                        border-collapse: collapse; 
+                        margin-bottom: 40px; 
+                        box-shadow: 0 0 10px rgba(0,0,0,0.05);
                     }
                     
+                    th { 
+                        background-color: #f8f9fa; 
+                        border: 1px solid #ddd; 
+                        padding: 15px; 
+                        text-align: center; 
+                        vertical-align: middle;
+                        font-size: 14px;
+                        color: #444;
+                    }
+                    
+                    td { 
+                        border: 1px solid #ddd; 
+                        padding: 15px; 
+                        vertical-align: top; /* Pastikan konten rata atas */
+                        font-size: 14px;
+                    }
+                    
+                    /* Styling khusus untuk highlight */
+                    .highlight-error { background-color: #FFF9C4; padding: 2px 4px; border-radius: 3px; font-weight: bold; }
+                    .diff-changed { background-color: #FFEBEE; color: #C62828; font-weight: bold; padding: 2px 4px; border-radius: 3px; }
+                    
+                    /* Sembunyikan tombol aksi yang tidak perlu di print view */
+                    .finalize-save-btn, .action-checkbox, .action-dropdown {
+                        display: none !important; 
+                    }
+
+                    /* Agar tampilan checkbox/select di tabel tidak rusak layoutnya */
+                    .table-cell-apakah_ganti, .table-cell-pic_proofread, .table-cell-finalize {
+                        display: none;
+                    }
+                    .header-apakah-ganti, .header-pic-proofread, .header-finalize {
+                        display: none;
+                    }
+
+                    /* Header Actions (Tombol Cetak & Tutup) */
                     .header-actions {
-                        margin-bottom: 15px;
+                        margin-bottom: 20px;
                         display: flex;
+                        justify-content: flex-end; /* Tombol ditaruh di kanan */
                         gap: 10px; 
+                        background: #f9f9f9;
+                        padding: 15px;
+                        border-radius: 8px;
+                        border: 1px solid #eee;
                     }
 
                     .btn-print {
-                        padding: 10px 20px; 
+                        padding: 10px 25px; 
                         cursor: pointer; 
-                        background: #333; 
+                        background: #2B3674; 
                         color: white; 
                         border: none; 
-                        border-radius: 4px; 
-                        font-weight: 500; 
+                        border-radius: 6px; 
+                        font-weight: 600; 
+                        transition: background 0.2s;
                     }
                     
                     .btn-close {
-                        padding: 10px 20px; 
+                        padding: 10px 25px; 
                         cursor: pointer; 
-                        background: #6c757d; 
-                        color: white; 
-                        border: none; 
-                        border-radius: 4px; 
-                        font-weight: 500; 
+                        background: #fff; 
+                        color: #555; 
+                        border: 1px solid #ddd; 
+                        border-radius: 6px; 
+                        font-weight: 600; 
+                        transition: background 0.2s;
                     }
 
-                    .btn-print:hover { background: #000; }
-                    .btn-close:hover { background: #5a6268; }
+                    .btn-print:hover { background: #1a237e; }
+                    .btn-close:hover { background: #f0f0f0; }
+
+                    /* Styling khusus saat Print (Ctrl+P) */
+                    @media print {
+                        .header-actions { display: none; }
+                        body { padding: 0; }
+                        table { box-shadow: none; }
+                        tr { page-break-inside: avoid; } /* Mencegah baris terpotong antar halaman */
+                    }
 
                 </style>
             </head>
             <body>
-                <h2>${title}</h2>
-                
                 <div class="header-actions">
+                    <button onclick="window.close()" class="btn-close">Kembali</button>
                     <button onclick="window.print()" class="btn-print">Cetak / Simpan PDF</button>
-                    <button onclick="window.close()" class="btn-close">Kembali ke Dashboard</button>
                 </div>
 
+                <h2>${title}</h2>
                 ${tableHTML}
             </body>
             </html>
@@ -662,6 +763,65 @@ function goToNextMonth() {
     renderCalendar(activeTasks, currentCalendarYear, currentCalendarMonth);
 }
 
+async function loadDashboardReminders() {
+    const onProgressContainer = document.querySelector('.reminder-group:nth-child(1) ul');
+    const overdueContainer = document.querySelector('.reminder-group:nth-child(2) ul');
+    
+    if (!onProgressContainer || !overdueContainer) return;
+
+    try {
+        const response = await fetch('/api/get_dashboard_logs');
+        const logsData = await response.json();
+
+        onProgressContainer.innerHTML = '';
+        overdueContainer.innerHTML = '';
+
+        function renderLogList(container, dataList, emptyMessage, isOverdue = false) {
+            if (!dataList || dataList.length === 0) {
+                container.innerHTML = `<li class="no-reminder">${emptyMessage}</li>`;
+                return;
+            }
+
+            const limit = 5;
+            const displayItems = dataList.slice(0, limit);
+
+            displayItems.forEach(item => {
+                const li = document.createElement('li');
+                li.style.cssText = "padding: 12px 20px; border-bottom: 1px solid #eee; display:flex; justify-content:space-between; align-items: center;";
+                
+                const titleStyle = isOverdue ? "font-weight:600; color:#C62828;" : "font-weight:500; color:#333;";
+                const badgeBg = isOverdue ? "#FFEBEE" : "#E1F5FE";
+                const badgeColor = isOverdue ? "#C62828" : "#0277BD";
+
+                li.innerHTML = `
+                    <span style="${titleStyle}">${item.filename}</span>
+                    <span style="font-size:0.8em; color:${badgeColor}; background:${badgeBg}; padding:4px 8px; border-radius:12px; white-space:nowrap;">
+                        ${item.deadline}
+                    </span>`;
+                container.appendChild(li);
+            });
+
+            if (dataList.length > limit) {
+                const moreLi = document.createElement('li');
+                moreLi.style.cssText = "padding: 10px; text-align: center; border-bottom: none;";
+                moreLi.innerHTML = `
+                    <a href="/log_analysis" style="text-decoration: none; color: #1976D2; font-weight: 700; font-size: 0.9em; cursor: pointer;">
+                        Lihat Semua (${dataList.length}) <i class='bx bx-right-arrow-alt' style="vertical-align: middle;"></i>
+                    </a>
+                `;
+                container.appendChild(moreLi);
+            }
+        }
+
+        renderLogList(onProgressContainer, logsData.on_progress, 'Tidak ada tugas yang sedang dikerjakan.', false);
+        renderLogList(overdueContainer, logsData.overdue, 'Tidak ada tugas yang terlambat.', true);
+
+    } catch (error) {
+        console.error("Gagal memuat reminder widget:", error);
+        onProgressContainer.innerHTML = '<li class="no-reminder" style="color:red;">Gagal memuat data.</li>';
+    }
+}
+
 async function fetchAndRenderDashboardWidgets() {
     try {
         const [logsResponse, remindersResponse] = await Promise.all([
@@ -674,73 +834,8 @@ async function fetchAndRenderDashboardWidgets() {
         const logsData = await logsResponse.json();
         const remindersData = await remindersResponse.json();
         
-        const progressList = document.getElementById('log-progress-list');
-        if (progressList) {
-            progressList.innerHTML = '';
-            if (!logsData.on_progress || logsData.on_progress.length === 0) {
-                progressList.innerHTML = '<li class="no-reminder">Belum ada reminder untuk bagian ini</li>';
-            } else {
-                logsData.on_progress.forEach(item => {
-                    const li = document.createElement('li');
-                    li.style.cssText = "padding: 10px; border-bottom: 1px solid #eee; display:flex; justify-content:space-between; align-items: center;";
-                    li.innerHTML = `
-                        <span style="font-weight:500; color:#333;">${item.filename}</span>
-                        <span style="font-size:0.8em; color:#0277BD; background:#E1F5FE; padding:4px 8px; border-radius:12px;">
-                            ${item.deadline}
-                        </span>`;
-                    progressList.appendChild(li);
-                });
-            }
-        }
+        loadDashboardReminders();
 
-        const overdueList = document.getElementById('log-overdue-list');
-        if (overdueList) {
-            overdueList.innerHTML = '';
-            if (!logsData.overdue || logsData.overdue.length === 0) {
-                overdueList.innerHTML = '<li class="no-reminder">Belum ada reminder untuk bagian ini</li>';
-            } else {
-                logsData.overdue.forEach(item => {
-                    const li = document.createElement('li');
-                    li.style.cssText = "padding: 10px; border-bottom: 1px solid #eee; display:flex; justify-content:space-between; align-items: center;";
-                    li.innerHTML = `
-                        <span style="font-weight:600; color:#C62828;">${item.filename}</span>
-                        <span style="font-size:0.8em; color:#C62828; background:#FFEBEE; padding:4px 8px; border-radius:12px;">
-                            ${item.deadline}
-                        </span>`;
-                    overdueList.appendChild(li);
-                });
-            }
-        }
-
-        const amsList = document.getElementById('ams-dashboard-list');
-        if (amsList) {
-            amsList.innerHTML = '';
-            const pendingAms = remindersData.filter(r => !r.is_responded);
-
-            if (pendingAms.length === 0) {
-                amsList.innerHTML = '<li class="no-reminder">Belum ada reminder untuk bagian ini</li>';
-            } else {
-                pendingAms.slice(0, 5).forEach(rem => {
-                    const li = document.createElement('li');
-                    li.style.cssText = "padding: 10px; border-bottom: 1px solid #eee;";
-                    
-                    const statusColor = rem.is_overdue ? '#C62828' : '#2E7D32';
-                    const sisaText = rem.is_overdue ? `Terlambat ${Math.abs(parseInt(rem.sisa_hari))} hari` : `${rem.sisa_hari}`;
-
-                    li.innerHTML = `
-                        <div style="display:flex; justify-content:space-between; margin-bottom:4px;">
-                            <strong style="font-size:0.95em;">${rem.subject}</strong>
-                            <span style="font-size:0.8em; color:${statusColor}; font-weight:bold;">${sisaText}</span>
-                        </div>
-                        <div style="font-size:0.85em; color:#666;">
-                            Kepada: ${rem.auditee}
-                        </div>
-                    `;
-                    amsList.appendChild(li);
-                });
-            }
-        }
-        
         let allCalendarTasks = [];
 
         if (logsData.on_progress) {
@@ -1090,10 +1185,14 @@ async function viewResultFile(folderName, filename, ownerId, featureType, event)
         if (featureType === 'proofreading') {
             headers = ["Kata/Frasa Salah", "Perbaikan Sesuai KBBI", "Pada Kalimat", "Ditemukan di Halaman", "apakah_ganti", "pic_proofread", "finalize"];
         } else if (featureType === 'compare') {
-            headers = ["Sub-bab Asal", "Kalimat yang Menyimpang di dokumen lainnya", "Alasan"];
+            headers = [
+                "Sub-bab Referensi pada Dokumen asli", 
+                "Sub-bab Asal (Pada dokumen yang dibanding)", 
+                "Kalimat Menyimpang (Dokumen yang dibanding)", 
+                "Alasan"
+            ];
         } else if (featureType === 'review' || featureType === 'review_dokumen') {
             
-            // --- LOGIKA SORTING DI CLIENT (Jaga-jaga jika data lama belum disort) ---
             if(data) data = sortReviewData(data);
 
             headers = ["kategori", "masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
@@ -1282,54 +1381,6 @@ async function openSaveModal(featureId, resultsData, filename) {
     }
 }
 
-async function loadDashboardReminders() {
-    const onProgressContainer = document.querySelector('.reminder-group:nth-child(1) ul');
-    const overdueContainer = document.querySelector('.reminder-group:nth-child(2) ul');
-    
-    if (!onProgressContainer || !overdueContainer) return;
-
-    try {
-        const response = await fetch('/api/get_reminders');
-        const reminders = await response.json();
-
-        onProgressContainer.innerHTML = '';
-        overdueContainer.innerHTML = '';
-
-        let hasOnProgress = false;
-        let hasOverdue = false;
-
-        reminders.forEach(rem => {
-            const li = document.createElement('li');
-            li.innerHTML = `
-                <div style="display:flex; justify-content:space-between; align-items:center;">
-                    <strong>${rem.subject}</strong>
-                    <small style="color: #666;">${rem.deadline}</small>
-                </div>
-                <div style="font-size: 0.85rem; color: #888;">Kepada: ${rem.auditee}</div>
-                <div style="font-size: 0.85rem; font-weight:bold; margin-top:2px;">Sisa: ${rem.sisa_hari}</div>
-            `;
-
-            if (rem.is_overdue) {
-                overdueContainer.appendChild(li);
-                hasOverdue = true;
-            } else {
-                onProgressContainer.appendChild(li);
-                hasOnProgress = true;
-            }
-        });
-
-        if (!hasOnProgress) {
-            onProgressContainer.innerHTML = '<li class="no-reminder">Tidak ada tugas yang sedang dikerjakan.</li>';
-        }
-        if (!hasOverdue) {
-            overdueContainer.innerHTML = '<li class="no-reminder">Tidak ada tugas yang terlambat.</li>';
-        }
-
-    } catch (error) {
-        console.error("Gagal memuat reminder widget:", error);
-    }
-}
-
 async function loadAMSDashboardWidget() {
     const amsContainer = document.getElementById('ams-dashboard-list');
     
@@ -1353,6 +1404,8 @@ async function loadAMSDashboardWidget() {
             
             const daysColor = rem.is_overdue ? '#D32F2F' : '#2E7D32';
             const daysText = rem.is_overdue ? `Telat ${rem.sisa_hari}` : `Sisa ${rem.sisa_hari}`;
+
+            li.style.cssText = "padding: 12px 20px; border-bottom: 1px solid #eee;";
 
             li.innerHTML = `
                 <div style="display:flex; justify-content:space-between; align-items:flex-start; margin-bottom:4px;">
@@ -1384,13 +1437,13 @@ async function openShareModal(folderName, event) {
     const userTableBody = document.getElementById("share-user-table-body");
     const shareModal = document.getElementById("share-modal");
     const shareModalError = document.getElementById("share-modal-error");
-    
+
     const titleSpan = document.getElementById("share-modal-folder-name");
     if(titleSpan) titleSpan.textContent = folderName;
-    
+
     if(shareModal) shareModal.classList.remove("hidden");
 
-    if(userTableBody) userTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;">Memuat data pengguna...</td></tr>';
+    if(userTableBody) userTableBody.innerHTML = '<tr><td colspan="3" style="text-align:center; padding: 20px;"><div class="spinner"></div> Memuat data pengguna...</td></tr>';
 
     try {
         const response = await fetch("/api/get_all_users");
@@ -1398,23 +1451,41 @@ async function openShareModal(folderName, event) {
             throw new Error("Gagal memuat daftar pengguna.");
         }
 
-        const users = await response.json();
-        
+        let users = await response.json();
+
+        users.sort((a, b) => {
+            const deptA = (a.label || '').toLowerCase();
+            const deptB = (b.label || '').toLowerCase();
+            const nameA = (a.fullname || a.username || '').toLowerCase();
+            const nameB = (b.fullname || b.username || '').toLowerCase();
+
+            if (deptA < deptB) return -1;
+            if (deptA > deptB) return 1;
+
+            if (nameA < nameB) return -1;
+            if (nameA > nameB) return 1;
+
+            return 0;
+        });
+
         if (!userTableBody) return;
         userTableBody.innerHTML = '';
 
         if (users.length === 0) {
-             userTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px;">Tidak ada pengguna lain.</td></tr>';
+             userTableBody.innerHTML = '<tr><td colspan="3" style="text-align: center; padding: 20px; color: #999;">Tidak ada pengguna lain.</td></tr>';
         } else {
             let rowsHTML = '';
             users.forEach(user => {
+                const displayName = user.fullname || user.username || 'Tanpa Nama';
+                const deptName = user.label || '-';
+
                 rowsHTML += `
                     <tr>
                         <td style="text-align:center;">
-                            <input type="checkbox" class="share-user-checkbox" value="${user.id}">
+                            <input type="checkbox" class="share-user-checkbox" value="${user.id}" style="transform: scale(1.2); cursor: pointer;">
                         </td>
-                        <td>${user.username || 'Tanpa Nama'}</td>
-                        <td>${user.label || '-'}</td>
+                        <td style="font-weight: 500;">${displayName}</td>
+                        <td><span style="background:#E3F2FD; color:#1565C0; padding: 2px 8px; border-radius: 4px; font-size: 12px;">${deptName}</span></td>
                     </tr>
                 `;
             });
@@ -1423,7 +1494,7 @@ async function openShareModal(folderName, event) {
 
     } catch (error) {
         console.error(error);
-        if(userTableBody) userTableBody.innerHTML = `<tr><td colspan="3" style="color: red; text-align:center;">Error: ${error.message}</td></tr>`;
+        if(userTableBody) userTableBody.innerHTML = `<tr><td colspan="3" style="color: red; text-align:center; padding: 20px;">Error: ${error.message}</td></tr>`;
     }
 }
 
@@ -1441,7 +1512,12 @@ function checkSessionStorage(pageId) {
         storageKey = 'compareResults';
         tableDiv = document.getElementById("compare-results-table");
         containerDiv = document.getElementById("compare-results-container");
-        headers = ["Sub-bab Asal", "Kalimat yang Menyimpang di dokumen lainnya", "Alasan"];
+        headers = [
+            "Sub-bab Referensi pada Dokumen asli", 
+            "Sub-bab Asal (Pada dokumen yang dibanding)", 
+            "Kalimat Menyimpang (Dokumen yang dibanding)", 
+            "Alasan"
+        ];
     
     } else if (pageId === 'review') {
         storageKey = 'reviewResults';
@@ -1464,7 +1540,6 @@ function checkSessionStorage(pageId) {
         try {
             let data = JSON.parse(storedData);
             if (data && data.length > 0) {
-                // --- LOGIKA SORTING DI SINI ---
                 if (pageId === 'review') {
                     data = sortReviewData(data);
                 }
@@ -1472,7 +1547,7 @@ function checkSessionStorage(pageId) {
                 const tempActions = JSON.parse(sessionStorage.getItem('tempRowActions') || '{}');
                 tableDiv.innerHTML = createTable(data, headers, [], tempActions);
                 containerDiv.classList.remove("hidden");
-        
+                
                 currentAnalysisResults = data;
                 currentAnalysisFeature = pageId;
                 currentAnalysisFilename = savedFile;
@@ -1746,23 +1821,37 @@ document.addEventListener("DOMContentLoaded", () => {
     });
 
     if (confirmShareBtn) {
-        confirmShareBtn.addEventListener("click", async () => {
-            const folderName = document.getElementById("share-modal-folder-name").textContent;
-    
+        const newBtn = confirmShareBtn.cloneNode(true);
+        confirmShareBtn.parentNode.replaceChild(newBtn, confirmShareBtn);
+
+        newBtn.addEventListener("click", async () => {
+            const folderNameElem = document.getElementById("share-modal-folder-name");
+            const shareModalError = document.getElementById("share-modal-error");
+            const shareModalLoading = document.getElementById("share-modal-loading");
+            const shareModal = document.getElementById("share-modal");
+
+            if (!folderNameElem) return;
+            const folderName = folderNameElem.textContent;
+
             const selectedUsers = [];
             document.querySelectorAll('#share-user-table-body input[type="checkbox"]:checked').forEach(checkbox => {
                 selectedUsers.push(checkbox.value);
             });
 
             if (selectedUsers.length === 0) {
-                shareModalError.textContent = "Mohon pilih minimal satu pengguna.";
-                shareModalError.classList.remove("hidden");
+                if (shareModalError) {
+                    shareModalError.textContent = "Mohon pilih minimal satu pengguna.";
+                    shareModalError.classList.remove("hidden");
+                } else {
+                    alert("Mohon pilih minimal satu pengguna.");
+                }
                 return;
             }
 
-            shareModalLoading.classList.remove("hidden");
-            shareModalError.classList.add("hidden");
-            confirmShareBtn.disabled = true;
+            if (shareModalLoading) shareModalLoading.classList.remove("hidden");
+            if (shareModalError) shareModalError.classList.add("hidden");
+            newBtn.disabled = true;
+            newBtn.textContent = "Memproses...";
 
             try {
                 const response = await fetch("/api/share_folder", {
@@ -1775,38 +1864,29 @@ document.addEventListener("DOMContentLoaded", () => {
                     const err = await response.json();
                     throw new Error(err.error || "Gagal berbagi folder.");
                 }
-    
+
                 const result = await response.json();
 
-                let successMessage = result.message;
+                if (shareModal) shareModal.classList.add("hidden");
+                
+                showCustomMessage(result.message || "Folder berhasil dibagikan!", 'success');
 
-                if (result.success_names && result.success_names.length > 0) {
-                    const namesList = result.success_names.join(', ');
-                    successMessage = `Berhasil di-share ke: ${namesList}.`;
-
-                    if (result.skipped_count > 0) {
-                        successMessage += ` (${result.skipped_count} user dilewati: sudah di-share)`;
-                    }
-                } else if (result.skipped_count > 0 && result.errors.length === 0) {
-                        successMessage = `${result.skipped_count} user dilewati (semuanya sudah di-share).`;
+                if (typeof loadUserFolders === "function") {
+                    loadUserFolders();
                 }
-
-                if (result.errors && result.errors.length > 0) {
-                    successMessage += ` Terdapat kegagalan: ${result.errors.join('; ')}`;
-                    showCustomMessage(successMessage, 'error', 'Peringatan Share');
-                } else {
-                    showCustomMessage(successMessage, 'success', 'Berbagi Berhasil');
-                }
-
-                shareModal.classList.add("hidden");
 
             } catch (error) {
-                shareModalError.textContent = error.message;
-                shareModalError.classList.remove("hidden");
+                console.error(error);
+                if (shareModalError) {
+                    shareModalError.textContent = error.message;
+                    shareModalError.classList.remove("hidden");
+                } else {
+                    alert(error.message);
+                }
             } finally {
-                shareModalLoading.classList.add("hidden");
-                confirmShareBtn.disabled = false;
-                loadUserFolders();
+                if (shareModalLoading) shareModalLoading.classList.add("hidden");
+                newBtn.disabled = false;
+                newBtn.textContent = "Bagikan";
             }
         });
     }
@@ -1867,7 +1947,6 @@ document.addEventListener("DOMContentLoaded", () => {
             try {
                 const response = await fetch("/api/proofread/analyze", { method: "POST", body: formData });
                 if (!response.ok) {
-                    // Penanganan error jika server return HTML (500) bukan JSON
                     let errMessage = "Server Error";
                     try {
                         const err = await response.json(); 
@@ -1922,6 +2001,7 @@ document.addEventListener("DOMContentLoaded", () => {
             compareResultsContainer.classList.add("hidden");
             if(compareSaveBtn) compareSaveBtn.classList.add("hidden");
             if(compareViewBtn) compareViewBtn.classList.add("hidden");
+            
             sessionStorage.removeItem('compareResults');
             sessionStorage.removeItem('compareFilename');
 
@@ -1936,28 +2016,33 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (!response.ok) {
                     let errMessage = "Server Error";
                     try { const err = await response.json(); errMessage = err.error; } 
-                    catch(e) { errMessage = `Gagal memproses (${response.status}). File terlalu besar/timeout.`; }
+                    catch(e) { errMessage = `Gagal memproses (${response.status}).`; }
                     throw new Error(errMessage);
                 }
                 const data = await response.json();
 
                 if (data.length === 0) {
-                compareResultsTableDiv.innerHTML = "<p>Tidak ada perbedaan makna yang signifikan ditemukan antara dokumen asli dan revisi.</p>";
+                    compareResultsTableDiv.innerHTML = "<p>Tidak ada perbedaan makna yang signifikan ditemukan.</p>";
                 } else {
-                const headers = ["Sub-bab Asal", "Kalimat yang Menyimpang di dokumen lainnya", "Alasan"];
+                    const headers = [
+                        "Sub-bab Referensi pada Dokumen asli", 
+                        "Sub-bab Asal (Pada dokumen yang dibanding)", 
+                        "Kalimat Menyimpang (Dokumen yang dibanding)", 
+                        "Alasan"
+                    ];
                 
-                const resultsData = data;
+                    compareResultsTableDiv.innerHTML = createTable(data, headers, [], {});
                 
-                compareResultsTableDiv.innerHTML = createTable(resultsData, headers, [], {});
-                
-                const filename = "perbandingan_" + file1.name;
-                sessionStorage.setItem('compareResults', JSON.stringify(resultsData));
-                sessionStorage.setItem('compareFilename', filename);
-                currentAnalysisResults = resultsData;
-                currentAnalysisFeature = 'compare';
-                currentAnalysisFilename = filename;
-                if(compareSaveBtn) compareSaveBtn.classList.remove("hidden");
-                if(compareViewBtn) compareViewBtn.classList.remove("hidden");
+                    const filename = "perbandingan_" + file1.name;
+                    sessionStorage.setItem('compareResults', JSON.stringify(data));
+                    sessionStorage.setItem('compareFilename', filename);
+                    
+                    currentAnalysisResults = data;
+                    currentAnalysisFeature = 'compare';
+                    currentAnalysisFilename = filename;
+                    
+                    if(compareSaveBtn) compareSaveBtn.classList.remove("hidden");
+                    if(compareViewBtn) compareViewBtn.classList.remove("hidden");
                 }
                 compareResultsContainer.classList.remove("hidden");
 
@@ -1968,19 +2053,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 compareAnalyzeBtn.disabled = false;
             }
         });
-
-        const compareDownloadBtn = document.getElementById("compare-download-btn");
-        if (compareDownloadBtn) {
-            compareDownloadBtn.addEventListener("click", () => {
-                const file1 = compareFileInput1.files[0];
-                const file2 = compareFileInput2.files[0];
-                if (!file1 || !file2) { showError("File asli tidak ditemukan. Muat ulang dan pilih file lagi."); return; }
-                const formData = new FormData();
-                formData.append("file1", file1);
-                formData.append("file2", file2);
-                handleDownload("/api/compare/download", formData, `perbandingan_${file1.name}`);
-            });
-        }
     }
     
     if (reviewAnalyzeBtn) {
@@ -2012,7 +2084,6 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.length === 0) {
                     reviewResultsTableDiv.innerHTML = "<p>Tidak ada masalah ditemukan (Dokumen Sempurna).</p>";
                 } else {
-                    // --- SORTING JUGA DI SINI ---
                     data = sortReviewData(data);
 
                     const headers = ["kategori", "masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
