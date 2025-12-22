@@ -7,7 +7,8 @@ import difflib
 import fitz
 import docx
 import pandas as pd
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import shutil 
 from docx.shared import RGBColor
 import PIL.Image
@@ -4671,4 +4672,5 @@ def api_generate_dashboard_insight():
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
 
 if __name__ == '__main__':
+
     app.run(debug=True, port=5000)
