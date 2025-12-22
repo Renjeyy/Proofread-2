@@ -86,7 +86,7 @@ try:
         raise ValueError("GOOGLE_API_KEY tidak ditemukan di file .env")
     
     genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-3-flash-preview') 
+    model = genai.GenerativeModel('gemini-2.5-flash') 
 except Exception as e:
     print(f"Error saat mengkonfigurasi Google AI: {e}")
 
@@ -297,6 +297,7 @@ class Message(db.Model):
 class LibraryFile(db.Model):
     id = db.Column(db.Integer, primary_key=True)
     user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    shelf_id = db.Column(db.String(50), nullable=True)
     title = db.Column(db.String(255), nullable=False)
     category = db.Column(db.String(100), nullable=False)
     summary = db.Column(db.Text, nullable=True)
@@ -538,10 +539,6 @@ def split_text_into_sentences(full_text):
     return [s.strip() for s in sentences if len(s.strip()) > 10]
 
 def analyze_document_by_section(original_text, revised_text):
-    """
-    Menganalisis kesesuaian makna antara dokumen asli dan revisi berdasarkan sub-bab.
-    Fungsi ini telah direvisi untuk meminta AI memberikan alasan dalam dua poin terpisah.
-    """
     if not original_text or not revised_text:
         return []
     prompt = f"""
@@ -549,47 +546,42 @@ def analyze_document_by_section(original_text, revised_text):
     Tujuannya adalah untuk memastikan bahwa konten di setiap sub-bab pada Dokumen Revisi tetap sejalan dengan makna dan konteks sub-bab yang sesuai di Dokumen Asli.
 
     Instruksi:
-    1.  Baca dan pahami struktur kedua dokumen. Identifikasi semua bab dan sub-bab (misalnya: "Bab 1", "1.1 Latar Belakang", "2.3 Prosedur Audit").
-    2.  **ABAIKAN** bagian-bagian berikut dalam analisis Anda:
-        *   Tabel dan isinya.
-        *   Gambar dan keterangan gambar.
-        *   Daftar pustaka.
-        *   Lampiran.
-        *   Bagian pendahuluan, definisi, atau daftar istilah jika ada di section/subsection tersendiri.
-    3.  Fokus analisis Anda **HANYA** pada isi paragraf dan poin-poin di dalam setiap sub-bab.
-    4.  Untuk setiap sub-bab di Dokumen Revisi, bandingkan kontennya dengan sub-bab yang sesuai di Dokumen Asli.
-    5.  Identifikasi kalimat atau poin di Dokumen Revisi yang mengalami **perubahan makna yang signifikan**, keluar dari konteks, atau tidak lagi relevan dengan sub-bab aslinya.
-    6.  Untuk setiap kalimat/poin yang menyimpang, jelaskan alasannya dalam **dua poin yang jelas**:
-        a. **Poin 1: Makna Asli.** Jelaskan makna atau konteks utama dari kalimat ini sebagaimana adanya di Dokumen Asli.
-        b. **Poin 2: Ketidaksesuaian & Rekomendasi.** Jelaskan mengapa makna ini tidak lagi relevan atau menyimpang dari konteks di Dokumen Revisi. Berikan saran spesifik tentang apa yang perlu ditambahkan atau diubah agar kalimat ini kembali sejalan dengan konteksnya di Dokumen Revisi.
+    1.  Baca dan pahami struktur kedua dokumen. Identifikasi semua bab dan sub-bab.
+    2.  ABAIKAN bagian tabel, gambar, daftar pustaka, dan lampiran.
+    3.  Fokus analisis pada isi paragraf dan poin-poin.
+    4.  Untuk setiap sub-bab di Dokumen Revisi, cari padanannya (referensinya) di Dokumen Asli.
+    5.  Identifikasi kalimat di Dokumen Revisi yang memiliki perubahan makna signifikan.
+    6.  Jelaskan alasannya dengan struktur ketat berikut:
+        - Poin 1: Makna di dokumen asli (Jelaskan makna di dokumen asli).
+        - Poin 2: Makna di dokumen yang dibanding (Jelaskan makna/konteks di dokumen revisi yang menyimpang).
+        - Rekomendasi: (Saran perbaikan konkret).
 
     Berikut adalah kedua dokumen tersebut:
     ---
     DOKUMEN ASLI:
-    ---
     {original_text}
     ---
     DOKUMEN REVISI:
-    ---
     {revised_text}
     ---
 
-    Berikan hasil analisis Anda secara eksklusif dalam format JSON array. Setiap objek dalam array harus memiliki tiga kunci:
-    1.  "sub_bab_asal": Nama sub-bab (dari Dokumen Revisi) di mana kalimat menyimpang ini ditemukan.
-    2.  "kalimat_menyimpang": Kalimat atau poin dari Dokumen Revisi yang maknanya menyimpang.
-    3.  "alasan": Penjelasan dalam dua poin. Gunakan format:
-        "1. [Penjelasan Makna Asli]\n2. [Penjelasan Ketidaksesuaian & Rekomendasi]"
+    Berikan hasil analisis dalam format JSON array. Setiap objek HARUS memiliki 4 key berikut:
+    1.  "sub_bab_asal": Nama sub-bab (dari Dokumen Revisi).
+    2.  "sub_bab_referensi": Nama sub-bab (dari Dokumen Asli) yang menjadi referensi/padanan.
+    3.  "kalimat_menyimpang": Kalimat dari Dokumen Revisi yang maknanya menyimpang.
+    4.  "alasan": Gabungan teks Poin 1, Poin 2, dan Rekomendasi (Gunakan format: "1. Makna di dokumen asli: ... \\n2. Makna di dokumen yang dibanding: ... \\nRekomendasi: ...").
 
     Contoh Output:
     [
       {{
         "sub_bab_asal": "1.2 Tujuan Audit",
-        "kalimat_menyimpang": "Manajemen wajib memastikan kepatuhan terhadap peraturan perundang-undangan yang berlaku di negara lain.",
-        "alasan": "1. Makna asli kalimat ini di dokumen asli adalah pembatasan cakupan hanya pada peraturan perundang-undangan nasional.\n2. Kalimat ini di revisi menjadi tidak relevan karena menambahkan cakupan yurisdiksi internasional yang tidak ada di konteks asli. Untuk menyelaraskan, sebaiknya hapus frasa 'di negara lain' atau ganti dengan 'di Indonesia'."
+        "sub_bab_referensi": "Bab I: Pendahuluan - Tujuan",
+        "kalimat_menyimpang": "Manajemen wajib memastikan kepatuhan...",
+        "alasan": "1. Makna di dokumen asli: Kewajiban hanya pada hukum nasional.\\n2. Makna di dokumen yang dibanding: Menambahkan hukum internasional yang tidak relevan.\\nRekomendasi: Hapus frasa 'hukum internasional'."
       }}
     ]
 
-    PENTING: HANYA KELUARKAN JSON ARRAY MURNI. TANPA TEKS PENDAHULU ATAU PENUTUP.
+    PENTING: HANYA KELUARKAN JSON ARRAY MURNI.
     """
     try:
         track_gemini_usage()
@@ -599,16 +591,10 @@ def analyze_document_by_section(original_text, revised_text):
         analysis_result = json.loads(response_text)
         if not isinstance(analysis_result, list):
             raise ValueError("Respons dari AI bukanlah sebuah array JSON.")
-            
         return analysis_result
-
-    except json.JSONDecodeError as e:
-        print(f"[ERROR] Gagal parsing JSON dari AI: {e}")
-        print(f"[ERROR] AI Response was: {response.text if 'response' in locals() else 'N/A'}")
-        return [{"sub_bab_asal": "Error", "kalimat_menyimpang": "Gagal memproses respons AI.", "alasan": str(e)}]
     except Exception as e:
-        print(f"[ERROR] Terjadi kesalahan saat menganalisis dokumen: {e}")
-        return [{"sub_bab_asal": "Error", "kalimat_menyimpang": "Terjadi kesalahan server.", "alasan": str(e)}]
+        print(f"Error analysis: {e}")
+        return [{"sub_bab_asal": "Error", "sub_bab_referensi": "-", "kalimat_menyimpang": "Gagal memproses respons AI.", "alasan": str(e)}]
 
 
 def analyze_context_difference(original_sentence, revised_sentence):
@@ -1232,11 +1218,12 @@ def api_library_list():
                 "id": f.id,
                 "title": f.title,
                 "cluster": f.cluster,
+                "shelf_id": f.shelf_id,
                 "summary": f.summary,
                 "category": f.category,
                 "size": f.file_size,
                 "type": f.file_type,
-                "url": url_for('api_library_view', file_id=f.id, filename=f.filename) 
+                "url": url_for('api_library_view', file_id=f.id, filename=f.filename)
             })
         return jsonify(data), 200
     except Exception as e:
@@ -1253,6 +1240,7 @@ def api_library_upload():
     category = request.form.get('category')
     summary = request.form.get('summary')
     cluster = request.form.get('cluster')
+    shelf_id = request.form.get('shelf_id')
 
     if file.filename == '':
         return jsonify({"error": "Nama file kosong"}), 400
@@ -1263,6 +1251,7 @@ def api_library_upload():
         os.makedirs(library_folder, exist_ok=True)
         filename = secure_filename(file.filename)
         save_path = os.path.join(library_folder, filename)
+        
         if os.path.exists(save_path):
             timestamp = datetime.datetime.now().strftime("%Y%m%d%H%M%S")
             filename = f"{timestamp}_{filename}"
@@ -1270,6 +1259,7 @@ def api_library_upload():
             
         file.save(save_path)
         file_size_bytes = os.path.getsize(save_path)
+        
         if file_size_bytes < 1024:
             size_str = f"{file_size_bytes} B"
         elif file_size_bytes < 1024 * 1024:
@@ -1278,7 +1268,6 @@ def api_library_upload():
             size_str = f"{file_size_bytes / (1024 * 1024):.1f} MB"
 
         file_ext = filename.split('.')[-1].lower()
-
 
         new_file = LibraryFile(
             user_id=current_user.id,
@@ -1289,7 +1278,8 @@ def api_library_upload():
             filename=filename,
             file_path=save_path,
             file_size=size_str,
-            file_type=file_ext
+            file_type=file_ext,
+            shelf_id=shelf_id
         )
         db.session.add(new_file)
         db.session.commit()
@@ -1957,9 +1947,9 @@ def api_compare_analyze_advanced():
         full_text1 = _get_full_text_from_file(file1)
         full_text2 = _get_full_text_from_file(file2)
         comparison_results_from_ai = analyze_document_by_section(full_text1, full_text2)
-        limited_results = comparison_results_from_ai[:100]
+        
         final_results = []
-        for item in limited_results:
+        for item in comparison_results_from_ai:
             sub_bab_asli = item.get("sub_bab_asal", "N/A")
             
             try:
@@ -1968,8 +1958,9 @@ def api_compare_analyze_advanced():
                 nama_sub_bab = sub_bab_asli
             
             final_results.append({
-                "Sub-bab Asal": nama_sub_bab,
-                "Kalimat yang Menyimpang di dokumen lainnya": item.get("kalimat_menyimpang", "N/A"),
+                "Sub-bab Referensi pada Dokumen asli": item.get("sub_bab_referensi", "-"),
+                "Sub-bab Asal (Pada dokumen yang dibanding)": nama_sub_bab,
+                "Kalimat Menyimpang (Dokumen yang dibanding)": item.get("kalimat_menyimpang", "N/A"),
                 "Alasan": item.get("alasan", "N/A")
             })
         
@@ -2330,7 +2321,7 @@ def api_upload_ams_image():
         3. Jika kolom berupa persentase (%), AMBIL ANGKA JUMLAHNYA SAJA yang ada di sebelahnya.
         """
 
-        model = genai.GenerativeModel('gemini-3-flash-preview') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
+        model = genai.GenerativeModel('gemini-2.5-flash') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
         track_gemini_usage()
         
         print("[DEBUG] Mengirim ke Gemini...")
@@ -3206,7 +3197,7 @@ def api_upload_tl_image():
         PENTING: Output HANYA JSON Array. Jangan pakai markdown.
         """
         
-        model = genai.GenerativeModel('gemini-3-flash-preview')
+        model = genai.GenerativeModel('gemini-2.5-pro')
         track_gemini_usage()
         response = model.generate_content([prompt, img])
         cleaned = response.text.replace('```json', '').replace('```', '').strip()
@@ -3640,7 +3631,7 @@ def api_get_reminders():
             delta = (rem.deadline - today).days
             if delta < 0:
                 status_text = "Sudah lewat deadline"
-                sisa_hari = f"{delta} hari"
+                sisa_hari = f"+{abs(delta)} hari"
                 is_overdue = True
             elif delta == 0:
                 status_text = "Deadline hari ini"
@@ -4131,7 +4122,7 @@ def api_generate_email_body():
     """
     
     try:
-        ai_model = genai.GenerativeModel('gemini-3-flash-preview') 
+        ai_model = genai.GenerativeModel('gemini-2.5-flash') 
         track_gemini_usage()
         response = ai_model.generate_content(full_prompt)
         clean_body = response.text.strip().replace('**', '').replace('*', '')
@@ -4668,7 +4659,7 @@ def api_generate_dashboard_insight():
     """
 
     try:
-        model = genai.GenerativeModel('gemini-3-flash-preview') 
+        model = genai.GenerativeModel('gemini-2.5-flash') 
         track_gemini_usage()
         response = model.generate_content(prompt)
         
@@ -4680,6 +4671,4 @@ def api_generate_dashboard_insight():
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
 
 if __name__ == '__main__':
-
     app.run(debug=True, port=5000)
-
