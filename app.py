@@ -1229,22 +1229,35 @@ def library_page():
 @login_required
 def api_library_list():
     try:
-        files = LibraryFile.query.filter_by(user_id=current_user.id).order_by(LibraryFile.upload_date.desc()).all()
+        shelf_id = request.args.get('shelf_id')
+        
+        # Query dasar: Filter berdasarkan user yang login
+        query = LibraryFile.query.filter_by(user_id=current_user.id)
+        
+        # Jika ada shelf_id, filter lagi
+        if shelf_id:
+            query = query.filter_by(shelf_id=shelf_id)
+            
+        files = query.all()
+        
         data = []
         for f in files:
             data.append({
-                "id": f.id,
-                "title": f.title,
-                "cluster": f.cluster,
-                "shelf_id": f.shelf_id,
-                "summary": f.summary,
-                "category": f.category,
-                "size": f.file_size,
-                "type": f.file_type,
-                "url": url_for('api_library_view', file_id=f.id, filename=f.filename)
+                'id': f.id,
+                'title': f.title,
+                'category': f.category,
+                'summary': f.summary,
+                'cluster': f.cluster,
+                'url': f.file_url,
+                'upload_date': f.upload_date.strftime('%d %b %Y'),
+                'type': f.file_type,
+                'shelf_id': f.shelf_id
             })
+            
         return jsonify(data), 200
+
     except Exception as e:
+        print(f"[ERROR LIBRARY LIST] {e}")
         return jsonify({"error": str(e)}), 500
 
 @app.route('/api/library/upload', methods=['POST'])
@@ -4708,4 +4721,5 @@ def api_generate_dashboard_insight():
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
     
 if __name__ == '__main__':
+
     app.run(debug=True, port=5000)
