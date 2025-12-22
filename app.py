@@ -7,7 +7,8 @@ import difflib
 import fitz
 import docx
 import pandas as pd
-import google.generativeai as genai
+from google import genai
+from google.genai import types
 import shutil 
 from docx.shared import RGBColor
 import PIL.Image
@@ -85,8 +86,7 @@ try:
     if not api_key:
         raise ValueError("GOOGLE_API_KEY tidak ditemukan di file .env")
     
-    genai.configure(api_key=api_key)
-    model = genai.GenerativeModel('gemini-3-flash-preview') 
+    client = genai.Client(api_key=api_key)
 except Exception as e:
     print(f"Error saat mengkonfigurasi Google AI: {e}")
 
@@ -2296,6 +2296,8 @@ def api_upload_ams_image():
 
     try:
         # 2. Proses Gambar ke Gemini
+        # Pastikan pointer file ada di awal sebelum dibaca PIL
+        file.seek(0)
         img = PIL.Image.open(file)
         
         # Tentukan Mode Prompt
@@ -2321,20 +2323,23 @@ def api_upload_ams_image():
         3. Jika kolom berupa persentase (%), AMBIL ANGKA JUMLAHNYA SAJA yang ada di sebelahnya.
         """
 
-        model = genai.GenerativeModel('gemini-3-flash-preview') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
+        # --- UPDATE BAGIAN INI UNTUK GOOGLE GENAI ---
+        # Inisialisasi Client (Pastikan 'from google import genai' ada di atas file)
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+        
         track_gemini_usage()
         
         print("[DEBUG] Mengirim ke Gemini...")
-        response = model.generate_content([prompt, img])
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=[prompt, img]
+        )
+        
         raw_text = response.text
+        # ---------------------------------------------
         
         print(f"[DEBUG] Raw Response dari AI:\n{raw_text}\n-------------------")
-
-        # 3. Pembersihan JSON (Cleaning)
-        # Hapus markdown ```json dan ```
         clean_json = raw_text.replace('```json', '').replace('```', '').strip()
-        
-        # Cari kurung siku pertama '[' dan terakhir ']' untuk isolasi array
         start_idx = clean_json.find('[')
         end_idx = clean_json.rfind(']')
         
@@ -2352,10 +2357,8 @@ def api_upload_ams_image():
         if not extracted_data:
             raise ValueError("Hasil ekstraksi kosong (array []). Coba gambar yang lebih jelas.")
 
-        # 4. Helper Function: Normalisasi Key & Angka
-        # Fungsi ini mencari value meskipun AI salah ketik huruf besar/kecil
+        # Helper Functions
         def get_val(item, keys_list):
-            # Buat dict lowercase
             item_lower = {k.lower(): v for k, v in item.items()}
             for k in keys_list:
                 if k.lower() in item_lower:
@@ -2373,7 +2376,6 @@ def api_upload_ams_image():
         # 5. Looping Simpan ke DB
         count = 0
         for item in extracted_data:
-            # Ambil Data dengan aman (Key Insensitive)
             auditee_val = get_val(item, ['auditee', 'nama_auditee', 'unit']) or 'Unknown'
             tahun_val = clean_int(get_val(item, ['tahun', 'tahun_audit']))
             if tahun_val < 2000: tahun_val = datetime.date.today().year # Fallback tahun
@@ -2381,8 +2383,7 @@ def api_upload_ams_image():
             total_rek = clean_int(get_val(item, ['total', 'total_rekomendasi', 'jumlah']))
             
             selesai_val = clean_int(get_val(item, ['selesai', 'done']))
-            
-            # Variabel Khusus BPK / Standard
+
             tidak_selesai_val = clean_int(get_val(item, ['tidak_selesai', 'bjt', 'belum_jatuh_tempo']))
             todo_val = clean_int(get_val(item, ['todo', 'outstanding', 'out']))
             
@@ -2410,7 +2411,6 @@ def api_upload_ams_image():
             count += 1
             print(f"[DEBUG] Menyiapkan data: {auditee_val} - Total: {total_rek}")
 
-        # 6. Commit Database
         db.session.commit()
         print(f"[SUCCESS] Berhasil menyimpan {count} data ke database.")
         
@@ -3178,7 +3178,10 @@ def api_upload_tl_image():
     file = request.files['file']
     
     try:
+        # Pastikan pointer file di awal
+        file.seek(0)
         img = PIL.Image.open(file)
+        
         prompt = """
         Analisis gambar tabel ini. Ekstrak datanya baris per baris.
         Abaikan header. Petakan ke format JSON object dengan key berikut:
@@ -3196,11 +3199,20 @@ def api_upload_tl_image():
 
         PENTING: Output HANYA JSON Array. Jangan pakai markdown.
         """
-        
-        model = genai.GenerativeModel('gemini-3-flash-preview')
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
         track_gemini_usage()
-        response = model.generate_content([prompt, img])
-        cleaned = response.text.replace('```json', '').replace('```', '').strip()
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=[prompt, img]
+        )
+        
+        raw_text = response.text
+        cleaned = raw_text.replace('```json', '').replace('```', '').strip()
+        start_idx = cleaned.find('[')
+        end_idx = cleaned.rfind(']')
+        if start_idx != -1 and end_idx != -1:
+            cleaned = cleaned[start_idx:end_idx+1]
+            
         data_list = json.loads(cleaned)
 
         count = 0
@@ -3240,6 +3252,7 @@ def api_upload_tl_image():
 
     except Exception as e:
         db.session.rollback()
+        print(f"[ERROR UPLOAD TL] {str(e)}") # Log error ke terminal
         return jsonify({"error": f"Gagal proses gambar: {str(e)}"}), 500
 
 @app.route('/api/tl_tidak_setuju/upload_excel', methods=['POST'])
@@ -4089,10 +4102,9 @@ def api_delete_message():
         print(f"Error deleting message: {e}")
         return jsonify({"error": "Terjadi kesalahan saat menghapus pesan di database."}), 500
 
-@app.route('/api/generate_email_body', methods=['POST']) 
+@app.route('/api/generate_email_body', methods=['POST'])
 @login_required
 def api_generate_email_body():
-    """Menggunakan AI untuk menghasilkan draf isi email dari prompt."""
     data = request.json
     prompt = data.get('prompt')
 
@@ -4122,9 +4134,14 @@ def api_generate_email_body():
     """
     
     try:
-        ai_model = genai.GenerativeModel('gemini-3-flash-preview') 
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
         track_gemini_usage()
-        response = ai_model.generate_content(full_prompt)
+        
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview',
+            contents=full_prompt
+        )
+        
         clean_body = response.text.strip().replace('**', '').replace('*', '')
 
         return jsonify({"status": "success", "body": clean_body}), 200
@@ -4610,11 +4627,9 @@ def api_generate_dashboard_insight():
     audit_category = data.get('category', 'Audit Umum')
     chart_data = data.get('chart_data', {})
     
-    # Validasi data
     if not chart_data or not chart_data.get('labels'):
         return jsonify({"error": "Data grafik tidak tersedia untuk dianalisis."}), 400
 
-    # Susun prompt yang TERSTRUKTUR PER SECTION
     prompt = f"""
     Anda adalah Chief Audit Executive (CAE) yang ahli dalam menyajikan data.
     Tugas Anda adalah memberikan interpretasi data audit yang **singkat, padat, dan estetik** berdasarkan data berikut:
@@ -4659,9 +4674,13 @@ def api_generate_dashboard_insight():
     """
 
     try:
-        model = genai.GenerativeModel('gemini-3-flash-preview') 
+        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
         track_gemini_usage()
-        response = model.generate_content(prompt)
+        
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview',
+            contents=prompt
+        )
         
         clean_text = response.text.replace('```html', '').replace('```', '')
         
@@ -4669,8 +4688,6 @@ def api_generate_dashboard_insight():
     except Exception as e:
         print(f"Error AI Insight: {e}")
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
-
+    
 if __name__ == '__main__':
-
     app.run(debug=True, port=5000)
-

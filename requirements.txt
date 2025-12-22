@@ -2,7 +2,7 @@ Flask
 Flask-SQLAlchemy
 Flask-Login
 Werkzeug
-google-generativeai
+google-genai
 python-docx
 PyMuPDF
 pandas
@@ -10,6 +10,4 @@ openpyxl
 python-dotenv
 gunicorn
 Pillow
-
 requests
-
