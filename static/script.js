@@ -281,13 +281,12 @@ function createTable(data, headers, existingComments = [], actions = {}) {
             "Sub-bab Referensi pada Dokumen asli",
             "Sub-bab Asal (Pada dokumen yang dibanding)", 
             "Kalimat Menyimpang (Dokumen yang dibanding)",
-            "Alasan", 
             "penjelasan", "Pada Kalimat", "Kalimat Awal", "Kalimat Revisi"
         ].includes(header)) {
             thStyle += 'min-width: 300px;';
         }
-        else if (["lokasi", "masalah", "saran"].includes(header)) {
-            thStyle += 'min-width: 350px;'; 
+        else if (["lokasi", "masalah", "Alasan", "saran"].includes(header)) {
+            thStyle += 'min-width: 500px;'; 
         }
         else if (["pic_proofread", "finalize", "apakah_ganti", "Ditemukan di Halaman", "Halaman"].includes(header)) {
             thStyle += 'width: 100px;';
@@ -2253,4 +2252,5 @@ async function saveRowState(rowId, event) {
             saveButton.style.backgroundColor = ''; 
         }, 1500); 
     }
+
 }
