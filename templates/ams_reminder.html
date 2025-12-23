@@ -2,372 +2,288 @@
 <html lang="id">
 <head>
     <meta charset="UTF-8">
-    <meta 
-        name="viewport" 
-        content="width=device-width, initial-scale=1.0"
-    >
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Reminder Tindak Lanjut</title>
-    
-    <link 
-        rel="preconnect" 
-        href="https://fonts.googleapis.com"
-    >
-    <link 
-        rel="preconnect" 
-        href="https://fonts.gstatic.com" 
-        crossorigin
-    >
-    <link 
-        href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" 
-        rel="stylesheet"
-    >
-    <!-- Tambahkan Boxicons untuk icon sidebar -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link rel="icon" href="{{ url_for('static', filename='apple-touch-icon.png') }}" type="image/png" />  
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700;800&family=DM+Sans:wght@400;500;700&display=swap" rel="stylesheet">
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
-    
-    <link 
-        rel="stylesheet" 
-        href="{{ url_for('static', filename='style.css') }}" 
-    >
-    <link 
-        rel="icon" 
-        href="{{ url_for('static', filename='favicon-32x32.png') }}" 
-        type="image/png"
-    >
-    
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
     <style>
-        /* === SIDEBAR & LAYOUT STYLES === */
-        :root {
-            /* Warna Sidebar & Layout */
-            --primary-color: #C62828;
-            --primary-hover: #B71C1C;
-            --primary-light: #FFEBEE;
-            --active-bg: #E3F2FD;
-            --active-text: #1565C0;
-            --secondary-bg: #F4F7FE;
-            --sidebar-width: 290px;
-            --sidebar-collapsed-width: 85px;
-            --text-dark: #2B3674;
-            --text-gray: #A3AED0;
-            --text-light-gray: #707EAE;
-            --white: #FFFFFF;
-            --border-color: #E0E5F2;
-
-            /* Warna Asli Reminder */
-            --secondary-color: green;
-            --secondary-hover: #1b5e20;
-            --text-color: #333;
-            --text-muted: #666;
-            --bg-light: #f8f9fa;
-            
+        :root { 
+            --primary-color: #C62828; 
+            --primary-hover: #B71C1C; 
+            --primary-light: #FFEBEE; 
+            --active-bg: #E3F2FD; 
+            --active-text: #1565C0; 
+            --secondary-bg: #F4F7FE; 
+            --sidebar-width: 290px; 
+            --sidebar-collapsed-width: 85px; 
+            --text-dark: #2B3674; 
+            --text-gray: #A3AED0; 
+            --text-light-gray: #707EAE; 
+            --white: #FFFFFF; 
+            --border-color: #E0E5F2; 
+            --secondary-color: green; 
+            --secondary-hover: #1b5e20; 
+            --text-color: #333; 
+            --text-muted: #666; 
+            --bg-light: #f8f9fa; 
             --status-overdue-bg: #FFEBEE; 
-            --status-overdue-text: #C62828;
-            --status-today-bg: #FFF9C4;       
-            --status-today-text: #F57F17;
-            --status-ok-bg: #E8F5E9;        
-            --status-ok-text: #2E7D32;
-            
-            --badge-company-bg: #E3F2FD;  
+            --status-overdue-text: #C62828; 
+            --status-today-bg: #FFF9C4; 
+            --status-today-text: #F57F17; 
+            --status-ok-bg: #E8F5E9; 
+            --status-ok-text: #2E7D32; 
+            --badge-company-bg: #E3F2FD; 
             --badge-company-text: #1565C0; 
-            --badge-company-border: #BBDEFB;
+            --badge-company-border: #BBDEFB; 
         }
-
         * { 
             box-sizing: border-box; 
         }
-
         body { 
             font-family: 'DM Sans', 'Poppins', sans-serif; 
-            color: var(--text-color);
-            margin: 0;
-            background-color: var(--secondary-bg); /* Menggunakan background dashboard */
-            display: block; /* Pastikan block untuk layout sidebar */
-            min-height: 100vh;
-            font-size: 0.9rem;
+            color: var(--text-color); 
+            margin: 0; 
+            background-color: var(--secondary-bg); 
+            display: block; 
+            min-height: 100vh; 
+            font-size: 0.9rem; 
         }
-
-        /* === SIDEBAR STYLES === */
-        .sidebar {
-            width: var(--sidebar-width);
-            background: var(--white);
-            height: 100vh;
-            position: fixed;
-            left: 0;
-            top: 0;
-            display: flex;
-            flex-direction: column;
-            padding: 24px;
-            box-sizing: border-box;
-            border-right: 1px solid var(--border-color);
-            z-index: 3000;
-            overflow-y: auto;
-            scrollbar-width: thin;
-            scrollbar-color: #ddd transparent;
-            transition: width 0.3s ease, padding 0.3s ease;
+        .sidebar { 
+            width: var(--sidebar-width); 
+            background: var(--white); 
+            height: 100vh; 
+            position: fixed; 
+            left: 0; 
+            top: 0; 
+            display: flex; 
+            flex-direction: column; 
+            padding: 24px; 
+            box-sizing: border-box; 
+            border-right: 1px solid var(--border-color); 
+            z-index: 3000; 
+            overflow-y: auto; 
+            transition: width 0.3s ease, padding 0.3s ease; 
         }
-
-        .sidebar.collapsed {
-            width: var(--sidebar-collapsed-width);
-            padding: 24px 12px;
+        .sidebar.collapsed { 
+            width: var(--sidebar-collapsed-width); 
+            padding: 24px 12px; 
         }
-
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
+        .sidebar-toggle-btn { 
+            position: absolute; 
+            top: 25px; 
+            right: 20px; 
+            cursor: pointer; 
+            font-size: 24px; 
+            color: var(--text-gray); 
+            z-index: 3002; 
+            transition: right 0.3s ease; 
         }
-        .sidebar::-webkit-scrollbar-thumb {
-            background-color: #ddd;
-            border-radius: 3px;
+        .sidebar.collapsed .sidebar-toggle-btn { 
+            right: 50%; 
+            transform: translateX(50%); 
         }
-
-        .sidebar-toggle-btn {
-            position: absolute;
-            top: 25px;
-            right: 20px;
-            cursor: pointer;
-            font-size: 24px;
-            color: var(--text-gray);
-            z-index: 3002;
-            transition: right 0.3s ease;
+        .sidebar-logo { 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            margin-bottom: 20px; 
+            padding-bottom: 20px; 
+            border-bottom: 1px solid var(--border-color); 
+            min-height: 50px; 
         }
-        
-        .sidebar.collapsed .sidebar-toggle-btn {
-            right: 50%;
-            transform: translateX(50%);
+        .sidebar-logo img { 
+            max-width: 100px; 
+            height: auto; 
+            transition: opacity 0.2s; 
         }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            margin-bottom: 20px;
-            padding-bottom: 20px;
-            border-bottom: 1px solid var(--border-color);
-            min-height: 50px;
-            position: relative;
+        .sidebar.collapsed .sidebar-logo img { 
+            opacity: 0; 
+            pointer-events: none; 
+            display: none; 
         }
-
-        .sidebar-logo img {
-            max-width: 100px;
-            height: auto;
-            transition: opacity 0.2s;
+        .nav-links { 
+            list-style: none; 
+            padding: 0; 
+            margin: 0; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 8px; 
+            flex: 1; 
         }
-
-        .sidebar.collapsed .sidebar-logo img {
-            opacity: 0;
-            pointer-events: none;
-            display: none;
+        .nav-links li { 
+            width: 100%; 
         }
-
-        .nav-links {
-            list-style: none;
-            padding: 0;
-            margin: 0;
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
-            flex: 1;
+        .nav-section-label { 
+            font-size: 11px; 
+            font-weight: 700; 
+            color: var(--text-gray); 
+            text-transform: uppercase; 
+            letter-spacing: 0.8px; 
+            margin-top: 16px; 
+            margin-bottom: 8px; 
+            padding-left: 12px; 
+            display: block; 
+            white-space: nowrap; 
+            transition: opacity 0.2s; 
         }
-
-        .nav-links li {
-            width: 100%;
+        .sidebar.collapsed .nav-section-label { 
+            display: none; 
         }
-
-        .nav-section-label {
-            font-size: 11px;
-            font-weight: 700;
-            color: var(--text-gray);
-            text-transform: uppercase;
-            letter-spacing: 0.8px;
-            margin-top: 16px;
-            margin-bottom: 8px;
-            padding-left: 12px;
-            display: block;
-            white-space: nowrap;
-            transition: opacity 0.2s;
+        .nav-links a { 
+            text-decoration: none; 
+            color: var(--text-light-gray); 
+            font-weight: 500; 
+            font-size: 14px; 
+            display: flex; 
+            align-items: center; 
+            padding: 12px 16px; 
+            border-radius: 12px; 
+            transition: all 0.2s ease; 
+            position: relative; 
+            white-space: nowrap; 
+            overflow: hidden; 
         }
-
-        .sidebar.collapsed .nav-section-label {
-            display: none;
+        .nav-links a i { 
+            font-size: 22px; 
+            margin-right: 14px; 
+            color: var(--text-gray); 
+            transition: margin 0.3s ease, color 0.2s; 
+            min-width: 22px; 
         }
-
-        .nav-links a {
-            text-decoration: none;
-            color: var(--text-light-gray);
-            font-weight: 500;
-            font-size: 14px;
-            display: flex;
-            align-items: center;
-            padding: 12px 16px;
-            border-radius: 12px;
-            transition: all 0.2s ease;
-            position: relative;
-            white-space: nowrap;
-            overflow: hidden;
+        .sidebar.collapsed .nav-links a { 
+            justify-content: center; 
+            padding: 12px; 
         }
-
-        .nav-links a i {
-            font-size: 22px;
-            margin-right: 14px;
-            color: var(--text-gray);
-            transition: margin 0.3s ease, color 0.2s;
-            min-width: 22px;
+        .sidebar.collapsed .nav-links a i { 
+            margin-right: 0; 
         }
-
-        .sidebar.collapsed .nav-links a {
-            justify-content: center;
-            padding: 12px;
+        .sidebar.collapsed .nav-links a span { 
+            display: none; 
         }
-        
-        .sidebar.collapsed .nav-links a i {
-            margin-right: 0;
+        .nav-links a:hover { 
+            background-color: var(--secondary-bg); 
+            color: var(--text-dark); 
         }
-        
-        .sidebar.collapsed .nav-links a span {
-            display: none;
+        .nav-links a:hover i { 
+            color: var(--primary-color); 
         }
-
-        .nav-links a:hover {
-            background-color: var(--secondary-bg);
-            color: var(--text-dark);
+        .nav-links a.active { 
+            background-color: var(--active-bg); 
+            color: var(--active-text); 
+            font-weight: 700; 
         }
-        
-        .nav-links a:hover i {
-            color: var(--primary-color);
+        .nav-links a.active i { 
+            color: var(--active-text); 
         }
-
-        .nav-links a.active {
-            background-color: var(--active-bg);
-            color: var(--active-text);
-            font-weight: 700;
+        .sidebar-footer { 
+            margin-top: 20px; 
         }
-        
-        .nav-links a.active i {
-            color: var(--active-text);
+        .user-card { 
+            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%); 
+            padding: 16px; 
+            border-radius: 16px; 
+            color: white; 
+            display: flex; 
+            flex-direction: column; 
+            gap: 10px; 
+            box-shadow: 0 10px 20px rgba(198, 40, 40, 0.2); 
+            transition: padding 0.3s; 
+            overflow: hidden; 
         }
-
-        .sidebar-footer {
-            margin-top: 20px;
+        .sidebar.collapsed .user-card { 
+            padding: 12px; 
+            align-items: center; 
+            background: var(--primary-color); 
         }
-
-        .user-card {
-            background: linear-gradient(135deg, #C62828 0%, #B71C1C 100%);
-            padding: 16px;
-            border-radius: 16px;
-            color: white;
-            display: flex;
-            flex-direction: column;
-            gap: 10px;
-            box-shadow: 0 10px 20px rgba(198, 40, 40, 0.2);
-            transition: padding 0.3s;
-            overflow: hidden;
+        .user-info { 
+            display: flex; 
+            align-items: center; 
+            gap: 12px; 
         }
-
-        .sidebar.collapsed .user-card {
-            padding: 12px;
-            align-items: center;
-            background: var(--primary-color);
+        .sidebar.collapsed .user-info { 
+            gap: 0; 
+            justify-content: center; 
         }
-
-        .user-info {
-            display: flex;
-            align-items: center;
-            gap: 12px;
+        .user-avatar { 
+            width: 36px; 
+            height: 36px; 
+            background: rgba(255,255,255,0.2); 
+            border-radius: 50%; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            font-size: 18px; 
+            flex-shrink: 0; 
         }
-
-        .sidebar.collapsed .user-info {
-            gap: 0;
-            justify-content: center;
+        .user-details { 
+            display: flex; 
+            flex-direction: column; 
+            white-space: nowrap; 
         }
-
-        .user-avatar {
-            width: 36px;
-            height: 36px;
-            background: rgba(255,255,255,0.2);
-            border-radius: 50%;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            font-size: 18px;
-            flex-shrink: 0;
+        .sidebar.collapsed .user-details { 
+            display: none; 
         }
-
-        .user-details {
-            display: flex;
-            flex-direction: column;
-            white-space: nowrap;
+        .user-name { 
+            font-size: 14px; 
+            font-weight: 700; 
         }
-
-        .sidebar.collapsed .user-details {
-            display: none;
+        .user-role { 
+            font-size: 11px; 
+            opacity: 0.8; 
         }
-
-        .user-name {
-            font-size: 14px;
-            font-weight: 700;
+        .logout-link { 
+            background: rgba(255,255,255,0.1); 
+            color: white; 
+            text-decoration: none; 
+            padding: 8px; 
+            border-radius: 8px; 
+            font-size: 12px; 
+            text-align: center; 
+            font-weight: 600; 
+            transition: background 0.2s; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            gap: 6px; 
         }
-
-        .user-role {
-            font-size: 11px;
-            opacity: 0.8;
+        .sidebar.collapsed .logout-link span { 
+            display: none; 
         }
-
-        .logout-link {
-            background: rgba(255,255,255,0.1);
-            color: white;
-            text-decoration: none;
-            padding: 8px;
-            border-radius: 8px;
-            font-size: 12px;
-            text-align: center;
-            font-weight: 600;
-            transition: background 0.2s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 6px;
+        .sidebar.collapsed .logout-link { 
+            padding: 8px 0; 
+            margin-top: 5px; 
         }
-
-        .sidebar.collapsed .logout-link span {
-            display: none;
+        .logout-link:hover { 
+            background: rgba(255,255,255,0.2); 
         }
-        
-        .sidebar.collapsed .logout-link {
-            padding: 8px 0;
-            margin-top: 5px;
-        }
-
-        .logout-link:hover {
-            background: rgba(255,255,255,0.2);
-        }
-
-        /* === MAIN CONTENT ADJUSTMENT === */
         main, .monitoring-main { 
             margin-left: var(--sidebar-width) !important; 
             width: auto !important; 
-            max-width: 100% !important;
+            max-width: 100% !important; 
             padding: 30px; 
-            box-sizing: border-box;
-            min-height: 100vh;
-            display: flex;
-            flex-direction: column;
-            transition: margin-left 0.3s ease;
+            box-sizing: border-box; 
+            min-height: 100vh; 
+            display: flex; 
+            flex-direction: column; 
+            transition: margin-left 0.3s ease; 
         }
-
-        main.expanded, .monitoring-main.expanded {
-            margin-left: var(--sidebar-collapsed-width) !important;
+        main.expanded, .monitoring-main.expanded { 
+            margin-left: var(--sidebar-collapsed-width) !important; 
         }
-
-        footer {
-            margin-top: auto;
-            background-color: var(--secondary-bg);
-            padding: 10px 0;
-            text-align: center;
-            color: #999;
-            font-size: 0.75rem;
-            width: 100%;
-            box-sizing: border-box;
+        footer { 
+            margin-top: auto; 
+            background-color: var(--secondary-bg); 
+            padding: 10px 0; 
+            text-align: center; 
+            color: #999; 
+            font-size: 0.75rem; 
+            width: 100%; 
+            box-sizing: border-box; 
         }
-
-        /* === CONTENT STYLES ASLI (Dipertahankan) === */
         .monitoring-header { 
             display: flex; 
             justify-content: space-between; 
@@ -376,14 +292,12 @@
             border-bottom: 2px solid #f0f0f0; 
             padding-bottom: 15px; 
         }
-
         .monitoring-header h1 { 
             margin: 0; 
             font-size: 1.8rem; 
-            color: var(--text-dark); /* Menggunakan warna dari tema baru */
+            color: var(--text-dark); 
             font-weight: 700; 
         }
-
         .start-btn { 
             background-color: var(--primary-color); 
             color: white; 
@@ -396,36 +310,61 @@
             box-shadow: 0 4px 6px rgba(198, 40, 40, 0.2); 
             transition: transform 0.2s; 
         }
-
         .start-btn:hover { 
             transform: translateY(-2px); 
             background-color: #b71c1c; 
         }
-
         .controls-container { 
             display: flex; 
             justify-content: flex-end; 
             gap: 1rem; 
             margin-bottom: 1rem; 
         }
-
         .data-table-container { 
             margin-bottom: 3rem; 
         }
-        
-        .list-header {
+        .list-header { 
             display: flex; 
             justify-content: space-between; 
-            align-items: center;
+            align-items: center; 
             border-bottom: 1px solid #eee; 
             padding-bottom: 1rem; 
-            margin-bottom: 1rem;
+            margin-bottom: 1rem; 
         }
-
-        .hidden { 
-            display: none !important; 
+        .results-table-wrapper { 
+            overflow-x: auto; 
+            -webkit-overflow-scrolling: touch; 
+            border: 1px solid var(--border-color); 
+            border-radius: 8px; 
+            margin-bottom: 2rem; 
+            background: white; 
+            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
         }
-
+        .monitoring-data-table { 
+            width: 100%; 
+            border-collapse: collapse; 
+            min-width: 1200px; 
+        }
+        .monitoring-data-table th, .monitoring-data-table td { 
+            white-space: nowrap; 
+            vertical-align: middle; 
+            padding: 14px 16px; 
+            border-bottom: 1px solid #f0f0f0; 
+        }
+        .monitoring-data-table th { 
+            background-color: var(--bg-light); 
+            font-weight: 700; 
+            color: #555; 
+            position: sticky; 
+            top: 0; 
+            z-index: 10; 
+            border-bottom: 2px solid #eee; 
+        }
+        .col-company { min-width: 100px; text-align: center; }
+        .col-auditee { min-width: 180px; max-width: 300px; white-space: normal; }
+        .col-pic { min-width: 150px; white-space: nowrap; }
+        .col-temuan { min-width: 100px; text-align: center; }
+        .col-checkbox { text-align: center; }
         .action-btn { 
             padding: 6px 12px; 
             border: none; 
@@ -436,35 +375,28 @@
             transition: all 0.2s ease-in-out; 
             font-family: 'Poppins', sans-serif; 
         }
-
         .btn-save { 
             background-color: var(--secondary-color); 
             color: white; 
         }
-
         .btn-save:hover { 
             background-color: var(--secondary-hover); 
             transform: translateY(-1px); 
         }
-
         .btn-edit { 
             background-color: #1976D2; 
             color: white; 
         }
-
         .btn-edit:hover { 
             background-color: #1565C0; 
         }
-
         .btn-delete { 
             background-color: #d32f2f; 
             color: white; 
         }
-
         .btn-delete:hover { 
             background-color: #b71c1c; 
         }
-
         .btn-view-temuan { 
             background-color: #2e7d32; 
             color: white; 
@@ -478,12 +410,10 @@
             box-shadow: 0 2px 4px rgba(0,0,0,0.1); 
             transition: background 0.2s; 
         }
-
         .btn-view-temuan:hover { 
             background-color: #1b5e20; 
             transform: translateY(-1px); 
         }
-        
         .btn-input-temuan { 
             background: #fff; 
             border: 1px dashed #999; 
@@ -497,41 +427,12 @@
             transition: all 0.2s; 
             font-family: 'Poppins', sans-serif; 
         }
-
         .btn-input-temuan:hover { 
             background-color: #f5f5f5; 
             border-color: var(--text-color); 
             color: var(--text-color); 
         }
-
-        .btn-share-cancel { 
-            flex: 1; 
-            background: #fff; 
-            border: 1px solid #ccc; 
-            padding: 10px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight:600; 
-            color:#555; 
-            font-family: 'Poppins', sans-serif; 
-        }
-
-        .btn-share-submit { 
-            flex: 1; 
-            background: #D32F2F; 
-            color: white; 
-            border: none; 
-            padding: 10px; 
-            border-radius: 8px; 
-            cursor: pointer; 
-            font-weight:600; 
-            font-family: 'Poppins', sans-serif; 
-        }
-
-        .custom-input, 
-        .btn-select-pic, 
-        .form-group input, 
-        .form-group select { 
+        .custom-input, .btn-select-pic, .form-group input, .form-group select { 
             width: 100%; 
             height: 40px; 
             border: 1px solid #ccc; 
@@ -544,23 +445,17 @@
             outline: none; 
             transition: border-color 0.2s; 
         }
-
-        .btn-select-pic, 
-        .form-group input, 
-        input.custom-input { 
+        .btn-select-pic, .form-group input, input.custom-input { 
             display: flex; 
             align-items: center; 
             padding: 0 12px; 
         }
-
         .btn-select-pic { 
             justify-content: space-between; 
             cursor: pointer; 
             text-align: left; 
         }
-
-        .form-group select, 
-        select.custom-input { 
+        .form-group select, select.custom-input { 
             display: block !important; 
             padding: 0 35px 0 12px !important; 
             line-height: 38px !important; 
@@ -573,20 +468,27 @@
             background-position: right 12px center; 
             background-size: 10px auto; 
         }
-
-        .form-group input:focus, 
-        .form-group select:focus { 
+        .form-group input:focus, .form-group select:focus { 
             border-color: #1976D2; 
             box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1); 
         }
-
-        .btn-select-pic:disabled { 
-            background-color: #f5f5f5; 
-            cursor: not-allowed; 
-            border-color: #ddd; 
-            color: #999; 
+        .form-group textarea { 
+            width: 100%; 
+            padding: 10px 12px; 
+            border: 1px solid #ccc; 
+            border-radius: 8px; 
+            font-family: 'Poppins', sans-serif; 
+            font-size: 0.9rem; 
+            outline: none; 
+            box-sizing: border-box; 
+            color: #333; 
+            resize: vertical; 
+            margin: 0 !important; 
         }
-
+        .form-group textarea:focus { 
+            border-color: #1976D2; 
+            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1); 
+        }
         .badge { 
             padding: 5px 10px; 
             border-radius: 6px; 
@@ -596,7 +498,6 @@
             text-transform: uppercase; 
             letter-spacing: 0.5px; 
         }
-
         .status-badge { 
             padding: 6px 12px; 
             border-radius: 8px; 
@@ -607,7 +508,6 @@
             text-transform: uppercase; 
             white-space: nowrap; 
         }
-
         .badge-company { 
             background-color: var(--badge-company-bg); 
             color: var(--badge-company-text); 
@@ -620,7 +520,6 @@
             border-radius: 6px; 
             display: inline-block; 
         }
-
         .badge-count { 
             background: #fff; 
             color: #2e7d32; 
@@ -630,70 +529,9 @@
             margin-left: 5px; 
             font-weight: 800; 
         }
-
-        .results-table-wrapper { 
-            overflow-x: auto; 
-            -webkit-overflow-scrolling: touch; 
-            border: 1px solid var(--border-color); 
-            border-radius: 8px; 
-            margin-bottom: 2rem; 
-            background: white; 
-            box-shadow: 0 2px 8px rgba(0,0,0,0.05); 
-        }
-
-        .monitoring-data-table { 
-            width: 100%; 
-            border-collapse: collapse; 
-            min-width: 1200px; 
-        }
-
-        .monitoring-data-table th, 
-        .monitoring-data-table td { 
-            white-space: nowrap; 
-            vertical-align: middle; 
-            padding: 14px 16px; 
-            border-bottom: 1px solid #f0f0f0; 
-        }
-
-        .monitoring-data-table th { 
-            background-color: var(--bg-light); 
-            font-weight: 700; 
-            color: #555; 
-            position: sticky; 
-            top: 0; 
-            z-index: 10; 
-            border-bottom: 2px solid #eee; 
-        }
-
-        .col-company { 
-            min-width: 100px; 
-            text-align: center; 
-        }
-
-        .col-auditee { 
-            min-width: 180px; 
-            max-width: 300px; 
-            white-space: normal; 
-        }
-        
-        .col-pic { 
-            min-width: 150px; 
-            white-space: nowrap; 
-        }
-        
-        .col-temuan { 
-            min-width: 100px; 
-            text-align: center; 
-        }
-
-        .col-checkbox { 
-            text-align: center; 
-        }
-
         .modal { 
-            z-index: 3005; /* Diatas sidebar */ 
+            z-index: 3005; 
         }
-
         .box-layout-modal { 
             width: 600px !important; 
             max-width: 95vw; 
@@ -702,18 +540,15 @@
             max-height: 85vh; 
             overflow-y: auto; 
         }
-
         .form-grid-wrapper { 
             display: flex; 
             flex-direction: column; 
-            gap: 2px !important; 
+            gap: 10px !important; 
             margin-bottom: 10px; 
         }
-
         .form-group { 
             margin-bottom: 0; 
         }
-
         .form-group label { 
             display: block; 
             margin-bottom: 6px; 
@@ -721,26 +556,25 @@
             color: var(--text-color); 
             font-size: 0.9rem; 
         }
-
         .modal-actions { 
             margin-top: 2rem; 
             display: flex; 
             justify-content: flex-end; 
             gap: 1rem; 
         }
-
+        .hidden { 
+            display: none !important; 
+        }
         .share-table-wrapper { 
             max-height: 400px; 
             overflow-y: auto; 
             border: 1px solid #eee; 
             border-radius: 6px; 
         }
-
         .share-table { 
             width: 100%; 
             border-collapse: collapse; 
         }
-
         .share-table th { 
             position: sticky; 
             top: 0; 
@@ -749,28 +583,24 @@
             padding: 12px; 
             border-bottom: 2px solid #eee; 
         }
-
         .share-table td { 
             text-align: center !important; 
             padding: 10px; 
             border-bottom: 1px solid #eee; 
             vertical-align: middle; 
         }
-
         .share-header { 
             padding: 20px 25px 10px; 
             text-align: center; 
             background: #fff; 
             border-bottom: 1px solid #eee; 
         }
-
         .share-header h3 { 
             color: var(--primary-color); 
             margin: 0 0 5px; 
             font-size: 1.4rem; 
             border: none; 
         }
-
         .share-footer { 
             padding: 15px 25px 20px; 
             background: #fff; 
@@ -778,7 +608,6 @@
             gap: 10px; 
             border-top: 1px solid #eee; 
         }
-
         .share-close-x { 
             position: absolute; 
             top: 15px; 
@@ -789,23 +618,45 @@
             z-index: 5; 
             line-height: 1; 
         }
-        
-        #user-selection-modal .modal-content {
-            width: 700px;
-            max-width: 95vw;
+        .btn-share-cancel { 
+            flex: 1; 
+            background: #fff; 
+            border: 1px solid #ccc; 
+            padding: 10px; 
+            border-radius: 8px; 
+            cursor: pointer; 
+            font-weight: 600; 
+            color: #555; 
+            font-family: 'Poppins', sans-serif; 
         }
-
+        #user-selection-modal .modal-content { 
+            width: 700px; 
+            max-width: 95vw; 
+        }
+        #user-search-container { 
+            padding: 0 25px 15px; 
+            background: #fff; 
+            border-bottom: 1px solid #eee; 
+        }
+        #user-search-input, #tembusan-search-input { 
+            width: 100%; 
+            padding: 10px; 
+            border: 1px solid #ccc; 
+            border-radius: 6px; 
+            font-family: 'Poppins', sans-serif; 
+        }
+        #user-selection-modal, #tembusan-selection-modal { 
+            z-index: 2500; 
+        }
         .notif-header { 
             text-align: center; 
             margin-bottom: 1.5rem; 
         }
-
         .notif-icon { 
             font-size: 3rem; 
             color: var(--secondary-color); 
             margin-bottom: 1rem; 
         }
-
         .notif-text { 
             font-size: 1.1rem; 
             color: #333; 
@@ -813,31 +664,9 @@
             text-align: center; 
             margin-bottom: 2rem; 
         }
-        
-        #user-selection-modal, 
-        #tembusan-selection-modal { 
-            z-index: 2500; 
-        } 
-
         #deadline-notification-modal { 
             z-index: 3000; 
         }
-
-        #user-search-container { 
-            padding: 0 25px 15px; 
-            background: #fff; 
-            border-bottom: 1px solid #eee; 
-        }
-
-        #user-search-input, 
-        #tembusan-search-input { 
-            width: 100%; 
-            padding: 10px; 
-            border: 1px solid #ccc; 
-            border-radius: 6px; 
-            font-family: 'Poppins', sans-serif; 
-        }
-
         .sla-badge { 
             padding: 5px 10px; 
             border-radius: 4px; 
@@ -847,20 +676,17 @@
             text-transform: uppercase; 
             white-space: nowrap; 
         }
-
         .sla-safe { 
             background-color: #E8F5E9; 
             color: #2E7D32; 
             border: 1px solid #C8E6C9; 
         }
-
         .sla-warning-1 { 
             background-color: #FFF3E0; 
             color: #E65100; 
             border: 1px solid #FFE0B2; 
             animation: pulse-warning 2s infinite; 
         }
-
         .sla-overdue { 
             background-color: #FFEBEE; 
             color: #D32F2F; 
@@ -868,13 +694,11 @@
             font-weight: 800; 
             box-shadow: 0 1px 2px rgba(0,0,0,0.1); 
         }
-
         @keyframes pulse-warning { 
             0% { opacity: 1; } 
             50% { opacity: 0.7; } 
             100% { opacity: 1; } 
         }
-
         .empty-dashboard { 
             text-align: center; 
             padding: 80px 20px; 
@@ -883,51 +707,56 @@
             border-radius: 12px; 
             margin-top: 2rem; 
         }
-
         .empty-dashboard h3 { 
             color: #888; 
             font-weight: 500; 
             font-size: 1.2rem; 
             margin: 0; 
         }
-
         .empty-dashboard p { 
             color: #aaa; 
             font-size: 0.95rem; 
             margin-top: 10px; 
         }
-
-        .form-group textarea {
+        .no-transition { 
+            transition: none !important; 
+        }
+        .evidence-table {
             width: 100%;
-            padding: 10px 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
-            font-family: 'Poppins', sans-serif;
-            font-size: 0.9rem;
-            outline: none;
-            box-sizing: border-box;
-            color: #333;
-            resize: vertical; 
-            margin: 0 !important;
+            border-collapse: collapse;
+            margin-top: 15px;
         }
-
-        .form-group textarea:focus {
-            border-color: #1976D2;
-            box-shadow: 0 0 0 2px rgba(25, 118, 210, 0.1);
+        .evidence-table th {
+            background: #f1f1f1;
+            padding: 8px;
+            text-align: center;
+            border-bottom: 2px solid #ddd;
+            font-size: 0.85rem;
         }
-
-        .no-transition {
-            transition: none !important;
+        .evidence-table td {
+            padding: 8px;
+            border-bottom: 1px solid #eee;
+            font-size: 0.85rem;
+            text-align: center;
+        }
+        .btn-view-proof {
+            color: #1976D2;
+            text-decoration: underline;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        .btn-delete-proof {
+            color: #D32F2F;
+            cursor: pointer;
+            font-size: 1.2rem;
         }
     </style>
-
     <script>
         document.addEventListener("DOMContentLoaded", function() {
             const sidebar = document.querySelector('.sidebar');
             const main = document.querySelector('main');
             const toggleBtn = document.querySelector('.sidebar-toggle-btn i');
             const isCollapsed = localStorage.getItem('sidebar-collapsed') === 'true';
-
             if (isCollapsed) {
                 sidebar.classList.add('no-transition');
                 main.classList.add('no-transition');
@@ -940,7 +769,6 @@
                 }, 100); 
             }
         });
-
         function toggleSidebar() {
             const sidebar = document.querySelector('.sidebar');
             const main = document.querySelector('main');
@@ -949,7 +777,6 @@
             main.classList.toggle('expanded');
             const isCollapsed = sidebar.classList.contains('collapsed');
             localStorage.setItem('sidebar-collapsed', isCollapsed);
-            
             if (isCollapsed) {
                 toggleBtn.className = 'bx bx-right-arrow-alt';
             } else {
@@ -959,171 +786,66 @@
     </script>
 </head>
 <body>
-    <input 
-        type="hidden" 
-        id="current-username" 
-        value="{{ username }}"
-    >
-
-    <!-- SIDEBAR NAVIGATION -->
+    <input type="hidden" id="current-username" value="{{ username }}">
     <nav class="sidebar">
         <div class="sidebar-toggle-btn" onclick="toggleSidebar()">
             <i class='bx bx-menu'></i>
         </div>
-
         <div class="sidebar-logo">
             <a href="{{ url_for('dashboard') }}">
                 <img src="{{ url_for('static', filename='Logo_IFG-removebg-preview.png') }}" alt="Logo IFG">
             </a>
         </div>
-        
         <ul class="nav-links">
-            <li>
-                <a href="{{ url_for('dashboard') }}">
-                    <i class='bx bxs-home-alt-2'></i>
-                    <span>Dashboard</span>
-                </a>
-            </li>
-
+            <li><a href="{{ url_for('dashboard') }}"><i class='bx bxs-home-alt-2'></i><span>Dashboard</span></a></li>
             <span class="nav-section-label">Analisis Dokumen</span>
-            
-            <li>
-                <a href="{{ url_for('dashboard') }}#folder-management">
-                    <i class='bx bxs-folder'></i>
-                    <span>Folder Saya</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('dashboard') }}#fitur">
-                    <i class='bx bxs-magic-wand'></i>
-                    <span>Proofread & Tools</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('log_analysis_page') }}">
-                    <i class='bx bxs-time-five'></i>
-                    <span>Log Analisis</span>
-                </a>
-            </li>
-
+            <li><a href="{{ url_for('dashboard') }}#folder-management"><i class='bx bxs-folder'></i><span>Folder Saya</span></a></li>
+            <li><a href="{{ url_for('dashboard') }}#fitur"><i class='bx bxs-magic-wand'></i><span>Proofread & Tools</span></a></li>
+            <li><a href="{{ url_for('log_analysis_page') }}"><i class='bx bxs-time-five'></i><span>Log Analisis</span></a></li>
             <span class="nav-section-label">Tindak Lanjut</span>
-
-            <li>
-                <a href="{{ url_for('monitoring_ams_page') }}">
-                    <i class='bx bxs-bar-chart-alt-2'></i>
-                    <span>Rekap Monitoring</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('ams_temuan_page') }}">
-                    <i class='bx bxs-file-find'></i>
-                    <span>Temuan</span>
-                </a>
-            </li>
-            <li>
-                <!-- MENU INI YANG AKTIF (Reminder) -->
-                <a href="{{ url_for('ams_reminder_page') }}" class="active">
-                    <i class='bx bxs-bell-ring'></i>
-                    <span>Reminder</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('ams_tl_tidak_setuju_page') }}">
-                    <i class='bx bxs-x-circle'></i>
-                    <span>TL Tidak Setuju</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('ams_auditors_page') }}">
-                    <i class='bx bxs-user-badge'></i>
-                    <span>Auditors</span>
-                </a>
-            </li>
-
+            <li><a href="{{ url_for('monitoring_ams_page') }}"><i class='bx bxs-bar-chart-alt-2'></i><span>Rekap Monitoring</span></a></li>
+            <li><a href="{{ url_for('ams_temuan_page') }}"><i class='bx bxs-file-find'></i><span>Temuan</span></a></li>
+            <li><a href="{{ url_for('ams_reminder_page') }}" class="active"><i class='bx bxs-bell-ring'></i><span>Reminder</span></a></li>
+            <li><a href="{{ url_for('ams_tl_tidak_setuju_page') }}"><i class='bx bxs-x-circle'></i><span>TL Tidak Setuju</span></a></li>
+            <li><a href="{{ url_for('ams_auditors_page') }}"><i class='bx bxs-user-badge'></i><span>Auditors</span></a></li>
             <span class="nav-section-label">Lainnya</span>
-
-            <li>
-                <a href="{{ url_for('mailbox_page') }}">
-                    <i class='bx bxs-envelope'></i>
-                    <span>Email</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('library_page') }}">
-                    <i class='bx bxs-book-bookmark'></i>
-                    <span>Library</span>
-                </a>
-            </li>
-            <li>
-                <a href="{{ url_for('settings_page') }}">
-                    <i class='bx bxs-cog'></i>
-                    <span>Settings</span>
-                </a>
-            </li>
+            <li><a href="{{ url_for('mailbox_page') }}"><i class='bx bxs-envelope'></i><span>Email</span></a></li>
+            <li><a href="{{ url_for('library_page') }}"><i class='bx bxs-book-bookmark'></i><span>Library</span></a></li>
+            <li><a href="{{ url_for('settings_page') }}"><i class='bx bxs-cog'></i><span>Settings</span></a></li>
         </ul>
-
         <div class="sidebar-footer">
             <div class="user-card">
                 <div class="user-info">
-                    <div class="user-avatar">
-                        <i class='bx bxs-user'></i>
-                    </div>
+                    <div class="user-avatar"><i class='bx bxs-user'></i></div>
                     <div class="user-details">
                         <span class="user-name">{{ current_user.fullname }}</span>
                         <span class="user-role">{{ current_user.label }}</span>
                     </div>
                 </div>
-                <a href="{{ url_for('logout') }}" class="logout-link">
-                    <i class='bx bx-log-out'></i> <span>Logout</span>
-                </a>
+                <a href="{{ url_for('logout') }}" class="logout-link"><i class='bx bx-log-out'></i> <span>Logout</span></a>
             </div>
         </div>
     </nav>
-
-    <!-- Gunakan kelas monitoring-main agar tetap sesuai dengan style spesifik Anda -->
     <main class="monitoring-main">
         <section class="monitoring-header">
             <h1>Daftar Reminder Tindak Lanjut</h1>
-            <button 
-                id="add-reminder-btn" 
-                class="start-btn"
-            >
-                Buat Reminder Baru
-            </button>
+            <button id="add-reminder-btn" class="start-btn">Buat Reminder Baru</button>
         </section>
-
-        <div 
-            id="loading-indicator" 
-            class="loading hidden" 
-            style="text-align: center; padding: 2rem;"
-        >
+        <div id="loading-indicator" class="loading hidden" style="text-align: center; padding: 2rem;">
             <div class="spinner" style="margin: 0 auto 10px auto;"></div>
             <span style="color: var(--primary-color);">Sedang memuat data...</span>
         </div>
-        
-        <section 
-            class="data-table-container" 
-            id="warning-section" 
-            style="display: none;"
-        >
-            <div 
-                class="list-header" 
-                style="background-color: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; padding: 15px; margin-bottom: 15px;"
-            >
+        <section class="data-table-container" id="warning-section" style="display: none;">
+            <div class="list-header" style="background-color: #fff3e0; border: 1px solid #ffe0b2; border-radius: 8px; padding: 15px; margin-bottom: 15px;">
                 <div style="display: flex; align-items: center; gap: 10px;">
                     <div style="font-size: 1.5rem;">⚠️</div>
                     <div>
                         <h3 style="margin: 0; color: #e65100;">Reminder Warning (Khusus PIC Auditee)</h3>
-                        <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem;">
-                            Daftar tugas yang ditujukan kepada Anda ({{ fullname }}). Harap segera respon kepada PIC SKAI yang terlampir pada tabel berikut.
-                        </p>
+                        <p style="margin: 5px 0 0; color: #666; font-size: 0.9rem;">Daftar tugas yang ditujukan kepada Anda ({{ fullname }}). Harap segera respon kepada PIC SKAI yang terlampir pada tabel berikut.</p>
                     </div>
                 </div>
             </div>
-            <div 
-                class="results-table-wrapper" 
-                style="border: 2px solid #ffe0b2;"
-            >
+            <div class="results-table-wrapper" style="border: 2px solid #ffe0b2;">
                 <table class="monitoring-data-table">
                     <thead style="background-color: #fff8e1;">
                         <tr>
@@ -1141,21 +863,12 @@
                 </table>
             </div>
         </section>
-
         {% if label == 'CoE' or label == 'Advisory' or label == 'Audit' %}
-        
         <section class="data-table-container">
             <div class="list-header">
                 <h3 style="margin: 0; color: var(--primary-color);">Past Reminders (Overdue)</h3>
-                <div 
-                    class="controls-container" 
-                    style="margin-bottom: 0;"
-                >
-                    <select 
-                        id="past-filter-dropdown" 
-                        class="custom-input" 
-                        style="min-width: 250px;"
-                    >
+                <div class="controls-container" style="margin-bottom: 0;">
+                    <select id="past-filter-dropdown" class="custom-input" style="min-width: 250px;">
                         <option value="all">Tampilkan Semua Auditee</option>
                     </select>
                 </div>
@@ -1179,6 +892,7 @@
                             <th class="col-temuan">Temuan</th>
                             <th class="col-checkbox">Reminded?</th>
                             <th class="col-checkbox">Responded?</th>
+                            <th style="min-width: 120px; text-align: center;">Bukti Reminder</th>
                             <th>Opsi</th>
                         </tr>
                     </thead>
@@ -1186,21 +900,11 @@
                 </table>
             </div>
         </section>
-
         <section class="data-table-container">
             <div class="list-header">
                 <h3 style="margin: 0; color: var(--text-color);">Data Reminder (Active)</h3>
-                <div 
-                    class="controls-container" 
-                    style="margin-bottom: 0;"
-                >
-                    <input 
-                        type="text" 
-                        id="active-search-input" 
-                        class="custom-input" 
-                        style="min-width: 250px;" 
-                        placeholder="Cari Perihal / Auditee..."
-                    >
+                <div class="controls-container" style="margin-bottom: 0;">
+                    <input type="text" id="active-search-input" class="custom-input" style="min-width: 250px;" placeholder="Cari Perihal / Auditee...">
                 </div>
             </div>
             <div class="results-table-wrapper">
@@ -1221,6 +925,7 @@
                             <th class="col-temuan">Temuan</th>
                             <th class="col-checkbox">Reminded?</th>
                             <th class="col-checkbox">Responded?</th>
+                            <th style="min-width: 120px; text-align: center;">Bukti Reminder</th>
                             <th>Opsi</th>
                         </tr>
                     </thead>
@@ -1228,645 +933,287 @@
                 </table>
             </div>
         </section>
-
         {% else %}
-        
         <div class="empty-dashboard">
             <div style="font-size: 3rem; color: #ddd; margin-bottom: 1rem;">📭</div>
             <h3>Tidak Ada Data Reminder</h3>
             <p>Untuk saat ini, Anda belum memiliki deadline reminder dari Tim SKAI IFG.</p>
         </div>
-
         {% endif %}
     </main>
-    
     <footer>
         <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
     </footer>
-
-    <!-- MODALS (Tidak ada perubahan isi, hanya style z-index disesuaikan di CSS) -->
-    <div 
-        id="confirmation-warning-modal" 
-        class="modal hidden" 
-        style="z-index: 3200;"
-    >
-        <div 
-            class="modal-content" 
-            style="max-width: 500px; text-align: center; padding: 2.5rem; border-radius: 12px;"
-        >
+    <div id="evidence-modal" class="modal hidden" style="z-index: 2900;">
+        <div class="modal-content box-layout-modal" style="width: 700px !important;">
+            <span class="modal-close-btn" onclick="closeModal('evidence-modal')">&times;</span>
+            <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 10px;">Bukti Reminder</h3>
+            <input type="hidden" id="evidence-reminder-id">
+            <form id="evidence-form" style="background: #f9f9f9; padding: 15px; border-radius: 8px; margin-bottom: 20px; border: 1px solid #eee;">
+                <h4 style="margin-top:0; color:#555;">Upload Bukti Baru</h4>
+                <div class="form-grid-wrapper" style="display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px;">
+                    <div class="form-group">
+                        <label>Tanggal Reminder</label>
+                        <input type="date" name="date" required>
+                    </div>
+                    <div class="form-group">
+                        <label>Jam Reminder</label>
+                        <input type="time" name="time" required>
+                    </div>
+                    <div class="form-group">
+                        <label>File Bukti (Img)</label>
+                        <input type="file" name="file" accept="image/png, image/jpeg, image/jpg" required style="padding-top: 5px;">
+                    </div>
+                </div>
+                <div style="text-align: right; margin-top: 10px;">
+                    <button type="submit" class="btn-save" style="padding: 8px 15px;">Upload</button>
+                </div>
+            </form>
+            <h4 style="color:#555; margin-bottom: 10px;">Daftar Bukti Tersimpan</h4>
+            <div style="max-height: 300px; overflow-y: auto;">
+                <table class="evidence-table">
+                    <thead>
+                        <tr>
+                            <th style="width: 50px;">No</th>
+                            <th>Tanggal Reminder</th>
+                            <th>Jam Reminder</th>
+                            <th>Bukti Reminder</th>
+                            <th style="width: 50px;">Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="evidence-tbody"></tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <div id="delete-proof-modal" class="modal hidden" style="z-index: 3100;">
+        <div class="modal-content" style="max-width: 400px; text-align: center; padding: 30px; border-radius: 20px; box-shadow: 0 20px 40px rgba(0,0,0,0.1);">
+            <div style="width: 80px; height: 80px; background: #FFEBEE; border-radius: 50%; display: flex; align-items: center; justify-content: center; margin: 0 auto 20px;">
+                <i class='bx bx-trash' style="font-size: 36px; color: #D32F2F;"></i>
+            </div>
+            <h3 style="color: #333; margin: 0 0 10px; font-family: 'Poppins', sans-serif; font-size: 1.5rem;">Hapus Bukti?</h3>
+            <p style="font-size: 0.95rem; color: #777; margin: 0 0 30px; line-height: 1.6;">
+                Apakah Anda yakin ingin menghapus bukti reminder ini secara permanen? Tindakan ini <b>tidak dapat dibatalkan</b>.
+            </p>
+            <div style="display: flex; gap: 15px; justify-content: center;">
+                <button onclick="closeModal('delete-proof-modal')" class="btn-share-cancel" style="flex: 1; padding: 12px; border-radius: 12px; font-weight: 600; border: 1px solid #e0e0e0; background: white; color: #555; transition: all 0.2s;">
+                    Batal
+                </button>
+                <button id="confirm-delete-proof-btn" class="btn-save" style="flex: 1; padding: 12px; border-radius: 12px; font-weight: 600; background: #D32F2F; color: white; border: none; box-shadow: 0 8px 15px rgba(211, 47, 47, 0.25); transition: all 0.2s;">
+                    Ya, Hapus
+                </button>
+            </div>
+        </div>
+    </div>
+    <div id="confirmation-warning-modal" class="modal hidden" style="z-index: 3200;">
+        <div class="modal-content" style="max-width: 500px; text-align: center; padding: 2.5rem; border-radius: 12px;">
             <div style="font-size: 3.5rem; margin-bottom: 1rem;">⚠️</div>
             <h3 style="color: var(--primary-color); margin-bottom: 1rem; font-size: 1.4rem;">Konfirmasi Respon</h3>
             <p style="font-size: 1rem; color: #555; line-height: 1.6; margin-bottom: 2rem; text-align: center;">
                 Dengan Anda klik Save, Tim SKAI IFG akan menerima informasi bahwa Anda sudah merespon terhadap Tindak Lanjut.
             </p>
-            <div 
-                class="modal-actions" 
-                style="justify-content: center; gap: 15px;"
-            >
-                <button 
-                    id="btn-cancel-warning" 
-                    class="btn-share-cancel" 
-                    style="flex:1; max-width:150px;"
-                >
-                    Batal
-                </button>
-                <button 
-                    id="btn-confirm-warning" 
-                    class="btn-save" 
-                    style="flex:1; max-width:150px;"
-                >
-                    Ya, Simpan
-                </button>
+            <div class="modal-actions" style="justify-content: center; gap: 15px;">
+                <button id="btn-cancel-warning" class="btn-share-cancel" style="flex:1; max-width:150px;">Batal</button>
+                <button id="btn-confirm-warning" class="btn-save" style="flex:1; max-width:150px;">Ya, Simpan</button>
             </div>
         </div>
     </div>
-
-    <div 
-        id="link-temuan-modal" 
-        class="modal hidden" 
-        style="z-index: 2600;"
-    >
-        <div 
-            class="modal-content box-layout-modal" 
-            style="width: 600px !important;"
-        >
-            <span 
-                class="modal-close-btn" 
-                onclick="closeModal('link-temuan-modal')"
-            >
-                &times;
-            </span>
+    <div id="link-temuan-modal" class="modal hidden" style="z-index: 2600;">
+        <div class="modal-content box-layout-modal" style="width: 600px !important;">
+            <span class="modal-close-btn" onclick="closeModal('link-temuan-modal')">&times;</span>
             <h3 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 10px;">Input Detail Temuan</h3>
-            <input 
-                type="hidden" 
-                id="link-reminder-id"
-            >
-            
+            <input type="hidden" id="link-reminder-id">
             <div class="form-grid-wrapper">
                 <div class="form-group">
                     <label>Pilih Jenis Temuan (Sesi):</label>
-                    <select 
-                        id="link-session-select" 
-                        class="custom-input"
-                    >
-                        <option value="" disabled selected>-- Pilih Sesi Temuan --</option>
-                    </select>
+                    <select id="link-session-select" class="custom-input"><option value="" disabled selected>-- Pilih Sesi Temuan --</option></select>
                 </div>
                 <div class="form-group">
                     <label>Filter by:</label>
-                    <select 
-                        id="link-filter-column" 
-                        class="custom-input" 
-                        disabled
-                    >
-                        <option value="" disabled selected>-- Pilih Sesi Terlebih Dahulu --</option>
-                    </select>
+                    <select id="link-filter-column" class="custom-input" disabled><option value="" disabled selected>-- Pilih Sesi Terlebih Dahulu --</option></select>
                 </div>
                 <div class="form-group">
                     <label>Then by:</label>
-                    <select 
-                        id="link-filter-value" 
-                        class="custom-input" 
-                        disabled
-                    >
-                        <option value="" disabled selected>-- Pilih Filter Terlebih Dahulu --</option>
-                    </select>
+                    <select id="link-filter-value" class="custom-input" disabled><option value="" disabled selected>-- Pilih Filter Terlebih Dahulu --</option></select>
                 </div>
             </div>
-            
             <div style="font-size: 0.85rem; color: var(--text-muted); background: #f9f9f9; padding: 10px; border-radius: 6px; border: 1px dashed #ccc; margin-bottom: 20px;">
                 <strong style="color: var(--primary);">Info:</strong> Dengan menekan tombol Simpan, semua data temuan yang sesuai dengan kriteria filter di atas akan otomatis ditautkan ke reminder ini.
             </div>
-            
             <div class="modal-actions">
-                <button 
-                    type="button" 
-                    class="btn-share-cancel" 
-                    onclick="closeModal('link-temuan-modal')"
-                >
-                    Batal
-                </button>
-                <button 
-                    type="button" 
-                    class="btn-save" 
-                    id="btn-save-link" 
-                    style="padding: 10px 20px;"
-                >
-                    Simpan & Tautkan
-                </button>
+                <button type="button" class="btn-share-cancel" onclick="closeModal('link-temuan-modal')">Batal</button>
+                <button type="button" class="btn-save" id="btn-save-link" style="padding: 10px 20px;">Simpan & Tautkan</button>
             </div>
         </div>
     </div>
-
-    <div 
-        id="add-reminder-modal" 
-        class="modal hidden"
-    >
+    <div id="add-reminder-modal" class="modal hidden">
         <div class="modal-content box-layout-modal">
-            <span 
-                class="modal-close-btn" 
-                onclick="closeModal('add-reminder-modal')"
-            >
-                &times;
-            </span>
+            <span class="modal-close-btn" onclick="closeModal('add-reminder-modal')">&times;</span>
             <h2 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">Buat Reminder Baru</h2>
             <form id="add-reminder-form">
                 <div class="form-grid-wrapper">
                     <div class="form-group">
                         <label>Auditee:</label>
-                        <button 
-                            type="button" 
-                            id="btn-open-auditee-modal" 
-                            class="btn-select-pic"
-                        >
-                            <span id="display-auditee-text">-- Pilih Auditee --</span><span>&#9662;</span>
-                        </button>
-                        <input 
-                            type="hidden" 
-                            name="auditee" 
-                            id="final-auditee-input" 
-                            required
-                        >
+                        <button type="button" id="btn-open-auditee-modal" class="btn-select-pic"><span id="display-auditee-text">-- Pilih Auditee --</span><span>&#9662;</span></button>
+                        <input type="hidden" name="auditee" id="final-auditee-input" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>Perihal:</label>
-                        <input 
-                            type="text" 
-                            name="subject" 
-                            required 
-                            placeholder="Contoh: Submit Laporan"
-                        >
+                        <input type="text" name="subject" required placeholder="Contoh: Submit Laporan">
                     </div>
-                    
                     <div class="form-group">
                         <label>PIC SKAI:</label>
-                        <button 
-                            type="button" 
-                            id="btn-select-pic-add" 
-                            class="btn-select-pic"
-                        >
-                            <span id="selected-pic-text-add">-- Pilih PIC --</span><span>&#9662;</span>
-                        </button>
-                        <input 
-                            type="hidden" 
-                            name="pic_skai" 
-                            id="input-pic-skai-add"
-                        >
+                        <button type="button" id="btn-select-pic-add" class="btn-select-pic"><span id="selected-pic-text-add">-- Pilih PIC --</span><span>&#9662;</span></button>
+                        <input type="hidden" name="pic_skai" id="input-pic-skai-add">
                     </div>
-                    
                     <div class="form-group">
                         <label>PIC Auditee:</label>
-                        <textarea 
-                            name="pic_auditee" 
-                            id="input-pic-auditee-add" 
-                            rows="4" 
-                            placeholder="1. Nama PIC 1&#10;2. Nama PIC 2"
-                        ></textarea>
+                        <textarea name="pic_auditee" id="input-pic-auditee-add" rows="4" placeholder="1. Nama PIC 1&#10;2. Nama PIC 2"></textarea>
                     </div>
-                    
                     <div class="form-group">
                         <label>PIC Reminder:</label>
-                        <button 
-                            type="button" 
-                            id="btn-select-pic-reminder-add" 
-                            class="btn-select-pic"
-                        >
-                            <span id="selected-pic-reminder-text-add">-- Pilih PIC Reminder --</span><span>&#9662;</span>
-                        </button>
-                        <input 
-                            type="hidden" 
-                            name="pic_reminder" 
-                            id="input-pic-reminder-add"
-                        >
+                        <button type="button" id="btn-select-pic-reminder-add" class="btn-select-pic"><span id="selected-pic-reminder-text-add">-- Pilih PIC Reminder --</span><span>&#9662;</span></button>
+                        <input type="hidden" name="pic_reminder" id="input-pic-reminder-add">
                     </div>
-                    
                     <div class="form-group">
                         <label>Deadline:</label>
-                        <input 
-                            type="date" 
-                            name="deadline" 
-                            required
-                        >
+                        <input type="date" name="deadline" required>
                     </div>
                 </div>
-                
                 <div class="modal-actions">
-                    <button 
-                        type="button" 
-                        class="btn-share-cancel" 
-                        onclick="closeModal('add-reminder-modal')"
-                    >
-                        Batal
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="btn-save" 
-                        style="padding: 10px 20px;"
-                    >
-                        Simpan
-                    </button>
+                    <button type="button" class="btn-share-cancel" onclick="closeModal('add-reminder-modal')">Batal</button>
+                    <button type="submit" class="btn-save" style="padding: 10px 20px;">Simpan</button>
                 </div>
             </form>
         </div>
     </div>
-
-    <div 
-        id="edit-reminder-modal" 
-        class="modal hidden"
-    >
+    <div id="edit-reminder-modal" class="modal hidden">
         <div class="modal-content box-layout-modal">
-            <span 
-                class="modal-close-btn" 
-                onclick="closeModal('edit-reminder-modal')"
-            >
-                &times;
-            </span>
+            <span class="modal-close-btn" onclick="closeModal('edit-reminder-modal')">&times;</span>
             <h2 style="color: var(--primary-color); border-bottom: 1px solid #eee; padding-bottom: 10px; margin-bottom: 20px;">Edit Reminder</h2>
             <form id="edit-reminder-form">
-                <input 
-                    type="hidden" 
-                    id="edit-id" 
-                    name="id"
-                >
+                <input type="hidden" id="edit-id" name="id">
                 <div class="form-grid-wrapper">
                     <div class="form-group">
                         <label>Auditee:</label>
-                        <button 
-                            type="button" 
-                            id="btn-open-auditee-modal-edit" 
-                            class="btn-select-pic"
-                        >
-                            <span id="edit-display-auditee-text">-- Pilih Auditee --</span><span>&#9662;</span>
-                        </button>
-                        <input 
-                            type="hidden" 
-                            id="edit-auditee" 
-                            name="auditee" 
-                            required
-                        >
+                        <button type="button" id="btn-open-auditee-modal-edit" class="btn-select-pic"><span id="edit-display-auditee-text">-- Pilih Auditee --</span><span>&#9662;</span></button>
+                        <input type="hidden" id="edit-auditee" name="auditee" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>Perihal:</label>
-                        <input 
-                            type="text" 
-                            id="edit-subject" 
-                            name="subject" 
-                            required
-                        >
+                        <input type="text" id="edit-subject" name="subject" required>
                     </div>
-                    
                     <div class="form-group">
                         <label>PIC SKAI:</label>
-                        <button 
-                            type="button" 
-                            id="btn-select-pic-edit" 
-                            class="btn-select-pic"
-                        >
-                            <span id="selected-pic-text-edit">-- Pilih PIC --</span><span>&#9662;</span>
-                        </button>
-                        <input 
-                            type="hidden" 
-                            name="pic_skai" 
-                            id="input-pic-skai-edit"
-                        >
+                        <button type="button" id="btn-select-pic-edit" class="btn-select-pic"><span id="selected-pic-text-edit">-- Pilih PIC --</span><span>&#9662;</span></button>
+                        <input type="hidden" name="pic_skai" id="input-pic-skai-edit">
                     </div>
-                    
                     <div class="form-group">
                         <label>PIC Auditee:</label>
-                        <button 
-                            type="button" 
-                            id="btn-select-pic-auditee-edit" 
-                            class="btn-select-pic"
-                        >
-                            <span id="selected-pic-auditee-text-edit">-- Pilih PIC Auditee --</span><span>&#9662;</span>
-                        </button>
-                        <input 
-                            type="hidden" 
-                            name="pic_auditee" 
-                            id="input-pic-auditee-edit"
-                        >
+                        <textarea name="pic_auditee" id="input-pic-auditee-edit" rows="4"></textarea>
                     </div>
-                    
                     <div class="form-group">
                         <label>PIC Reminder:</label>
-                        <button 
-                            type="button" 
-                            id="btn-select-pic-reminder-edit" 
-                            class="btn-select-pic"
-                        >
-                            <span id="selected-pic-reminder-text-edit">-- Pilih PIC Reminder --</span><span>&#9662;</span>
-                        </button>
-                        <input 
-                            type="hidden" 
-                            name="pic_reminder" 
-                            id="input-pic-reminder-edit"
-                        >
+                        <button type="button" id="btn-select-pic-reminder-edit" class="btn-select-pic"><span id="selected-pic-reminder-text-edit">-- Pilih PIC Reminder --</span><span>&#9662;</span></button>
+                        <input type="hidden" name="pic_reminder" id="input-pic-reminder-edit">
                     </div>
-                    
                     <div class="form-group">
                         <label>Deadline:</label>
-                        <input 
-                            type="date" 
-                            id="edit-deadline" 
-                            name="deadline" 
-                            required
-                        >
+                        <input type="date" id="edit-deadline" name="deadline" required>
                     </div>
                 </div>
-                
                 <div class="modal-actions">
-                    <button 
-                        type="button" 
-                        class="btn-share-cancel" 
-                        onclick="closeModal('edit-reminder-modal')"
-                    >
-                        Batal
-                    </button>
-                    <button 
-                        type="submit" 
-                        class="btn-save" 
-                        style="padding: 10px 20px;"
-                    >
-                        Simpan Perubahan
-                    </button>
+                    <button type="button" class="btn-share-cancel" onclick="closeModal('edit-reminder-modal')">Batal</button>
+                    <button type="submit" class="btn-save" style="padding: 10px 20px;">Simpan Perubahan</button>
                 </div>
             </form>
         </div>
     </div>
-
-    <div 
-        id="auditee-selection-modal" 
-        class="modal hidden" 
-        style="z-index: 2800;"
-    >
-        <div 
-            class="modal-content box-layout-modal" 
-            style="width: 500px !important;"
-        >
-            <span 
-                class="modal-close-btn" 
-                onclick="closeModal('auditee-selection-modal')"
-            >
-                &times;
-            </span>
+    <div id="auditee-selection-modal" class="modal hidden" style="z-index: 2800;">
+        <div class="modal-content box-layout-modal" style="width: 500px !important;">
+            <span class="modal-close-btn" onclick="closeModal('auditee-selection-modal')">&times;</span>
             <h3 style="text-align:center; color: var(--primary-color);">Pilih Auditee Anda</h3>
             <div class="form-group">
                 <label>Perusahaan:</label>
-                <select 
-                    id="select-company" 
-                    class="custom-input"
-                >
-                    <option value="" disabled selected>-- Pilih Perusahaan --</option>
-                </select>
+                <select id="select-company" class="custom-input"><option value="" disabled selected>-- Pilih Perusahaan --</option></select>
             </div>
-            <div 
-                id="auditee-wrapper" 
-                class="form-group hidden"
-            >
+            <div id="auditee-wrapper" class="form-group hidden">
                 <label>Auditee (Divisi):</label>
-                <select 
-                    id="select-auditee-unit" 
-                    class="custom-input"
-                >
-                    <option value="" disabled selected>-- Pilih Divisi --</option>
-                </select>
+                <select id="select-auditee-unit" class="custom-input"><option value="" disabled selected>-- Pilih Divisi --</option></select>
             </div>
-            <div 
-                class="modal-actions" 
-                style="justify-content: center;"
-            >
-                <button 
-                    type="button" 
-                    class="btn-share-cancel" 
-                    onclick="closeModal('auditee-selection-modal')"
-                >
-                    Batal
-                </button>
-                <button 
-                    type="button" 
-                    class="btn-save" 
-                    id="save-auditee-selection" 
-                    style="padding: 10px 20px;"
-                >
-                    Pilih
-                </button>
+            <div class="modal-actions" style="justify-content: center;">
+                <button type="button" class="btn-share-cancel" onclick="closeModal('auditee-selection-modal')">Batal</button>
+                <button type="button" class="btn-save" id="save-auditee-selection" style="padding: 10px 20px;">Pilih</button>
             </div>
         </div>
     </div>
-    
-    <div 
-        id="user-selection-modal" 
-        class="modal hidden" 
-        style="z-index: 2500;"
-    >
+    <div id="user-selection-modal" class="modal hidden" style="z-index: 2500;">
         <div class="modal-content">
-            <span 
-                class="share-close-x" 
-                onclick="closeModal('user-selection-modal')"
-            >
-                &times;
-            </span>
+            <span class="share-close-x" onclick="closeModal('user-selection-modal')">&times;</span>
             <div class="share-header"><h3>Pilih User</h3></div>
             <div id="user-search-container">
-                <input 
-                    type="text" 
-                    id="user-search-input" 
-                    placeholder="Cari nama user..." 
-                    autocomplete="off"
-                >
+                <input type="text" id="user-search-input" placeholder="Cari nama user..." autocomplete="off">
             </div>
             <div class="share-table-wrapper">
                 <table class="share-table">
-                    <thead>
-                        <tr>
-                            <th>Pilih</th>
-                            <th>Username</th>
-                            <th>Label</th>
-                        </tr>
-                    </thead>
+                    <thead><tr><th>Pilih</th><th>Username</th><th>Label</th></tr></thead>
                     <tbody id="user-selection-tbody"></tbody>
                 </table>
             </div>
             <div class="share-footer">
-                <button 
-                    class="btn-share-cancel" 
-                    onclick="closeModal('user-selection-modal')"
-                >
-                    Batal
-                </button>
-                <button 
-                    class="btn-save" 
-                    id="btn-save-user"
-                >
-                    Simpan Pilihan
-                </button>
+                <button class="btn-share-cancel" onclick="closeModal('user-selection-modal')">Batal</button>
+                <button class="btn-save" id="btn-save-user">Simpan Pilihan</button>
             </div>
         </div>
     </div>
-
-    <div 
-        id="tembusan-selection-modal" 
-        class="modal hidden" 
-        style="z-index: 2550;"
-    >
-        <div class="modal-content">
-            <span 
-                class="share-close-x" 
-                onclick="closeModal('tembusan-selection-modal')"
-            >
-                &times;
-            </span>
-            <div class="share-header"><h3>Pilih Tembusan</h3></div>
-            <div id="user-search-container">
-                <input 
-                    type="text" 
-                    id="tembusan-search-input" 
-                    placeholder="Cari label..." 
-                    autocomplete="off"
-                >
-            </div>
-            <div class="share-table-wrapper">
-                <table class="share-table">
-                    <thead>
-                        <tr>
-                            <th>Pilih</th>
-                            <th>Label</th>
-                        </tr>
-                    </thead>
-                    <tbody id="tembusan-selection-tbody"></tbody>
-                </table>
-            </div>
-            <div class="share-footer">
-                <button 
-                    class="btn-share-cancel" 
-                    onclick="closeModal('tembusan-selection-modal')"
-                >
-                    Batal
-                </button>
-                <button 
-                    class="btn-save" 
-                    id="btn-save-tembusan"
-                >
-                    Simpan Pilihan
-                </button>
-            </div>
-        </div>
-    </div>
-    
-    <div 
-        id="deadline-notification-modal" 
-        class="modal hidden" 
-        style="z-index: 3000;"
-    >
-        <div 
-            class="modal-content" 
-            style="max-width: 500px; padding: 2rem; text-align: center;"
-        >
-            <div class="notif-icon">🔔</div>
-            <h3 style="color: var(--secondary-color);">Pengingat Deadline</h3>
-            <div 
-                id="deadline-notif-content" 
-                class="notif-text"
-            ></div>
-            <button 
-                class="btn-share-cancel" 
-                onclick="closeModal('deadline-notification-modal')"
-            >
-                Tutup
-            </button>
-        </div>
-    </div>
-
-    <div 
-        id="custom-message-modal" 
-        class="modal hidden"
-    >
-        <div 
-            class="modal-content" 
-            style="max-width:400px; text-align:center; padding:2rem;"
-        >
+    <div id="custom-message-modal" class="modal hidden">
+        <div class="modal-content" style="max-width:400px; text-align:center; padding:2rem;">
             <h3 id="custom-message-title">Pesan</h3>
             <p id="custom-message-text"></p>
-            <button 
-                onclick="closeModal('custom-message-modal')" 
-                class="action-btn btn-save" 
-                style="width:100%;"
-            >
-                OK
-            </button>
+            <button onclick="closeModal('custom-message-modal')" class="action-btn btn-save" style="width:100%;">OK</button>
         </div>
     </div>
-
-    <div 
-        id="custom-confirm-modal" 
-        class="modal hidden"
-    >
-        <div 
-            class="modal-content" 
-            style="max-width:400px; text-align:center; padding:2rem;"
-        >
+    <div id="custom-confirm-modal" class="modal hidden">
+        <div class="modal-content" style="max-width:400px; text-align:center; padding:2rem;">
             <h3>Konfirmasi</h3>
             <p id="custom-confirm-text"></p>
-            <div 
-                style="display:flex; gap:10px; justify-content:center; margin-top:1rem;"
-            >
-                <button 
-                    id="custom-confirm-ok-btn" 
-                    class="action-btn btn-save" 
-                    style="flex: 1;"
-                >
-                    Ya
-                </button>
-                <button 
-                    id="custom-confirm-cancel-btn" 
-                    class="btn-share-cancel" 
-                    style="flex: 1;"
-                >
-                    Batal
-                </button>
+            <div style="display:flex; gap:10px; justify-content:center; margin-top:1rem;">
+                <button id="custom-confirm-ok-btn" class="action-btn btn-save" style="flex: 1;">Ya</button>
+                <button id="custom-confirm-cancel-btn" class="btn-share-cancel" style="flex: 1;">Batal</button>
             </div>
         </div>
     </div>
-
     <script>
         document.addEventListener('DOMContentLoaded', () => {
-            
-            const COMPANY_LIST = [
-                "Askrindo", "Bahana Artha Ventura", "Bahana Kapital Investa", "Bahana Sekuritas",
-                "Bahana TCW Investment Management", "IFG", "IFG Life", "Jamkrindo", "Jasa Raharja",
-                "Jasindo", "Kementrian Badan Usaha Milik Negara (KBUMN)", "Mandiri Inhealth",
-                "Nasional Re (Nasre)", "PT Grahaniaga Tatautama"
+            const COMPANY_LIST = [ 
+                "Askrindo", "Bahana Artha Ventura", "Bahana Kapital Investa", "Bahana Sekuritas", 
+                "Bahana TCW Investment Management", "IFG", "IFG Life", "Jamkrindo", "Jasa Raharja", 
+                "Jasindo", "Kementrian Badan Usaha Milik Negara (KBUMN)", "Mandiri Inhealth", 
+                "Nasional Re (Nasre)", "PT Grahaniaga Tatautama" 
             ].sort();
-
-            const IFG_DIVISIONS = [
-                "Divisi Aktuaria", "Divisi Akuntansi & Pelaporan", "Divisi Bisnis Asuransi Jiwa",
-                "Divisi Bisnis Asuransi Umum & Penjaminan", "Divisi Bisnis Capital Market & Investasi",
-                "Divisi Hukum", "Divisi Keuangan Perusahaan", "Divisi M&A dan Partnership",
-                "Divisi Manajemen Portofolio Investeasi & Anak Perusahaan",
-                "Divisi Manajemen Risiko, Kepatuhan dan Kebijakan", "Divisi Optimasi Operasional Asuransi",
-                "Divisi Pengadaan & Pengelolaan Aset", "Divisi Perusahaan",
-                "Divisi Satuan Kerja Audit Internal", "Divisi Sekretaris Perusahaan",
-                "Divisi Special Liability Management", "Divisi Strategi Digital & Pengembangan Bisnis",
-                "Divisi Sumber Daya Manusia", "Divisi Teknologi Informasi", "SEVP IFG Progress",
-                "SEVP Manajemen Bisnis", "SEVP Teknologi Informasi", "SEVP Transformasi"
+            const IFG_DIVISIONS = [ 
+                "Divisi Aktuaria", "Divisi Akuntansi & Pelaporan", "Divisi Bisnis Asuransi Jiwa", 
+                "Divisi Bisnis Asuransi Umum & Penjaminan", "Divisi Bisnis Capital Market & Investasi", 
+                "Divisi Hukum", "Divisi Keuangan Perusahaan", "Divisi M&A dan Partnership", 
+                "Divisi Manajemen Portofolio Investeasi & Anak Perusahaan", "Divisi Manajemen Risiko, Kepatuhan dan Kebijakan", 
+                "Divisi Optimasi Operasional Asuransi", "Divisi Pengadaan & Pengelolaan Aset", "Divisi Perusahaan", 
+                "Divisi Satuan Kerja Audit Internal", "Divisi Sekretaris Perusahaan", "Divisi Special Liability Management", 
+                "Divisi Strategi Digital & Pengembangan Bisnis", "Divisi Sumber Daya Manusia", "Divisi Teknologi Informasi", 
+                "SEVP IFG Progress", "SEVP Manajemen Bisnis", "SEVP Teknologi Informasi", "SEVP Transformasi" 
             ].sort();
-
             let globalPastData = [];
             let globalActiveData = [];
             let allUsersCache = [];
             let currentSessionData = [];
             let currentLinkReminderId = null;
             let pendingWarningId = null;
-
+            let pendingEvidenceDeleteId = null;
+            let pendingEvidenceReminderId = null;
             let targetInputId = null;  
             let targetDisplayId = null;
             let targetAuditeeInputId = null;  
             let targetAuditeeDisplayId = null;
-            
             const currentUsername = document.getElementById('current-username').value;
-
             const els = {
                 pastTbody: document.getElementById('past-tbody'),
                 activeTbody: document.getElementById('active-tbody'),
@@ -1880,7 +1227,6 @@
                 linkModal: document.getElementById('link-temuan-modal'),
                 auditeeModal: document.getElementById('auditee-selection-modal'),
                 userModal: document.getElementById('user-selection-modal'),
-                tembusanModal: document.getElementById('tembusan-selection-modal'),
                 warningModal: document.getElementById('confirmation-warning-modal'),
                 addForm: document.getElementById('add-reminder-form'),
                 editForm: document.getElementById('edit-reminder-form'),
@@ -1897,12 +1243,16 @@
                 btnSaveLink: document.getElementById('btn-save-link'),
                 btnConfirmWarning: document.getElementById('btn-confirm-warning'),
                 btnCancelWarning: document.getElementById('btn-cancel-warning'),
-                btnAddReminder: document.getElementById('add-reminder-btn')
+                btnAddReminder: document.getElementById('add-reminder-btn'),
+                evidenceModal: document.getElementById('evidence-modal'),
+                evidenceForm: document.getElementById('evidence-form'),
+                evidenceTbody: document.getElementById('evidence-tbody'),
+                evidenceReminderId: document.getElementById('evidence-reminder-id')
             };
-
             window.closeModal = (id) => document.getElementById(id).classList.add('hidden');
-            const openModal = (el) => { if (el) el.classList.remove('hidden'); };
-
+            const openModal = (el) => { 
+                if (el) el.classList.remove('hidden'); 
+            };
             function showMessage(msg, type = 'info') {
                 const m = document.getElementById('custom-message-modal');
                 document.getElementById('custom-message-text').textContent = msg;
@@ -1911,7 +1261,6 @@
                 t.style.color = type === 'error' ? 'var(--primary-color)' : 'green';
                 openModal(m);
             }
-
             function showConfirm(msg, onConfirm) {
                 const m = document.getElementById('custom-confirm-modal');
                 document.getElementById('custom-confirm-text').textContent = msg;
@@ -1919,19 +1268,22 @@
                 const cancelBtn = document.getElementById('custom-confirm-cancel-btn');
                 const newOk = okBtn.cloneNode(true);
                 okBtn.parentNode.replaceChild(newOk, okBtn);
-                newOk.onclick = () => { closeModal('custom-confirm-modal'); onConfirm(true); };
-                cancelBtn.onclick = () => { closeModal('custom-confirm-modal'); onConfirm(false); };
+                newOk.onclick = () => { 
+                    closeModal('custom-confirm-modal'); 
+                    onConfirm(true); 
+                };
+                cancelBtn.onclick = () => { 
+                    closeModal('custom-confirm-modal'); 
+                    onConfirm(false); 
+                };
                 openModal(m);
             }
-
             function init() {
                 COMPANY_LIST.forEach(c => els.selectCompany.add(new Option(c, c)));
                 IFG_DIVISIONS.forEach(d => els.selectAuditeeUnit.add(new Option(d, d)));
                 setupEventListeners();
                 loadReminders();
-                checkDeadlines();
             }
-
             function setupEventListeners() {
                 els.btnAddReminder.onclick = () => {
                     els.addForm.reset();
@@ -1939,21 +1291,69 @@
                     els.auditeeWrapper.classList.add('hidden');
                     const resetText = (id, text) => {  
                         const el = document.getElementById(id);  
-                        if(el) { el.textContent = text; el.style.color = "#333"; el.style.fontWeight = "normal"; } 
+                        if(el) { 
+                            el.textContent = text; 
+                            el.style.color = "#333"; 
+                            el.style.fontWeight = "normal"; 
+                        } 
                     };
                     resetText('display-auditee-text', "-- Pilih Auditee --");
                     resetText('selected-pic-text-add', "-- Pilih PIC --");
                     resetText('selected-pic-reminder-text-add', "-- Pilih PIC Reminder --");
-                    
                     document.getElementById('input-pic-auditee-add').value = "";
-                    
                     ['input-pic-skai-add','input-pic-reminder-add'].forEach(id => document.getElementById(id).value = "");
                     openModal(els.addModal);
                 };
-
                 els.addForm.onsubmit = (e) => handleFormSubmit(e, '/api/add_reminder', 'add-reminder-modal', 'Berhasil disimpan');
                 els.editForm.onsubmit = (e) => handleFormSubmit(e, `/api/edit_reminder/${document.getElementById('edit-id').value}`, 'edit-reminder-modal', 'Data diperbarui');
-
+                els.evidenceForm.onsubmit = async (e) => {
+                    e.preventDefault();
+                    const formData = new FormData(e.target);
+                    formData.append('reminder_id', els.evidenceReminderId.value);
+                    try {
+                        const res = await fetch('/api/reminder_evidence/upload', {
+                            method: 'POST',
+                            body: formData
+                        });
+                        if (res.ok) {
+                            e.target.reset();
+                            loadEvidenceList(els.evidenceReminderId.value);
+                            showMessage("Bukti berhasil diupload!", "success");
+                        } else {
+                            const err = await res.json();
+                            showMessage(err.error || "Gagal upload", "error");
+                        }
+                    } catch (e) {
+                        showMessage("Error koneksi", "error");
+                    }
+                };
+                document.getElementById('confirm-delete-proof-btn').onclick = async function() {
+                    if (!pendingEvidenceDeleteId) return;
+                    const btn = this;
+                    const originalText = btn.innerHTML;
+                    btn.innerHTML = "<i class='bx bx-loader-alt bx-spin'></i> Menghapus...";
+                    btn.disabled = true;
+                    btn.style.opacity = "0.7";
+                    try {
+                        const res = await fetch(`/api/reminder_evidence/delete/${pendingEvidenceDeleteId}`, {method: 'DELETE'});
+                        const d = await res.json();
+                        if(d.status === 'success') {
+                            loadEvidenceList(pendingEvidenceReminderId); 
+                            showMessage("Bukti berhasil dihapus.", "success");
+                        } else {
+                            showMessage(d.error || "Gagal menghapus bukti.", "error");
+                        }
+                    } catch(e) {
+                        showMessage("Terjadi kesalahan koneksi.", "error");
+                    } finally {
+                        closeModal('delete-proof-modal');
+                        btn.innerHTML = originalText;
+                        btn.disabled = false;
+                        btn.style.opacity = "1";
+                        pendingEvidenceDeleteId = null;
+                        pendingEvidenceReminderId = null;
+                    }
+                };
                 document.getElementById('btn-open-auditee-modal').onclick = () => openAuditeeModal('final-auditee-input', 'display-auditee-text');
                 document.getElementById('btn-open-auditee-modal-edit').onclick = () => openAuditeeModal('edit-auditee', 'edit-display-auditee-text');
                 els.selectCompany.addEventListener('change', () => {
@@ -1964,20 +1364,15 @@
                     }
                 });
                 els.saveAuditeeBtn.onclick = handleSaveAuditee;
-
                 document.getElementById('btn-select-pic-add').onclick = () => openUserModal('input-pic-skai-add', 'selected-pic-text-add');
                 document.getElementById('btn-select-pic-reminder-add').onclick = () => openUserModal('input-pic-reminder-add', 'selected-pic-reminder-text-add');
-
                 document.getElementById('btn-select-pic-edit').onclick = () => openUserModal('input-pic-skai-edit', 'selected-pic-text-edit');
                 document.getElementById('btn-select-pic-reminder-edit').onclick = () => openUserModal('input-pic-reminder-edit', 'selected-pic-reminder-text-edit');
-
                 els.userSearchInput.addEventListener('keyup', (e) => filterTable(e.target.value, '#user-selection-tbody'));
                 els.btnSaveUser.onclick = handleSaveUserSelection;
-
                 els.linkSession.addEventListener('change', handleLinkSessionChange);
                 els.linkCol.addEventListener('change', handleLinkColumnChange);
                 els.btnSaveLink.onclick = handleSaveLink;
-
                 els.pastFilter.addEventListener('change', (e) => {
                     const val = e.target.value;
                     const data = val === 'all' ? globalPastData : globalPastData.filter(i => i.auditee === val);
@@ -1988,16 +1383,22 @@
                     const data = globalActiveData.filter(i => (i.auditee && i.auditee.toLowerCase().includes(val)) || (i.subject && i.subject.toLowerCase().includes(val)));
                     renderTable(data, els.activeTbody);
                 });
-
                 els.btnConfirmWarning.onclick = () => {
-                    if (pendingWarningId) { executeSaveWarning(pendingWarningId, true); closeModal('confirmation-warning-modal'); pendingWarningId = null; }
+                    if (pendingWarningId) { 
+                        executeSaveWarning(pendingWarningId, true); 
+                        closeModal('confirmation-warning-modal'); 
+                        pendingWarningId = null; 
+                    }
                 };
                 els.btnCancelWarning.onclick = () => {
-                    if (pendingWarningId) { const cb = document.getElementById(`warn-check-${pendingWarningId}`); if (cb) cb.checked = false; }
-                    closeModal('confirmation-warning-modal'); pendingWarningId = null;
+                    if (pendingWarningId) { 
+                        const cb = document.getElementById(`warn-check-${pendingWarningId}`); 
+                        if (cb) cb.checked = false; 
+                    }
+                    closeModal('confirmation-warning-modal'); 
+                    pendingWarningId = null;
                 };
             }
-
             async function loadReminders() {
                 els.loading.classList.remove('hidden');
                 try {
@@ -2014,109 +1415,77 @@
                     });
                     globalPastData = processed.filter(i => i.is_overdue);
                     globalActiveData = processed.filter(i => !i.is_overdue);
-                    
                     renderTable(globalPastData, els.pastTbody);
                     renderTable(globalActiveData, els.activeTbody);
                     renderWarningTable(processed);
                     populateFilterDropdown(globalPastData);
-                } catch (e) { console.error("Load Error:", e); } 
-                finally { els.loading.classList.add('hidden'); }
+                } catch (e) { 
+                    console.error("Load Error:", e); 
+                } finally { 
+                    els.loading.classList.add('hidden'); 
+                }
             }
-
             function renderTable(data, tbody) {
                 if (!tbody) return;
                 tbody.innerHTML = '';
-                
                 if (!data.length) {
-                    tbody.innerHTML = '<tr><td colspan="15" style="text-align:center; padding:2rem; color:#999;">Belum ada data.</td></tr>';
+                    const colspan = (tbody.id === 'active-tbody') ? 16 : 17; 
+                    tbody.innerHTML = `<tr><td colspan="${colspan}" style="text-align:center; padding:2rem; color:#999;">Belum ada data.</td></tr>`;
                     return;
                 }
-
+                const isActive = (tbody.id === 'active-tbody');
                 data.forEach((item, index) => {
                     const tr = document.createElement('tr');
-                    
                     const picSkai = formatUserListHTML(item.pic_skai);
                     const picRem = formatUserListHTML(item.pic_reminder);
                     const picAud = formatUserListHTML(item.pic_auditee);
-
                     let statusStyle = "background: #E8F5E9; color: #2E7D32;";
                     if(item.is_overdue) statusStyle = "background: #FFEBEE; color: #C62828;";
                     else if(item.sisa_hari === "0 hari") statusStyle = "background: #FFF9C4; color: #F57F17;";
-
                     let reminderLevelHtml = '';
-                    
-                    const d1 = new Date(item.deadline_raw);
-                    d1.setHours(0,0,0,0);
-                    const d2 = new Date(); 
-                    d2.setHours(0,0,0,0);
+                    const d1 = new Date(item.deadline_raw); d1.setHours(0,0,0,0);
+                    const d2 = new Date(); d2.setHours(0,0,0,0);
                     const diffTime = d2 - d1;
                     const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
                     if (!item.is_responded && item.is_overdue) {
                         let reminders = [];
                         const styleBase = "padding: 6px; width: 100%; box-sizing: border-box; font-size: 0.85em; font-weight: 700; border-radius: 4px; margin-bottom: 3px; text-align: center;";
                         const styleActive = "background-color: #5CE65C; color: #000000; border: 1px solid #FFF59D;";
                         const stylePassed = "background-color: #C62828; color: white; border: 1px solid #B71C1C;";
-
-                        // REMINDER 1 (Overdue > 0 hari)
-                        if (diffDays > 0) {
-                            // Jika sudah masuk Reminder 2 (>5 hari), maka Reminder 1 jadi Merah (Passed)
-                            // Jika belum, maka Reminder 1 tetap Kuning (Active)
-                            const style1 = (diffDays > 5) ? stylePassed : styleActive;
-                            reminders.push(`<div style="${styleBase} ${style1}">1 (Pertama)</div>`);
+                        if (diffDays > 0) { 
+                            const style1 = (diffDays > 5) ? stylePassed : styleActive; 
+                            reminders.push(`<div style="${styleBase} ${style1}">1 (Pertama)</div>`); 
                         }
-
-                        if (diffDays > 5) {
-                            const style2 = (diffDays > 10) ? stylePassed : styleActive;
-                            reminders.push(`<div style="${styleBase} ${style2}">2 (Kedua)</div>`);
+                        if (diffDays > 5) { 
+                            const style2 = (diffDays > 10) ? stylePassed : styleActive; 
+                            reminders.push(`<div style="${styleBase} ${style2}">2 (Kedua)</div>`); 
                         }
-
-                        if (diffDays > 10) {
-                            reminders.push(`<div style="${styleBase} ${styleActive}">3 (Ketiga)</div>`);
+                        if (diffDays > 10) { 
+                            reminders.push(`<div style="${styleBase} ${styleActive}">3 (Ketiga)</div>`); 
                         }
-                        
-                        reminderLevelHtml = `
-                            <td style="padding: 5px; vertical-align: top; min-width: 110px;">
-                                <div style="display: flex; flex-direction: column;">
-                                    ${reminders.join('')}
-                                </div>
-                            </td>
-                        `;
+                        reminderLevelHtml = `<td style="padding: 5px; vertical-align: top; min-width: 110px;"><div style="display: flex; flex-direction: column;">${reminders.join('')}</div></td>`;
                     } else {
-                        // Jika tidak overdue atau sudah direspon
                         reminderLevelHtml = `<td>-</td>`;
                     }
-
                     let temuanBtn = `<span style="color:#999; font-size:0.8em;">-</span>`;
-                    
                     if (item.visible_temuan_count > 0) {
-                        temuanBtn = `
-                            <a href="/view_linked_temuan/${item.id}" target="_blank" class="btn-view-temuan">
-                                View <span class="badge-count">${item.visible_temuan_count}</span>
-                            </a>`;
+                        temuanBtn = `<a href="/view_linked_temuan/${item.id}" target="_blank" class="btn-view-temuan">View <span class="badge-count">${item.visible_temuan_count}</span></a>`;
                     } else if (item.is_owner || item.is_current_user_pic) {
                         temuanBtn = `<button class="btn-input-temuan" onclick="openLinkModal(${item.id})">+ Input Temuan</button>`;
                     }
-
+                    let proofBtn = '';
+                    if (item.is_owner || item.is_current_user_pic) {
+                        proofBtn = `<button class="btn-input-temuan" style="border: 1px solid #1976D2; color: #1976D2;" onclick="openEvidenceModal(${item.id})">Upload Bukti</button>`;
+                    } else {
+                        proofBtn = `<button class="btn-input-temuan" style="border: 1px solid #1976D2; color: #1976D2;" onclick="openEvidenceModal(${item.id})">Lihat Bukti</button>`;
+                    }
                     let actionButtons = '';
                     if(item.is_owner) {
-                        actionButtons = `
-                            <div style="display:flex; gap:5px; justify-content:center;">
-                                <button class="action-btn btn-save" onclick="saveStatus(${item.id})">Save</button>
-                                <button class="action-btn btn-edit" onclick='openEdit(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button>
-                                <button class="action-btn btn-delete" onclick="deleteItem(${item.id})">Hapus</button>
-                            </div>
-                        `;
+                        actionButtons = `<div style="display:flex; gap:5px; justify-content:center;"><button class="action-btn btn-save" onclick="saveStatus(${item.id})">Save</button><button class="action-btn btn-edit" onclick='openEdit(${JSON.stringify(item).replace(/'/g, "&#39;")})'>Edit</button><button class="action-btn btn-delete" onclick="deleteItem(${item.id})">Hapus</button></div>`;
                     } else if (item.is_current_user_pic) {
-                        actionButtons = `
-                            <div style="display:flex; gap:5px; justify-content:center;">
-                                <button class="action-btn btn-save" onclick="saveStatus(${item.id})">Save</button>
-                            </div>
-                        `;
+                        actionButtons = `<div style="display:flex; gap:5px; justify-content:center;"><button class="action-btn btn-save" onclick="saveStatus(${item.id})">Save</button></div>`;
                     }
-
-                    let companyCol = ``;
-                    let auditeeCol = ``;
+                    let companyCol = ``, auditeeCol = ``;
                     if (item.auditee && item.auditee.startsWith("IFG - ")) {
                         const unit = item.auditee.replace("IFG - ", "");
                         companyCol = `<td class="col-company" style="text-align:center;"><span class="badge badge-company">IFG</span></td>`;
@@ -2125,7 +1494,6 @@
                         companyCol = `<td class="col-company" style="text-align:center;"><span class="badge badge-company">${item.auditee || '-'}</span></td>`;
                         auditeeCol = `<td class="col-auditee"></td>`;
                     }
-
                     tr.innerHTML = `
                         <td>${index + 1}</td>
                         ${companyCol}
@@ -2133,37 +1501,77 @@
                         <td class="col-pic" style="vertical-align:top; text-align: left;">${picAud}</td>
                         <td class="col-pic" style="vertical-align:top; text-align: left;">${picSkai}</td>
                         <td class="col-pic" style="vertical-align:top; text-align: left;">${picRem}</td>
-                        <td class="col-pic" style="text-align:center;">
-                            <strong>${item.creator_name}</strong><br>
-                            <small style="color:#777;">${item.created_at}</small>
-                        </td>
+                        <td class="col-pic" style="text-align:center;"><strong>${item.creator_name}</strong><br><small style="color:#777;">${item.created_at}</small></td>
                         <td>${item.subject || '-'}</td>
                         <td>${item.deadline}</td>
                         <td><span class="status-badge" style="${statusStyle}">${item.status}</span></td>
                         <td style="font-weight:bold; color:${item.is_overdue ? '#D32F2F' : '#2E7D32'}">${item.sisa_hari}</td>
-                        
-                        ${reminderLevelHtml}
-                        
+                        ${!isActive ? reminderLevelHtml : ''}
                         <td class="col-temuan" style="text-align:center;">${temuanBtn}</td>
-                        <td class="col-checkbox" style="text-align:center;">
-                            <input type="checkbox" id="remind-check-${item.id}" ${item.is_reminded ? 'checked' : ''} ${(!item.is_owner && !item.is_current_user_pic) ? 'disabled' : ''} style="transform: scale(1.5);">
-                        </td>
-                        <td class="col-checkbox" style="text-align:center;">
-                            <input type="checkbox" id="respon-check-${item.id}" ${item.is_responded ? 'checked' : ''} ${(!item.is_owner && !item.is_current_user_pic) ? 'disabled' : ''} style="transform: scale(1.5);">
-                        </td>
+                        <td class="col-checkbox" style="text-align:center;"><input type="checkbox" id="remind-check-${item.id}" ${item.is_reminded ? 'checked' : ''} ${(!item.is_owner && !item.is_current_user_pic) ? 'disabled' : ''} style="transform: scale(1.5);"></td>
+                        <td class="col-checkbox" style="text-align:center;"><input type="checkbox" id="respon-check-${item.id}" ${item.is_responded ? 'checked' : ''} ${(!item.is_owner && !item.is_current_user_pic) ? 'disabled' : ''} style="transform: scale(1.5);"></td>
+                        <td style="text-align:center;">${proofBtn}</td>
                         <td>${actionButtons}</td>
                     `;
                     tbody.appendChild(tr);
                 });
             }
-
+            window.openEvidenceModal = (id) => {
+                els.evidenceReminderId.value = id;
+                els.evidenceForm.reset();
+                const now = new Date();
+                const pad = (n) => n.toString().padStart(2, '0');
+                els.evidenceForm.querySelector('[name=date]').value = `${now.getFullYear()}-${pad(now.getMonth()+1)}-${pad(now.getDate())}`;
+                els.evidenceForm.querySelector('[name=time]').value = `${pad(now.getHours())}:${pad(now.getMinutes())}`;
+                loadEvidenceList(id);
+                openModal(els.evidenceModal);
+            };
+            async function loadEvidenceList(id) {
+                els.evidenceTbody.innerHTML = '<tr><td colspan="5">Memuat data...</td></tr>';
+                try {
+                    const res = await fetch(`/api/reminder_evidence/list/${id}`);
+                    const data = await res.json();
+                    els.evidenceTbody.innerHTML = '';
+                    if (data.length === 0) {
+                        els.evidenceTbody.innerHTML = '<tr><td colspan="5">Belum ada bukti diupload.</td></tr>';
+                        return;
+                    }
+                    data.forEach((item, index) => {
+                        const row = document.createElement('tr');
+                        row.innerHTML = `
+                            <td>${index + 1}</td>
+                            <td>${item.date}</td>
+                            <td>${item.time}</td>
+                            <td>
+                                <a href="${item.url}" target="_blank" class="btn-view-proof">Lihat Bukti</a>
+                                <br><small style="color:#777;">by ${item.uploader}</small>
+                            </td>
+                            <td>
+                                <span class="btn-delete-proof" onclick="deleteEvidence(${item.id}, ${id})">&times;</span>
+                            </td>
+                        `;
+                        els.evidenceTbody.appendChild(row);
+                    });
+                } catch (e) {
+                    els.evidenceTbody.innerHTML = '<tr><td colspan="5">Gagal memuat data.</td></tr>';
+                }
+            }
+            window.deleteEvidence = (evId, remId) => {
+                pendingEvidenceDeleteId = evId;
+                pendingEvidenceReminderId = remId;
+                openModal(document.getElementById('delete-proof-modal'));
+            };
             function renderWarningTable(data) {
                 const warningData = data.filter(item => {
                     const picAuditee = item.pic_auditee || "";
                     return picAuditee.includes(currentUsername) && !item.is_responded;
                 });
-                if (warningData.length === 0) { els.warningSection.style.display = 'none'; return; }
-                els.warningSection.style.display = 'block'; els.warningTbody.innerHTML = '';
+                if (warningData.length === 0) { 
+                    els.warningSection.style.display = 'none'; 
+                    return; 
+                }
+                els.warningSection.style.display = 'block'; 
+                els.warningTbody.innerHTML = '';
                 warningData.forEach((item, index) => {
                     const picSkai = formatUserListHTML(item.pic_skai);
                     const statusObj = getStatusStyle(item.status, item.is_overdue);
@@ -2194,15 +1602,12 @@
                             >
                         </td>
                         <td style="text-align:center;">
-                            <button class="action-btn btn-save" onclick="saveWarningResponse(${item.id})">
-                                Save
-                            </button>
+                            <button class="action-btn btn-save" onclick="saveWarningResponse(${item.id})">Save</button>
                         </td>
                     `;
                     els.warningTbody.appendChild(tr);
                 });
             }
-
             window.openEdit = (item) => {
                 document.getElementById('edit-id').value = item.id;
                 document.getElementById('edit-auditee').value = item.auditee;
@@ -2212,29 +1617,23 @@
                 dispAuditee.style.color = "var(--primary-color)";
                 document.getElementById('edit-subject').value = item.subject;
                 document.getElementById('edit-deadline').value = item.deadline_raw;
-
                 const setPicData = (raw, inputId, displayId) => {
                     const val = raw || ''; 
                     const arr = Array.isArray(val) ? val : val.split(',').filter(x => x);
                     document.getElementById(inputId).value = arr.join(',');
-                    const displayText = arr.length ? `${arr.length} PIC` : '-- Pilih PIC --';
-                    document.getElementById(displayId).textContent = displayText;
+                    document.getElementById(displayId).textContent = arr.length ? `${arr.length} PIC` : '-- Pilih PIC --';
                     return arr;
                 };
                 setPicData(item.pic_skai, 'input-pic-skai-edit', 'selected-pic-text-edit');
                 const picRemArr = setPicData(item.pic_reminder, 'input-pic-reminder-edit', 'selected-pic-reminder-text-edit');
-                
                 let auditeeVal = item.pic_auditee || '';
                 if(Array.isArray(auditeeVal)) {
-                    auditeeVal = auditeeVal.join('\n');
+                    auditeeVal = auditeeVal.join('\n'); 
                 } else if(auditeeVal.includes(',')) {
                     auditeeVal = auditeeVal.split(',').join('\n');
                 }
                 document.getElementById('input-pic-auditee-edit').value = auditeeVal;
-
-                const isPicReminder = picRemArr
-                    .map(s => s.trim())
-                    .includes(currentUsername);
+                const isPicReminder = picRemArr.map(s => s.trim()).includes(currentUsername);
                 const btnEditSkai = document.getElementById('btn-select-pic-edit');
                 if (isPicReminder && !item.is_owner) { 
                     btnEditSkai.disabled = true; 
@@ -2245,107 +1644,156 @@
                 }
                 openModal(els.editModal);
             };
-
             async function handleFormSubmit(e, url, modalId, successMsg) {
                 e.preventDefault();
                 const formData = new FormData(e.target);
                 const data = Object.fromEntries(formData.entries());
                 const splitAndClean = (id) => document.getElementById(id).value.split(',').filter(x => x);
-                
                 if (modalId === 'add-reminder-modal') {
                     data.pic_skai = splitAndClean('input-pic-skai-add'); 
                     data.pic_reminder = splitAndClean('input-pic-reminder-add'); 
-                    data.pic_auditee = document.getElementById('input-pic-auditee-add').value; 
+                    data.pic_auditee = document.getElementById('input-pic-auditee-add').value;
                 } else {
                     data.pic_skai = splitAndClean('input-pic-skai-edit'); 
                     data.pic_reminder = splitAndClean('input-pic-reminder-edit'); 
-                    data.pic_auditee = document.getElementById('input-pic-auditee-edit').value; 
+                    data.pic_auditee = document.getElementById('input-pic-auditee-edit').value;
                 }
-                
-                data.tembusan = ""; 
-                
+                data.tembusan = "";
                 try {
-                    const res = await fetch(url, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data) });
-                    if (res.ok) { closeModal(modalId); if (modalId === 'add-reminder-modal') e.target.reset(); loadReminders(); showMessage(successMsg, "success"); } 
-                    else { const err = await res.json(); showMessage("Gagal menyimpan: " + (err.error || "Error Server"), "error"); }
-                } catch (err) { showMessage("Terjadi kesalahan koneksi.", "error"); }
+                    const res = await fetch(url, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(data) 
+                    });
+                    if (res.ok) { 
+                        closeModal(modalId); 
+                        if (modalId === 'add-reminder-modal') e.target.reset(); 
+                        loadReminders(); 
+                        showMessage(successMsg, "success"); 
+                    } else { 
+                        const err = await res.json(); 
+                        showMessage("Gagal menyimpan: " + (err.error || "Error Server"), "error"); 
+                    }
+                } catch (err) { 
+                    showMessage("Terjadi kesalahan koneksi.", "error"); 
+                }
             }
-
             window.saveStatus = async (id) => {
-                const payload = { is_responded: document.getElementById(`respon-check-${id}`).checked, is_reminded: !document.getElementById(`remind-check-${id}`).disabled ? document.getElementById(`remind-check-${id}`).checked : undefined };
-                try { const res = await fetch(`/api/update_reminder_response/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload) }); if (res.ok) showMessage("Status tersimpan", "success"); else showMessage("Gagal menyimpan status", "error"); } catch (e) { showMessage("Error koneksi", "error"); }
+                const payload = { 
+                    is_responded: document.getElementById(`respon-check-${id}`).checked, 
+                    is_reminded: !document.getElementById(`remind-check-${id}`).disabled 
+                        ? document.getElementById(`remind-check-${id}`).checked 
+                        : undefined 
+                };
+                try { 
+                    const res = await fetch(`/api/update_reminder_response/${id}`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify(payload) 
+                    }); 
+                    if (res.ok) showMessage("Status tersimpan", "success"); 
+                    else showMessage("Gagal menyimpan status", "error"); 
+                } catch (e) { 
+                    showMessage("Error koneksi", "error"); 
+                }
             };
-
             window.deleteItem = (id) => {
                 showConfirm("Apakah Anda yakin ingin menghapus reminder ini?", async (yes) => {
                     if (yes) {
                         try {
-                            const res = await fetch(`/api/delete_reminder/${id}`, {
-                                method: 'DELETE',
-                                headers: {
-                                    'Content-Type': 'application/json'
-                                }
+                            const res = await fetch(`/api/delete_reminder/${id}`, { 
+                                method: 'DELETE', 
+                                headers: { 'Content-Type': 'application/json' } 
                             });
-
-                            if (res.ok) {
-                                loadReminders();
-                                showMessage("Data dihapus.", "success");
-                            } else {
-                                let pesanError = "Gagal menghapus data.";
-                                try {
-                                    const errData = await res.json();
-                                    if (errData.error) {
-                                        pesanError = errData.error;
-                                    } else if (errData.message) {
-                                        pesanError = errData.message;
-                                    }
-                                } catch (parseErr) {
-                                    console.error("Gagal parsing error response", parseErr);
-                                }
-                                
-                                showMessage(pesanError, "error");
+                            if (res.ok) { 
+                                loadReminders(); 
+                                showMessage("Data dihapus.", "success"); 
+                            } else { 
+                                let pesanError = "Gagal menghapus data."; 
+                                try { 
+                                    const errData = await res.json(); 
+                                    if (errData.error) pesanError = errData.error; 
+                                    else if (errData.message) pesanError = errData.message; 
+                                } catch (parseErr) {} 
+                                showMessage(pesanError, "error"); 
                             }
-                        } catch (e) {
-                            console.error(e);
-                            showMessage("Error koneksi: " + e.message, "error");
+                        } catch (e) { 
+                            showMessage("Error koneksi: " + e.message, "error"); 
                         }
                     }
                 });
             };
-
             window.saveWarningResponse = async (id) => {
                 const checkbox = document.getElementById(`warn-check-${id}`);
-                if (!checkbox.checked) { await executeSaveWarning(id, false); return; }
+                if (!checkbox.checked) { 
+                    await executeSaveWarning(id, false); 
+                    return; 
+                }
                 pendingWarningId = id;
                 openModal(els.warningModal);
             };
-            async function executeSaveWarning(id, isChecked) { try { const res = await fetch(`/api/update_reminder_response/${id}`, { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ is_responded: isChecked }) }); if (res.ok) { showMessage("Respon berhasil disimpan!", "success"); loadReminders(); } else { showMessage("Gagal menyimpan.", "error"); const cb = document.getElementById(`warn-check-${id}`); if (cb) cb.checked = !isChecked; } } catch (e) { showMessage("Terjadi kesalahan koneksi.", "error"); } }
-
-            function openAuditeeModal(inputId, displayId) { targetAuditeeInputId = inputId; targetAuditeeDisplayId = displayId; els.selectCompany.value = ""; els.selectAuditeeUnit.value = ""; els.auditeeWrapper.classList.add('hidden'); openModal(els.auditeeModal); }
-            function handleSaveAuditee() { const comp = els.selectCompany.value; if (!comp) return alert("Pilih Perusahaan"); let res = comp; if (comp === 'IFG') { if (!els.selectAuditeeUnit.value) return alert("Pilih Divisi"); res = `IFG - ${els.selectAuditeeUnit.value}`; } if (targetAuditeeInputId && targetAuditeeDisplayId) { document.getElementById(targetAuditeeInputId).value = res; const disp = document.getElementById(targetAuditeeDisplayId); disp.textContent = res; disp.style.fontWeight = "bold"; disp.style.color = "var(--primary-color)"; } closeModal('auditee-selection-modal'); }
-            
+            async function executeSaveWarning(id, isChecked) { 
+                try { 
+                    const res = await fetch(`/api/update_reminder_response/${id}`, { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ is_responded: isChecked }) 
+                    }); 
+                    if (res.ok) { 
+                        showMessage("Respon berhasil disimpan!", "success"); 
+                        loadReminders(); 
+                    } else { 
+                        showMessage("Gagal menyimpan.", "error"); 
+                        const cb = document.getElementById(`warn-check-${id}`); 
+                        if (cb) cb.checked = !isChecked; 
+                    } 
+                } catch (e) { 
+                    showMessage("Terjadi kesalahan koneksi.", "error"); 
+                } 
+            }
+            function openAuditeeModal(inputId, displayId) { 
+                targetAuditeeInputId = inputId; 
+                targetAuditeeDisplayId = displayId; 
+                els.selectCompany.value = ""; 
+                els.selectAuditeeUnit.value = ""; 
+                els.auditeeWrapper.classList.add('hidden'); 
+                openModal(els.auditeeModal); 
+            }
+            function handleSaveAuditee() { 
+                const comp = els.selectCompany.value; 
+                if (!comp) return alert("Pilih Perusahaan"); 
+                let res = comp; 
+                if (comp === 'IFG') { 
+                    if (!els.selectAuditeeUnit.value) return alert("Pilih Divisi"); 
+                    res = `IFG - ${els.selectAuditeeUnit.value}`; 
+                } 
+                if (targetAuditeeInputId && targetAuditeeDisplayId) { 
+                    document.getElementById(targetAuditeeInputId).value = res; 
+                    const disp = document.getElementById(targetAuditeeDisplayId); 
+                    disp.textContent = res; 
+                    disp.style.fontWeight = "bold"; 
+                    disp.style.color = "var(--primary-color)"; 
+                } 
+                closeModal('auditee-selection-modal'); 
+            }
             window.openUserModal = async (inputId, displayId) => { 
                 targetInputId = inputId; 
                 targetDisplayId = displayId; 
                 els.userSearchInput.value = ""; 
-                openModal(els.userModal); 
-                
+                openModal(els.userModal);
                 if (!allUsersCache.length) { 
                     const r = await fetch('/api/get_all_users'); 
                     allUsersCache = await r.json(); 
-                } 
-                
-                allUsersCache.sort((a, b) => {
-                    const labelCompare = (a.label || "").localeCompare(b.label || "");
-                    if (labelCompare !== 0) return labelCompare;
-                    return (a.fullname || "").localeCompare(b.fullname || "");
+                }
+                allUsersCache.sort((a, b) => { 
+                    const labelCompare = (a.label || "").localeCompare(b.label || ""); 
+                    if (labelCompare !== 0) return labelCompare; 
+                    return (a.fullname || "").localeCompare(b.fullname || ""); 
                 });
-
                 const curVal = document.getElementById(inputId).value; 
-                const cur = curVal ? curVal.split(',').map(s => s.trim()) : []; 
+                const cur = curVal ? curVal.split(',').map(s => s.trim()) : [];
                 const tbody = document.getElementById('user-selection-tbody'); 
-                tbody.innerHTML = ''; 
-                
+                tbody.innerHTML = '';
                 allUsersCache.forEach(u => { 
                     const tr = document.createElement('tr'); 
                     tr.innerHTML = `<td><input type="checkbox" class="user-select-cb" value="${u.fullname}" ${cur.includes(u.fullname) ? 'checked' : ''}></td><td>${u.fullname}</td><td><span class="badge" style="background:#eee;">${u.label}</span></td>`; 
@@ -2355,60 +1803,124 @@
                     tbody.appendChild(tr); 
                 }); 
             };
-            
-            function handleSaveUserSelection() { const sel = Array.from(document.querySelectorAll('.user-select-cb:checked')).map(c => c.value); document.getElementById(targetInputId).value = sel.join(','); document.getElementById(targetDisplayId).textContent = sel.length ? `${sel.length} PIC` : '-- Pilih PIC --'; closeModal('user-selection-modal'); }
-            function filterTable(term, tbodySelector) { term = term.toLowerCase(); document.querySelectorAll(`${tbodySelector} tr`).forEach(row => { const text = row.textContent.toLowerCase(); row.style.display = text.includes(term) ? '' : 'none'; }); }
-
-            window.openLinkModal = async (id) => { currentLinkReminderId = id; openModal(els.linkModal); els.linkSession.innerHTML = '<option>Memuat...</option>'; els.linkCol.disabled = true; els.linkVal.disabled = true; try { const r = await fetch('/api/get_temuan_sessions'); const s = await r.json(); els.linkSession.innerHTML = '<option value="" disabled selected>-- Pilih Sesi --</option>'; s.forEach(x => els.linkSession.add(new Option(`${x.jenis_audit} - ${x.nama_sesi}`, x.id))); } catch (e) { els.linkSession.innerHTML = '<option>Gagal memuat</option>'; } };
-            async function handleLinkSessionChange(e) { els.linkCol.innerHTML = '<option>Memuat...</option>'; const r = await fetch(`/api/get_temuan_data/${e.target.value}`); currentSessionData = await r.json(); const FILTERABLE_COLUMNS = [{ key: 'no_aoi', label: 'No AOI' }, { key: 'jenis_aoi', label: 'Jenis AOI' }, { key: 'klasifikasi', label: 'Klasifikasi' }, { key: 'no_lha', label: 'No LHA' }, { key: 'nama_penugasan', label: 'Nama Penugasan' }, { key: 'aoi', label: 'Area of Improvement' }, { key: 'rekomendasi', label: 'Rekomendasi' }, { key: 'rencana_tl', label: 'Rencana TL' }, { key: 'auditee', label: 'Auditee' }, { key: 'pic_auditee', label: 'PIC Auditee' }, { key: 'target_penyelesaian', label: 'Target Penyelesaian' }, { key: 'signifikansi', label: 'Signifikansi' }, { key: 'control', label: 'Control' }]; els.linkCol.innerHTML = '<option value="" disabled selected>-- Pilih Kolom --</option>'; FILTERABLE_COLUMNS.forEach(c => els.linkCol.add(new Option(c.label, c.key))); els.linkCol.disabled = false; }
-            function handleLinkColumnChange(e) { const k = e.target.value; const v = [...new Set(currentSessionData.map(r => r[k] ? r[k].toString().trim() : ""))].sort(); els.linkVal.innerHTML = '<option value="" disabled selected>-- Pilih Data --</option>'; v.forEach(x => { if (x) els.linkVal.add(new Option(x, x)); }); els.linkVal.disabled = false; }
+            function handleSaveUserSelection() { 
+                const sel = Array.from(document.querySelectorAll('.user-select-cb:checked')).map(c => c.value); 
+                document.getElementById(targetInputId).value = sel.join(','); 
+                document.getElementById(targetDisplayId).textContent = sel.length ? `${sel.length} PIC` : '-- Pilih PIC --'; 
+                closeModal('user-selection-modal'); 
+            }
+            function filterTable(term, tbodySelector) { 
+                term = term.toLowerCase(); 
+                document.querySelectorAll(`${tbodySelector} tr`).forEach(row => { 
+                    const text = row.textContent.toLowerCase(); 
+                    row.style.display = text.includes(term) ? '' : 'none'; 
+                }); 
+            }
+            window.openLinkModal = async (id) => { 
+                currentLinkReminderId = id; 
+                openModal(els.linkModal); 
+                els.linkSession.innerHTML = '<option>Memuat...</option>'; 
+                els.linkCol.disabled = true; 
+                els.linkVal.disabled = true; 
+                try { 
+                    const r = await fetch('/api/get_temuan_sessions'); 
+                    const s = await r.json(); 
+                    els.linkSession.innerHTML = '<option value="" disabled selected>-- Pilih Sesi --</option>'; 
+                    s.forEach(x => els.linkSession.add(new Option(`${x.jenis_audit} - ${x.nama_sesi}`, x.id))); 
+                } catch (e) { 
+                    els.linkSession.innerHTML = '<option>Gagal memuat</option>'; 
+                } 
+            };
+            async function handleLinkSessionChange(e) { 
+                els.linkCol.innerHTML = '<option>Memuat...</option>'; 
+                const r = await fetch(`/api/get_temuan_data/${e.target.value}`); 
+                currentSessionData = await r.json(); 
+                const FILTERABLE_COLUMNS = [
+                    { key: 'no_aoi', label: 'No AOI' }, { key: 'jenis_aoi', label: 'Jenis AOI' }, 
+                    { key: 'klasifikasi', label: 'Klasifikasi' }, { key: 'no_lha', label: 'No LHA' }, 
+                    { key: 'nama_penugasan', label: 'Nama Penugasan' }, { key: 'aoi', label: 'Area of Improvement' }, 
+                    { key: 'rekomendasi', label: 'Rekomendasi' }, { key: 'rencana_tl', label: 'Rencana TL' }, 
+                    { key: 'auditee', label: 'Auditee' }, { key: 'pic_auditee', label: 'PIC Auditee' }, 
+                    { key: 'target_penyelesaian', label: 'Target Penyelesaian' }, { key: 'signifikansi', label: 'Signifikansi' }, 
+                    { key: 'control', label: 'Control' }
+                ]; 
+                els.linkCol.innerHTML = '<option value="" disabled selected>-- Pilih Kolom --</option>'; 
+                FILTERABLE_COLUMNS.forEach(c => els.linkCol.add(new Option(c.label, c.key))); 
+                els.linkCol.disabled = false; 
+            }
+            function handleLinkColumnChange(e) { 
+                const k = e.target.value; 
+                const v = [...new Set(currentSessionData.map(r => r[k] ? r[k].toString().trim() : ""))].sort(); 
+                els.linkVal.innerHTML = '<option value="" disabled selected>-- Pilih Data --</option>'; 
+                v.forEach(x => { 
+                    if (x) els.linkVal.add(new Option(x, x)); 
+                }); 
+                els.linkVal.disabled = false; 
+            }
             async function handleSaveLink() {
-                const col = els.linkCol.value; const val = els.linkVal.value;
+                const col = els.linkCol.value; 
+                const val = els.linkVal.value;
                 const filteredRows = currentSessionData.filter(r => r[col] && r[col].toString().trim() === val);
                 const ids = filteredRows.map(r => r.id);
                 if (!ids.length) return alert("Data tidak ditemukan atau kriteria filter salah.");
                 try {
-                    const res = await fetch('/api/save_reminder_temuan_link', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ reminder_id: currentLinkReminderId, temuan_ids: ids }) });
-                    if (res.ok) {
-                        window.location.href = `/assign_pic_page/${currentLinkReminderId}`;
-                    } else { showMessage("Gagal menyimpan data.", "error"); }
-                } catch (e) { showMessage("Terjadi kesalahan koneksi.", "error"); }
-            }
-
-            function getStatusStyle(status, isOverdue) { const s = (status || '').toUpperCase(); if (s.includes('HARI INI')) return { bg: 'var(--status-today-bg)', text: 'var(--status-today-text)' }; if (isOverdue) return { bg: 'var(--status-overdue-bg)', text: 'var(--status-overdue-text)' }; return { bg: 'var(--status-ok-bg)', text: 'var(--status-ok-text)' }; }
-            function getCompanyColumns(rawAuditee) { rawAuditee = rawAuditee || ""; if (rawAuditee.startsWith("IFG - ")) { const unit = rawAuditee.replace("IFG - ", ""); return { col1: `<td><span class="badge badge-company">IFG</span></td>`, col2: `<td>${unit}</td>` }; } else { return { col1: `<td colspan="2" style="text-align:center;"><span class="badge badge-company">${rawAuditee}</span></td>`, col2: `` }; } }
-            function getTemuanButton(item, canInput) {
-                const count = item.visible_temuan_count || 0;
-                
-                if (count > 0) {
-                    return `<a href="/view_linked_temuan/${item.id}" target="_blank" class="btn-view-temuan">View <span class="badge-count">${count}</span></a>`;
+                    const res = await fetch('/api/save_reminder_temuan_link', { 
+                        method: 'POST', 
+                        headers: { 'Content-Type': 'application/json' }, 
+                        body: JSON.stringify({ reminder_id: currentLinkReminderId, temuan_ids: ids }) 
+                    });
+                    if (res.ok) { 
+                        window.location.href = `/assign_pic_page/${currentLinkReminderId}`; 
+                    } else { 
+                        showMessage("Gagal menyimpan data.", "error"); 
+                    }
+                } catch (e) { 
+                    showMessage("Terjadi kesalahan koneksi.", "error"); 
                 }
-                
-                if (canInput) {
-                    return `<button class="btn-input-temuan" onclick="openLinkModal(${item.id})">+ Input Temuan</button>`;
-                }
-                
-                return `<span style="color:#999; font-size:0.8em;">-</span>`;
             }
-            function calculateSLA(deadlineRaw) { const deadline = new Date(deadlineRaw); deadline.setHours(0, 0, 0, 0); const today = new Date(); today.setHours(0, 0, 0, 0); const diffTime = today - deadline; const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); let displaySisa = "", styleSisa = "", isOverdue = false; if (diffDays > 0) { displaySisa = `+${Math.abs(diffDays)} hari`; styleSisa = "color: #D32F2F; font-weight: bold;"; isOverdue = true; } else if (diffDays === 0) { displaySisa = "Hari Ini"; styleSisa = "color: #F57F17; font-weight: bold;"; } else { displaySisa = `${Math.abs(diffDays)} hari`; styleSisa = "color: #2E7D32;"; } return { displaySisa, styleSisa, isOverdue }; }
-            
+            function getStatusStyle(status, isOverdue) { 
+                const s = (status || '').toUpperCase(); 
+                if (s.includes('HARI INI')) return { bg: 'var(--status-today-bg)', text: 'var(--status-today-text)' }; 
+                if (isOverdue) return { bg: 'var(--status-overdue-bg)', text: 'var(--status-overdue-text)' }; 
+                return { bg: 'var(--status-ok-bg)', text: 'var(--status-ok-text)' }; 
+            }
             function formatUserListHTML(data) { 
                 if (!data) return '-';
-                
-                if (typeof data === 'string' && data.includes('\n')) {
-                    const arr = data.split('\n').filter(s => s.trim() !== "");
-                    if (arr.length === 0) return '-';
-                    return `<ul style="padding-left:15px; margin:0;">${arr.map(p => `<li>${p.trim()}</li>`).join('')}</ul>`;
+                if (typeof data === 'string' && data.includes('\n')) { 
+                    const arr = data.split('\n').filter(s => s.trim() !== ""); 
+                    if (arr.length === 0) return '-'; 
+                    return `<ul style="padding-left:15px; margin:0;">${arr.map(p => `<li>${p.trim()}</li>`).join('')}</ul>`; 
                 }
-                
-                const arr = Array.isArray(data) ? data : data.split(',');
-                if (arr.length === 0) return '-';
+                const arr = Array.isArray(data) ? data : data.split(','); 
+                if (arr.length === 0) return '-'; 
                 return `<ul style="padding-left:15px; margin:0;">${arr.map(p => `<li>${p.trim()}</li>`).join('')}</ul>`; 
             }
-            
-            function populateFilterDropdown(data) { const unique = [...new Set(data.map(i => i.auditee))].sort(); els.pastFilter.innerHTML = '<option value="all">Tampilkan Semua Auditee</option>'; unique.forEach(u => els.pastFilter.add(new Option(u, u))); }
-            async function checkDeadlines() { if (sessionStorage.getItem('hasSeenDeadlineModal')) return; try { const r = await fetch('/api/check_deadline_notifications'); if (r.ok) { const n = await r.json(); if (n.length) { document.getElementById('deadline-notif-content').innerHTML = `Reminder: <strong>${n[0].auditee}</strong> - ${n[0].subject}`; openModal(document.getElementById('deadline-notification-modal')); sessionStorage.setItem('hasSeenDeadlineModal', 'true'); } } } catch (e) { /* ignore */ } }
-
+            function populateFilterDropdown(data) { 
+                const unique = [...new Set(data.map(i => i.auditee))].sort(); 
+                els.pastFilter.innerHTML = '<option value="all">Tampilkan Semua Auditee</option>'; 
+                unique.forEach(u => els.pastFilter.add(new Option(u, u))); 
+            }
+            function calculateSLA(deadlineRaw) { 
+                const deadline = new Date(deadlineRaw); 
+                deadline.setHours(0, 0, 0, 0); 
+                const today = new Date(); 
+                today.setHours(0, 0, 0, 0); 
+                const diffTime = today - deadline; 
+                const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24)); 
+                let displaySisa = "", styleSisa = "", isOverdue = false; 
+                if (diffDays > 0) { 
+                    displaySisa = `+${Math.abs(diffDays)} hari`; 
+                    styleSisa = "color: #D32F2F; font-weight: bold;"; 
+                    isOverdue = true; 
+                } else if (diffDays === 0) { 
+                    displaySisa = "Hari Ini"; 
+                    styleSisa = "color: #F57F17; font-weight: bold;"; 
+                } else { 
+                    displaySisa = `${Math.abs(diffDays)} hari`; 
+                    styleSisa = "color: #2E7D32;"; 
+                } 
+                return { displaySisa, styleSisa, isOverdue }; 
+            }
             init();
         });
     </script>
