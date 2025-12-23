@@ -322,6 +322,18 @@ class AmsAuditor(db.Model):
     created_at = db.Column(db.DateTime, default=datetime.datetime.utcnow)
     user = db.relationship('User', backref='ams_auditors')
 
+class AmsReminderEvidence(db.Model):
+    id = db.Column(db.Integer, primary_key=True)
+    reminder_id = db.Column(db.Integer, db.ForeignKey('ams_reminder.id'), nullable=False)
+    user_id = db.Column(db.Integer, db.ForeignKey('user.id'), nullable=False)
+    reminder_date = db.Column(db.Date, nullable=False) 
+    reminder_time = db.Column(db.Time, nullable=False) 
+    filename = db.Column(db.String(255), nullable=False)
+    file_path = db.Column(db.String(500), nullable=False) 
+    uploaded_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    reminder = db.relationship('AmsReminder', backref=db.backref('evidences', cascade="all, delete-orphan"))
+    uploader = db.relationship('User', foreign_keys=[user_id])
+
 @login_manager.user_loader
 def load_user(user_id):
     """Fungsi wajib untuk Flask-Login"""
@@ -1003,6 +1015,109 @@ def _analyze_comparison(file1, file2):
                     "Halaman": f"Halaman {revised_page}"
                 })
     return comparison_results
+
+@app.route('/api/reminder_evidence/upload', methods=['POST'])
+@login_required
+def api_upload_reminder_evidence():
+    if 'file' not in request.files:
+        return jsonify({"error": "Tidak ada file gambar."}), 400
+    
+    file = request.files['file']
+    reminder_id = request.form.get('reminder_id')
+    date_str = request.form.get('date')
+    time_str = request.form.get('time')
+
+    if not all([file, reminder_id, date_str, time_str]):
+        return jsonify({"error": "Data tidak lengkap."}), 400
+
+    reminder = AmsReminder.query.get(reminder_id)
+    if not reminder:
+        return jsonify({"error": "Reminder tidak ditemukan."}), 404
+
+    is_owner = (reminder.user_id == current_user.id)
+    is_pic_reminder = False
+    
+    if reminder.pic_reminder:
+        pic_list = [p.strip() for p in reminder.pic_reminder.split(',') if p.strip()]
+        if current_user.username in pic_list or current_user.fullname in pic_list:
+            is_pic_reminder = True
+
+    if not is_owner and not is_pic_reminder:
+        return jsonify({"error": "Akses ditolak. Hanya Owner atau PIC Reminder yang dapat mengupload bukti."}), 403
+
+    try:
+        rem_date = datetime.datetime.strptime(date_str, '%Y-%m-%d').date()
+        rem_time = datetime.datetime.strptime(time_str, '%H:%M').time()
+
+        user_folder = get_user_root_folder()
+        evidence_folder = os.path.join(user_folder, 'Reminder_Evidence')
+        os.makedirs(evidence_folder, exist_ok=True)
+        
+        filename = secure_filename(f"REM_{reminder_id}_{int(datetime.datetime.now().timestamp())}_{file.filename}")
+        save_path = os.path.join(evidence_folder, filename)
+        file.save(save_path)
+
+        new_evidence = AmsReminderEvidence(
+            reminder_id=reminder.id,
+            user_id=current_user.id,
+            reminder_date=rem_date,
+            reminder_time=rem_time,
+            filename=filename,
+            file_path=save_path
+        )
+        db.session.add(new_evidence)
+        db.session.commit()
+
+        return jsonify({"status": "success", "message": "Bukti berhasil diupload."}), 201
+
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
+
+@app.route('/api/reminder_evidence/list/<int:reminder_id>', methods=['GET'])
+@login_required
+def api_list_reminder_evidence(reminder_id):
+    evidences = AmsReminderEvidence.query.filter_by(reminder_id=reminder_id).order_by(AmsReminderEvidence.reminder_date.desc(), AmsReminderEvidence.reminder_time.desc()).all()
+    
+    data = []
+    for ev in evidences:
+        data.append({
+            "id": ev.id,
+            "date": ev.reminder_date.strftime('%d-%m-%Y'),
+            "time": ev.reminder_time.strftime('%H:%M'),
+            "filename": ev.filename,
+            "url": url_for('api_view_evidence_file', evidence_id=ev.id),
+            "uploader": ev.uploader.fullname
+        })
+    return jsonify(data), 200
+
+@app.route('/api/reminder_evidence/view/<int:evidence_id>')
+@login_required
+def api_view_evidence_file(evidence_id):
+    ev = AmsReminderEvidence.query.get_or_404(evidence_id)
+    return send_file(ev.file_path)
+
+@app.route('/api/reminder_evidence/delete/<int:evidence_id>', methods=['DELETE'])
+@login_required
+def api_delete_reminder_evidence(evidence_id):
+    ev = AmsReminderEvidence.query.get_or_404(evidence_id)
+    
+    is_uploader = (ev.user_id == current_user.id)
+    is_owner = (ev.reminder.user_id == current_user.id)
+    
+    if not is_uploader and not is_owner:
+        return jsonify({"error": "Akses ditolak."}), 403
+
+    try:
+        if os.path.exists(ev.file_path):
+            os.remove(ev.file_path)
+        
+        db.session.delete(ev)
+        db.session.commit()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/settings')
 @login_required
@@ -4725,6 +4840,7 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
 
 
 
