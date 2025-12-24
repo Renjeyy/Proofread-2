@@ -728,7 +728,7 @@
         else if (pageId === 'folder-management') { 
             if(folderLink) folderLink.classList.add('active'); 
         } 
-        else if (['fitur', 'proofreading', 'compare', 'review'].includes(pageId)) { 
+        else if (['fitur', 'proofreading', 'compare', 'review', 'rewording'].includes(pageId)) { 
             if(proofreadLink) proofreadLink.classList.add('active'); 
         }
         else if (pageId === 'log-analysis') {
@@ -737,7 +737,7 @@
     }
 
     function showPage(pageId) {
-        const sectionsToHide = ["hero-section", "dashboard-widgets-section", "features-page-container", "dropdown-section", "folder-management-section", "proofreading", "compare", "review"];
+        const sectionsToHide = ["hero-section", "dashboard-widgets-section", "features-page-container", "dropdown-section", "folder-management-section", "proofreading", "compare", "review", "rewording"];
         sectionsToHide.forEach(id => { const el = document.getElementById(id); if(el) el.classList.add("hidden"); });
         
         const featureSelect = document.getElementById("feature-select");
@@ -761,7 +761,7 @@
                 document.getElementById("features-page-container")?.classList.remove("hidden");
                 if (featureSelect) featureSelect.value = "";
                 break;
-            case 'proofreading': case 'compare': case 'review':
+            case 'proofreading': case 'compare': case 'review': case 'rewording':
                 document.getElementById("features-page-container")?.classList.remove("hidden");
                 document.getElementById("dropdown-section")?.classList.remove("hidden");
                 document.getElementById(pageId)?.classList.remove("hidden");
@@ -810,6 +810,9 @@
         } else if (featureId === 'review') {
             storageKey = 'reviewResults';
             defaultFilename = 'Hasil_Reviu_Lengkap';
+        } else if (featureId === 'rewording') {
+            storageKey = 'rewordingResults';
+            defaultFilename = 'Hasil_Rewording';
         } else {
             document.getElementById('custom-message-title').innerText = "Export Error";
             document.getElementById('custom-message-text').innerText = "Fitur tidak dikenali.";
@@ -851,6 +854,13 @@
             } else if (featureId === 'review') {
                 exportData = jsonData.map(row => ({
                     "Kategori": row["kategori"] || "",
+                    "Masalah": row["masalah"] || "",
+                    "Saran Perbaikan": row["saran"] || "",
+                    "Penjelasan": row["penjelasan"] || "",
+                    "Lokasi": row["lokasi"] || ""
+                }));
+            } else if (featureId === 'rewording') {
+                exportData = jsonData.map(row => ({
                     "Masalah": row["masalah"] || "",
                     "Saran Perbaikan": row["saran"] || "",
                     "Penjelasan": row["penjelasan"] || "",
@@ -1119,6 +1129,14 @@
                     <p>Analisis komprehensif: Proofreading, Rewording, dan Struktur.</p>
                     <button class="feature-btn" onclick="document.getElementById('feature-select').value='review'; showFeature();">Pilih Fitur</button>
                 </div>
+                <div class="feature-card">
+                    <div style="width: 50px; height: 50px; background: #E3F2FD; border-radius: 12px; display: flex; align-items: center; justify-content: center; color: #1976D2; font-size: 28px; margin-bottom: 20px;">
+                        <i class='bx bx-revision'></i>
+                    </div>
+                    <h3>Rewording</h3>
+                    <p>Deteksi kalimat yang berbelit atau kurang profesional, serta dapatkan saran penulisan ulang.</p>
+                    <button class="feature-btn" onclick="document.getElementById('feature-select').value='rewording'; showFeature();">Pilih Fitur</button>
+                </div>
             </section>
         </section>
 
@@ -1132,6 +1150,7 @@
                 <option value="proofreading">Proofreading</option>
                 <option value="compare">Perbandingan Dokumen</option>
                 <option value="review">Reviu Dokumen Lengkap</option>
+                <option value="rewording">Rewording (Kalimat Efektif)</option>
             </select>
         </section>
 
@@ -1210,6 +1229,28 @@
                     </div>
 
                     <div id="review-results-table"></div>
+                </div>
+            </div>
+        </section>
+
+        <section id="rewording" class="feature-section hidden">
+            <div class="feature-card">
+                <h3>Rewording (Kalimat Efektif)</h3>
+                <p>Mendeteksi kalimat yang berbelit-belit atau kurang profesional dan memberikan saran penulisan ulang yang lebih ringkas.</p>
+                <div class="upload-box">
+                    <i class='bx bx-revision' style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
+                    <input type="file" id="rewording-file" accept=".docx, .pdf" style="margin-top:10px;">
+                    <button id="rewording-analyze-btn" class="analyze-btn" style="margin-top:15px;">Mulai Analisis Rewording</button>
+                </div>
+                <div id="rewording-loading" class="loading hidden">
+                    <div class="spinner"></div> Sedang menganalisis struktur kalimat...
+                </div>
+                <div id="rewording-results-container" class="hidden">
+                    <div id="rewording-save-to-folder-bar" class="results-action-bar" style="display: flex; gap: 15px;">
+                        <button id="rewording-save-btn" class="save-btn hidden login-btn" style="width: auto; min-width: 180px; white-space: nowrap; justify-content: center;">Simpan ke Folder</button>
+                        <button id="rewording-view-new-tab-btn" class="view-new-tab-btn hidden login-btn" style="width: auto; min-width: 180px; white-space: nowrap; justify-content: center;">View Full</button>
+                    </div>
+                    <div id="rewording-results-table"></div>
                 </div>
             </div>
         </section>

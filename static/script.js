@@ -18,7 +18,7 @@ const folderSelectDropdown = document.getElementById("folder-select-dropdown");
 const folderHistoryDetail = document.getElementById("folder-history-detail");
 
 function sortReviewData(data) {
-    const priority = { 'Proofreading': 1, 'Koherensi': 2, 'Struktur': 3 };
+    const priority = { 'Proofreading': 1, 'Rewording': 2, 'Koherensi': 3, 'Struktur': 4 }; 
     return data.sort((a, b) => {
         const pa = priority[a.kategori] || 99;
         const pb = priority[b.kategori] || 99;
@@ -339,7 +339,6 @@ function createTable(data, headers, existingComments = [], actions = {}) {
                 tdStyle += 'text-align: center;'; 
             }
 
-            // --- KONTEN CELL ---
             if ((header === "Kalimat Revisi") && Array.isArray(cellData)) {
                 cellContent = cellData.map(part => part.changed ? 
                     `<span class="diff-changed" style="background-color: #ffeef0; color: #b71c1c; font-weight: bold;">${part.text}</span>` : part.text
@@ -347,10 +346,10 @@ function createTable(data, headers, existingComments = [], actions = {}) {
             }
             else if (header === "kategori") {
                 let badgeColor = '#9E9E9E';
-                if(cellData === 'Proofreading') badgeColor = '#4CAF50';
-                if(cellData === 'Koherensi') badgeColor = '#FF9800';
-                if(cellData === 'Struktur') badgeColor = '#2196F3';
-                // Gunakan display inline-block agar vertical align berfungsi baik
+                if(cellData === 'Proofreading') badgeColor = '#4CAF50'; 
+                if(cellData === 'Koherensi') badgeColor = '#FF9800';    
+                if(cellData === 'Struktur') badgeColor = '#2196F3';     
+                if(cellData === 'Rewording') badgeColor = '#9C27B0';    
                 cellContent = `<span style="background-color:${badgeColor}; color:white; padding:6px 12px; border-radius:12px; font-size:0.85em; display:inline-block;">${cellData}</span>`;
             }
             else if (header === "apakah_ganti") {
@@ -436,6 +435,11 @@ function openResultsInNewTab(featureId) {
         if(data) data = sortReviewData(data);
         headers = ["kategori", "masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
         title = "Hasil Reviu Dokumen Lengkap";
+    }
+    else if (featureId === 'rewording') {
+        data = JSON.parse(sessionStorage.getItem('rewordingResults'));
+        headers = ["masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
+        title = "Hasil Analisis Rewording (Kalimat Efektif)";
     }
 
     if (!data || data.length === 0) {
@@ -1517,7 +1521,12 @@ function checkSessionStorage(pageId) {
             "Kalimat Menyimpang (Dokumen yang dibanding)", 
             "Alasan"
         ];
-    
+    } else if (pageId === 'rewording') {
+        storageKey = 'rewordingResults';
+        tableDiv = document.getElementById("rewording-results-table");
+        containerDiv = document.getElementById("rewording-results-container");
+        headers = ["masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
+
     } else if (pageId === 'review') {
         storageKey = 'reviewResults';
         tableDiv = document.getElementById("review-results-table");
@@ -1624,6 +1633,14 @@ document.addEventListener("DOMContentLoaded", () => {
     const shareModalError = document.getElementById("share-modal-error");
     const createFolderBtn = document.getElementById("create-folder-btn");
 
+    const rewordingFileInput = document.getElementById("rewording-file");
+    const rewordingAnalyzeBtn = document.getElementById("rewording-analyze-btn");
+    const rewordingLoading = document.getElementById("rewording-loading");
+    const rewordingResultsContainer = document.getElementById("rewording-results-container");
+    const rewordingResultsTableDiv = document.getElementById("rewording-results-table");
+    const rewordingSaveBtn = document.getElementById("rewording-save-btn");
+    const rewordingViewBtn = document.getElementById("rewording-view-new-tab-btn");
+
     if (proofreadViewBtn) {
         proofreadViewBtn.addEventListener("click", () => openResultsInNewTab('proofreading'));
     }
@@ -1632,6 +1649,9 @@ document.addEventListener("DOMContentLoaded", () => {
     }
     if (reviewViewBtn) {
         reviewViewBtn.addEventListener("click", () => openResultsInNewTab('review'));
+    }
+    if (rewordingViewBtn) {
+        rewordingViewBtn.addEventListener("click", () => openResultsInNewTab('rewording'));
     }
 
     document.body.addEventListener('click', function(event) {
@@ -1923,6 +1943,7 @@ document.addEventListener("DOMContentLoaded", () => {
     setupSaveButton("proofread-save-btn", "proofreading", "proofread-file");
     setupSaveButton("compare-save-btn", "compare", "compare-file1", "compare-file2");
     setupSaveButton("review-save-btn", "review", "review-file");
+    setupSaveButton("rewording-save-btn", "rewording", "rewording-file");
 
 
     if (proofreadAnalyzeBtn) {
@@ -2109,6 +2130,71 @@ document.addEventListener("DOMContentLoaded", () => {
             }
         });
     }
+    if (rewordingAnalyzeBtn) {
+        rewordingAnalyzeBtn.addEventListener("click", async () => {
+            const file = rewordingFileInput.files[0];
+            if (!file) { showError("Silakan pilih file terlebih dahulu."); return; }
+            
+            clearError();
+            rewordingLoading.classList.remove("hidden");
+            rewordingAnalyzeBtn.disabled = true;
+            rewordingResultsContainer.classList.add("hidden");
+            
+            // Bersihkan session storage lama
+            sessionStorage.removeItem('rewordingResults');
+            sessionStorage.removeItem('rewordingFilename');
+
+            if(rewordingSaveBtn) rewordingSaveBtn.classList.add("hidden");
+            if(rewordingViewBtn) rewordingViewBtn.classList.add("hidden");
+
+            // Log start task (Opsional, jika ingin dilacak di dashboard)
+            let logId = await logAnalysisStart(file.name, 'rewording');
+
+            const formData = new FormData();
+            formData.append("file", file);
+
+            try {
+                const response = await fetch("/api/rewording/analyze", { method: "POST", body: formData });
+                if (!response.ok) {
+                    let errMessage = "Server Error";
+                    try { const err = await response.json(); errMessage = err.error; } 
+                    catch(e) { errMessage = `Gagal memproses (${response.status}).`; }
+                    throw new Error(errMessage);
+                }
+                const data = await response.json();
+
+                if (data.length === 0) {
+                    rewordingResultsTableDiv.innerHTML = "<p>Dokumen sudah efektif. Tidak ada saran rewording.</p>";
+                } else {
+                    // Header yang akan ditampilkan
+                    const headers = ["masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
+                    rewordingResultsTableDiv.innerHTML = createTable(data, headers, [], {});
+                    
+                    // Simpan ke session storage
+                    sessionStorage.setItem('rewordingResults', JSON.stringify(data));
+                    sessionStorage.setItem('rewordingFilename', file.name);
+                    
+                    currentAnalysisResults = data;
+                    currentAnalysisFeature = 'rewording';
+                    currentAnalysisFilename = file.name;
+                    
+                    if(rewordingSaveBtn) rewordingSaveBtn.classList.remove("hidden");
+                    if(rewordingViewBtn) rewordingViewBtn.classList.remove("hidden");
+                }
+                rewordingResultsContainer.classList.remove("hidden");
+                
+                await logAnalysisEnd(logId, 'done');
+
+            } catch (error) {
+                console.error("Error Rewording:", error);
+                showError("Gagal: " + error.message);
+                await logAnalysisEnd(logId, 'error');
+            } finally {
+                rewordingLoading.classList.add("hidden");
+                rewordingAnalyzeBtn.disabled = false;
+            }
+        });
+    }
 
 });
 
@@ -2252,5 +2338,4 @@ async function saveRowState(rowId, event) {
             saveButton.style.backgroundColor = ''; 
         }, 1500); 
     }
-
 }
