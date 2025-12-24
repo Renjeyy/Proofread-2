@@ -454,10 +454,20 @@ def _extract_text_with_pages(file_bytes, file_extension):
             pdf_document.close()
         except Exception as e:
             raise ValueError(f"Gagal membaca file PDF: {e}")
+            
     elif file_extension == 'docx':
         try:
             doc = docx.Document(io.BytesIO(file_bytes))
-            full_text = "\n".join([para.text for para in doc.paragraphs])
+            full_text = ""
+            for para in doc.paragraphs:
+                para_text = ""
+                for run in para.runs:
+                    if run.italic:
+                        para_text += f"<i>{run.text}</i>"
+                    else:
+                        para_text += run.text
+                full_text += para_text + "\n"
+            
             pages_content.append({"halaman": 1, "teks": full_text})
         except Exception as e:
             raise ValueError(f"Gagal membaca file DOCX: {e}")
@@ -793,25 +803,34 @@ def review_document_comprehensive(text_to_check):
         return []
 
     prompt = f"""
-    Anda adalah Editor Kepala dan Auditor Senior. Tugas Anda adalah melakukan "Reviu Dokumen Lengkap" pada teks berikut.
-    Lakukan 3 jenis analisis sekaligus secara mendalam:
+    Anda adalah Editor Kepala dan Auditor Senior. Tugas Anda adalah melakukan "Reviu Dokumen Lengkap".
+    
+    **PENTING - TENTANG FORMAT INPUT:**
+    Teks input mengandung tag HTML `<i>...</i>` yang menandakan kata tersebut SUDAH dimiringkan (Italic) di dokumen asli.
+    Contoh: "Melakukan <i>vendor management</i> secara berkala."
+    
+    **LAKUKAN 4 JENIS ANALISIS TERPISAH (JANGAN DIGABUNG):**
+    1. **Proofreading:** - Cari kesalahan ejaan, typo, dan PUEBI.
+       - Cek kata bahasa asing. Jika kata asing tersebut SUDAH ada dalam tag `<i>`, BERARTI SUDAH BENAR. JANGAN dilaporkan.
+       - Hanya laporkan kata asing yang BELUM ada tag `<i>`-nya.
+    2. **Koherensi (Alur):** Identifikasi kalimat yang tidak nyambung dengan topik utama paragraf.
+    3. **Struktur (Restrukturisasi):** Identifikasi paragraf yang salah tempat.
+    4. **Rewording (Kalimat Efektif):** Identifikasi kalimat yang berbelit-belit, kurang profesional, atau ambigu. Berikan saran yang lebih ringkas.
 
-    1. **Proofreading (Typo & PUEBI):** Cari kesalahan ejaan, tanda baca, dan kata tidak baku sesuai KBBI. Kalau ada yang bahasa inggris, italic aja, jangan diganti ke bahasa Indonesia, nomor surat gausah dicek, kalau sudah dalam bahasa indonesia, gausah ditranslate ke bahasa inggris
-    2. **Koherensi (Rewording):** Identifikasi kalimat yang tidak nyambung dengan topik utama paragraf atau sulit dipahami.
-    3. **Struktur (Restrukturisasi):** Identifikasi paragraf yang salah tempat atau tidak logis urutannya.
+    **INSTRUKSI FORMAT OUTPUT:**
+    1. **JANGAN MENGGABUNGKAN (Grouping)** kesalahan. Pisahkan setiap temuan menjadi baris/objek sendiri.
+    2. **FORMAT SARAN ITALIC:** Jangan gunakan tanda bintang (*). Gunakan tag HTML `<i>` agar langsung terlihat miring.
+       - SALAH: *vendor management*
+       - BENAR: <i>vendor management</i>
+    3. **KATEGORI:** Wajib menggunakan salah satu dari string ini: "Proofreading", "Koherensi", "Struktur", atau "Rewording".
 
     Teks untuk dianalisis:
     ---
     {text_to_check}
     ---
 
-    **FORMAT OUTPUT:**
-    Berikan jawaban HANYA dalam format JSON Array murni. Setiap objek harus memiliki kunci berikut (pastikan nama kunci persis sama):
-    - "kategori": Isi dengan salah satu: "Proofreading", "Koherensi", atau "Struktur".
-    - "masalah": Teks asli yang bermasalah (kata/kalimat/paragraf).
-    - "saran": Perbaikan yang disarankan (kata baku/kalimat revisi/lokasi baru).
-    - "penjelasan": Alasan singkat kenapa ini salah atau saran perbaikan.
-    - "lokasi": Konteks lokasi (misal: "Paragraf 1", "Kalimat ke-2").
+    **FORMAT JSON RESPONSE:**
+    Berikan JSON Array murni berisi objek dengan kunci persis: "kategori", "masalah", "saran", "penjelasan", "lokasi".
     """
     try:
         track_gemini_usage()
@@ -820,18 +839,25 @@ def review_document_comprehensive(text_to_check):
             contents=prompt
         )
         raw_response = response.text.strip()
-        cleaned_text = re.sub(r'^```json\s*', '', raw_response)
-        cleaned_text = re.sub(r'^```\s*', '', cleaned_text)
-        cleaned_text = re.sub(r'\s*```$', '', cleaned_text)
+
+        start_idx = raw_response.find('[')
+        end_idx = raw_response.rfind(']')
+
+        if start_idx != -1 and end_idx != -1:
+            cleaned_text = raw_response[start_idx:end_idx+1]
+        else:
+            cleaned_text = raw_response 
+
         results = json.loads(cleaned_text)
-        priority_map = {'Proofreading': 1, 'Koherensi': 2, 'Struktur': 3}
+
+        priority_map = {'Proofreading': 1, 'Rewording': 2, 'Koherensi': 3, 'Struktur': 4}
         results.sort(key=lambda x: priority_map.get(x.get('kategori'), 99))
         
         return results
 
     except Exception as e:
         print(f"Error Reviu Dokumen: {e}")
-        return [{"kategori": "Error", "masalah": "Gagal analisis", "saran": "-", "penjelasan": str(e), "lokasi": "-"}]
+        return [{"kategori": "Error", "masalah": "Gagal analisis", "saran": "-", "penjelasan": f"Sistem: {str(e)}", "lokasi": "-"}]
 
 def generate_revised_docx(file_bytes, errors):
     doc = docx.Document(io.BytesIO(file_bytes))
@@ -849,6 +875,66 @@ def generate_revised_docx(file_bytes, errors):
     output_buffer = io.BytesIO()
     doc.save(output_buffer)
     return output_buffer.getvalue()
+
+def analyze_rewording_only(text_to_check):
+    if not text_to_check or text_to_check.isspace():
+        return []
+
+    prompt = f"""
+    Anda adalah Editor Bahasa Profesional. Tugas Anda adalah melakukan "Rewording" (Penulisan Ulang) pada teks berikut.
+    
+    Fokus Analisis:
+    1. Identifikasi kalimat yang berbelit-belit, boros kata, ambigu, atau strukturnya lemah.
+    2. Identifikasi kalimat yang terdengar kurang profesional atau terlalu informal untuk dokumen audit.
+    3. Berikan saran penulisan ulang (rewording) yang lebih **Ringkas, Padat, Jelas, dan Profesional** (Formal).
+    4. Jika kalimat sudah cukup baik, JANGAN dilaporkan. Hanya laporkan yang perlu perbaikan signifikan.
+
+    Teks input mengandung tag HTML `<i>...</i>` (Italic). Pertahankan tag tersebut dalam output jika kata didalamnya masih relevan.
+
+    Teks:
+    ---
+    {text_to_check}
+    ---
+
+    **INSTRUKSI OUTPUT:**
+    Berikan jawaban HANYA dalam format JSON Array murni. Jangan gunakan Markdown.
+    Setiap objek harus memiliki kunci:
+    - "masalah": Kalimat asli yang kurang efektif.
+    - "saran": Versi rewording (kalimat baru).
+    - "penjelasan": Alasan singkat (misal: "Terlalu berbelit", "Kurang formal", "Ambigu").
+    - "lokasi": Lokasi kalimat (misal: "Paragraf 2").
+
+    Contoh JSON:
+    [
+      {{
+        "masalah": "Berdasarkan hasil daripada pemeriksaan yang telah kami lakukan barusan...",
+        "saran": "Berdasarkan hasil pemeriksaan kami...",
+        "penjelasan": "Pemborosan kata (inefektif).",
+        "lokasi": "Paragraf 1"
+      }}
+    ]
+    """
+    try:
+        track_gemini_usage()
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
+        raw_response = response.text.strip()
+
+        start_idx = raw_response.find('[')
+        end_idx = raw_response.rfind(']')
+
+        if start_idx != -1 and end_idx != -1:
+            cleaned_text = raw_response[start_idx:end_idx+1]
+        else:
+            cleaned_text = raw_response 
+
+        return json.loads(cleaned_text)
+
+    except Exception as e:
+        print(f"Error Rewording: {e}")
+        return [{"masalah": "Gagal analisis", "saran": "-", "penjelasan": str(e), "lokasi": "-"}]
 
 def generate_highlighted_docx(file_bytes, errors):
     doc = docx.Document(io.BytesIO(file_bytes))
@@ -1015,6 +1101,45 @@ def _analyze_comparison(file1, file2):
                     "Halaman": f"Halaman {revised_page}"
                 })
     return comparison_results
+
+@app.route('/api/rewording/analyze', methods=['POST'])
+@login_required 
+def api_rewording_analyze():
+    if 'file' not in request.files:
+        return jsonify({"error": "Tidak ada file yang diunggah"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"error": "Nama file kosong"}), 400
+
+    try:
+        file_bytes = file.read()
+        file.seek(0)
+        file_extension = file.filename.split('.')[-1].lower()
+        
+        # Gunakan ekstraktor yang sudah ada (yang support deteksi italic)
+        pages_content = _extract_text_with_pages(file_bytes, file_extension)
+        full_text = "\n".join([p['teks'] for p in pages_content])
+
+        results = analyze_rewording_only(full_text)
+
+        try:
+            new_log = AnalysisLog(
+                user_id=current_user.id,
+                filename=file.filename,
+                feature_type='rewording',
+                status='done',
+                end_time=datetime.datetime.utcnow()
+            )
+            db.session.add(new_log)
+            db.session.commit()
+        except Exception as e:
+            print(f"Gagal simpan log rewording: {e}")
+
+        return jsonify(results)
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/reminder_evidence/upload', methods=['POST'])
 @login_required
@@ -4840,6 +4965,7 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
 
 
 
