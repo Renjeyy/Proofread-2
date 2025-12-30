@@ -835,7 +835,10 @@ def review_document_comprehensive(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-3-flash-preview', 
+            contents=prompt
+        )
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -4963,6 +4966,7 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
 
 
 
