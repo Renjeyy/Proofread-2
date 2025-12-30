@@ -249,7 +249,7 @@ function createTable(data, headers, existingComments = [], actions = {}) {
 
     let a = 1;
     let head = "<tr>";
-    head += `<th style="width: 40px; vertical-align: middle; text-align: center; padding: 12px; border: 1px solid #e0e0e0;">No.</th>`; 
+    head += `<th style="width: 40px; vertical-align: middle; text-align: center; padding: 12px; border: 1px solid #e0e0e0;">No.</th>`;
 
     let customHeaders = {
         "Kata/Frasa Salah": "Salah",
@@ -264,8 +264,8 @@ function createTable(data, headers, existingComments = [], actions = {}) {
         "saran": "Saran Perbaikan",
         "penjelasan": "Penjelasan / Alasan",
         "lokasi": "Lokasi",
-        "apakah_ganti": "Ganti?", 
-        "pic_proofread": "PIC", 
+        "apakah_ganti": "Ganti?",
+        "pic_proofread": "PIC",
         "finalize": "Finalize",
         "Sub-bab Referensi pada Dokumen asli": "Sub-bab Referensi (Asli)",
         "Sub-bab Asal (Pada dokumen yang dibanding)": "Sub-bab Asal (Pembanding)",
@@ -274,24 +274,21 @@ function createTable(data, headers, existingComments = [], actions = {}) {
     };
 
     headers.forEach(header => {
-        let thStyle = 'vertical-align: middle; text-align: center; padding: 12px; font-weight: bold; border: 1px solid #e0e0e0; background-color: #f8f9fa;'; 
+        let thStyle = 'vertical-align: middle; text-align: center; padding: 12px; font-weight: bold; border: 1px solid #e0e0e0; background-color: #f8f9fa;';
         let headerText = customHeaders[header] || header;
 
         if ([
             "Sub-bab Referensi pada Dokumen asli",
-            "Sub-bab Asal (Pada dokumen yang dibanding)", 
+            "Sub-bab Asal (Pada dokumen yang dibanding)",
             "Kalimat Menyimpang (Dokumen yang dibanding)",
             "penjelasan", "Pada Kalimat", "Kalimat Awal", "Kalimat Revisi"
         ].includes(header)) {
             thStyle += 'min-width: 300px;';
-        }
-        else if (["lokasi", "masalah", "Alasan", "saran"].includes(header)) {
-            thStyle += 'min-width: 500px;'; 
-        }
-        else if (["pic_proofread", "finalize", "apakah_ganti", "Ditemukan di Halaman", "Halaman"].includes(header)) {
+        } else if (["lokasi", "masalah", "Alasan", "saran"].includes(header)) {
+            thStyle += 'min-width: 500px;';
+        } else if (["pic_proofread", "finalize", "apakah_ganti", "Ditemukan di Halaman", "Halaman"].includes(header)) {
             thStyle += 'width: 100px;';
-        }
-        else if (["Kata/Frasa Salah", "Perbaikan Sesuai KBBI", "Kata yang Direvisi", "kategori"].includes(header)) {
+        } else if (["Kata/Frasa Salah", "Perbaikan Sesuai KBBI", "Kata yang Direvisi", "kategori"].includes(header)) {
             thStyle += 'min-width: 150px;';
         }
 
@@ -303,21 +300,21 @@ function createTable(data, headers, existingComments = [], actions = {}) {
     data.forEach((row, index) => {
         const rowId = index + 1;
         const savedAction = actions[rowId] || {};
-        
+
         body += "<tr>";
         body += `<td style="vertical-align: middle; text-align: center; border: 1px solid #e0e0e0;">${a++}</td>`;
-        
+
         headers.forEach(header => {
             let cellData = row[header] || "";
             let cellContent = '';
-            
-            let vAlign = 'top'; 
-            
+
+            let vAlign = 'top';
+
             if ([
                 "Sub-bab Referensi pada Dokumen asli",
                 "Sub-bab Asal (Pada dokumen yang dibanding)",
                 "Kalimat Menyimpang (Dokumen yang dibanding)",
-                "masalah", "saran", "penjelasan", 
+                "masalah", "saran", "penjelasan",
                 "Kata/Frasa Salah",
                 "Perbaikan Sesuai KBBI",
                 "Pada Kalimat",
@@ -328,46 +325,47 @@ function createTable(data, headers, existingComments = [], actions = {}) {
                 "lokasi",
                 "kategori"
             ].includes(header)) {
-                vAlign = 'middle'; 
+                vAlign = 'middle';
             }
 
-            let tdStyle = `vertical-align: ${vAlign}; padding: 12px; border: 1px solid #e0e0e0; line-height: 1.6;`; 
-            
-            if (['penjelasan', 'Alasan', 'Kalimat Menyimpang (Dokumen yang dibanding)', 'Pada Kalimat', 'Kalimat Awal', 'Kalimat Revisi'].includes(header)) {
-                tdStyle += 'text-align: justify;'; 
+            let tdStyle = `vertical-align: ${vAlign}; padding: 12px; border: 1px solid #e0e0e0; line-height: 1.6;`;
+
+            if (['penjelasan', 'Alasan', 'Kalimat Menyimpang (Dokumen yang dibanding)', 'Pada Kalimat', 'Kalimat Awal', 'Kalimat Revisi', 'masalah'].includes(header)) {
+                tdStyle += 'text-align: justify;';
             } else {
-                tdStyle += 'text-align: center;'; 
+                tdStyle += 'text-align: center;';
             }
 
-            if ((header === "Kalimat Revisi") && Array.isArray(cellData)) {
-                cellContent = cellData.map(part => part.changed ? 
+            if (header === "masalah") {
+                if (row['kategori'] === 'Proofreading' && cellData.includes('||')) {
+                    cellContent = cellData.replace(/\|\|(.*?)\|\|/g, '<span class="highlight-error" style="background-color: yellow; font-weight:bold;">$1</span>');
+                } else {
+                    cellContent = cellData;
+                }
+            } else if ((header === "Kalimat Revisi") && Array.isArray(cellData)) {
+                cellContent = cellData.map(part => part.changed ?
                     `<span class="diff-changed" style="background-color: #ffeef0; color: #b71c1c; font-weight: bold;">${part.text}</span>` : part.text
                 ).join('');
-            }
-            else if (header === "kategori") {
+            } else if (header === "kategori") {
                 let badgeColor = '#9E9E9E';
-                if(cellData === 'Proofreading') badgeColor = '#4CAF50'; 
-                if(cellData === 'Koherensi') badgeColor = '#FF9800';    
-                if(cellData === 'Struktur') badgeColor = '#2196F3';     
-                if(cellData === 'Rewording') badgeColor = '#9C27B0';    
+                if (cellData === 'Proofreading') badgeColor = '#4CAF50';
+                if (cellData === 'Koherensi') badgeColor = '#FF9800';
+                if (cellData === 'Struktur') badgeColor = '#2196F3';
+                if (cellData === 'Rewording') badgeColor = '#9C27B0';
                 cellContent = `<span style="background-color:${badgeColor}; color:white; padding:6px 12px; border-radius:12px; font-size:0.85em; display:inline-block;">${cellData}</span>`;
-            }
-            else if (header === "apakah_ganti") {
+            } else if (header === "apakah_ganti") {
                 const isChecked = savedAction.is_ganti ? 'checked' : '';
                 cellContent = `<div style="display:flex; justify-content:center;"><input type="checkbox" class="action-checkbox" title="Centang jika perlu diganti" ${isChecked}></div>`;
-            }
-            else if (header === "pic_proofread") {
-                cellContent = `<select class="action-dropdown" style="width: 100%; font-size: 0.9em; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"><option value="">-- Pilih PIC --</option>`; 
+            } else if (header === "pic_proofread") {
+                cellContent = `<select class="action-dropdown" style="width: 100%; font-size: 0.9em; padding: 6px; border: 1px solid #ccc; border-radius: 4px;"><option value="">-- Pilih PIC --</option>`;
                 allUsersForDropdown.forEach(user => {
                     const isSelected = (savedAction.pic_user_id == user.id) ? 'selected' : '';
                     cellContent += `<option value="${user.id}" ${isSelected}>${user.fullname}</option>`;
                 });
                 cellContent += `</select>`;
-            }
-            else if (header === "finalize") {
+            } else if (header === "finalize") {
                 cellContent = `<button type="button" class="finalize-save-btn" onclick="saveRowState(${rowId}, event)">Save</button>`;
-            }
-            else if (header === "Pada Kalimat") {
+            } else if (header === "Pada Kalimat") {
                 const salahWord = row["Kata/Frasa Salah"];
                 if (salahWord && cellData.toLowerCase().includes(salahWord.toLowerCase())) {
                     const regex = new RegExp(`(${salahWord})`, 'gi');
@@ -375,11 +373,10 @@ function createTable(data, headers, existingComments = [], actions = {}) {
                 } else {
                     cellContent = cellData;
                 }
-            }
-            else if (header === "Alasan" || header === "penjelasan") {
+            } else if (header === "Alasan" || header === "penjelasan") {
                 let text = cellData.replace(/\n/g, '<br>');
                 let parts = text.split(/Rekomendasi:/i);
-                
+
                 if (parts.length > 1) {
                     cellContent = `
                         <div style="margin-bottom: 10px;">${parts[0]}</div>
@@ -390,19 +387,18 @@ function createTable(data, headers, existingComments = [], actions = {}) {
                 } else {
                     cellContent = text;
                 }
-            }
-            else {
+            } else {
                 cellContent = cellData;
             }
-            
+
             body += `<td style="${tdStyle}">${cellContent}</td>`;
         });
         body += "</tr>";
     });
 
     return `
-        <div class="results-table-wrapper" style="max-height: 600px; overflow-y: auto; overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 8px;"> 
-            <table style="width: 100%; border-collapse: collapse; min-width: 1200px;"> 
+        <div class="results-table-wrapper" style="max-height: 600px; overflow-y: auto; overflow-x: auto; border: 1px solid #e0e0e0; border-radius: 8px;">
+            <table style="width: 100%; border-collapse: collapse; min-width: 1200px;">
                 <thead style="position: sticky; top: 0; background-color: #f8f9fa; z-index: 10; box-shadow: 0 2px 4px rgba(0,0,0,0.05);">
                     ${head}
                 </thead>
