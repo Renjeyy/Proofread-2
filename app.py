@@ -807,22 +807,23 @@ def review_document_comprehensive(text_to_check):
     
     **PENTING - TENTANG FORMAT INPUT:**
     Teks input mengandung tag HTML `<i>...</i>` yang menandakan kata tersebut SUDAH dimiringkan (Italic) di dokumen asli.
-    Contoh: "Melakukan <i>vendor management</i> secara berkala."
     
-    **LAKUKAN 4 JENIS ANALISIS TERPISAH (JANGAN DIGABUNG):**
+    **LAKUKAN 4 JENIS ANALISIS TERPISAH:**
     1. **Proofreading:** - Cari kesalahan ejaan, typo, dan PUEBI.
        - Cek kata bahasa asing. Jika kata asing tersebut SUDAH ada dalam tag `<i>`, BERARTI SUDAH BENAR. JANGAN dilaporkan.
        - Hanya laporkan kata asing yang BELUM ada tag `<i>`-nya.
     2. **Koherensi (Alur):** Identifikasi kalimat yang tidak nyambung dengan topik utama paragraf.
     3. **Struktur (Restrukturisasi):** Identifikasi paragraf yang salah tempat.
-    4. **Rewording (Kalimat Efektif):** Identifikasi kalimat yang berbelit-belit, kurang profesional, atau ambigu. Berikan saran yang lebih ringkas.
+    4. **Rewording (Kalimat Efektif):** Identifikasi kalimat yang berbelit-belit, kurang profesional, atau ambigu.
 
-    **INSTRUKSI FORMAT OUTPUT:**
+    **INSTRUKSI FORMAT OUTPUT (SANGAT PENTING):**
     1. **JANGAN MENGGABUNGKAN (Grouping)** kesalahan. Pisahkan setiap temuan menjadi baris/objek sendiri.
-    2. **FORMAT SARAN ITALIC:** Jangan gunakan tanda bintang (*). Gunakan tag HTML `<i>` agar langsung terlihat miring.
-       - SALAH: *vendor management*
-       - BENAR: <i>vendor management</i>
-    3. **KATEGORI:** Wajib menggunakan salah satu dari string ini: "Proofreading", "Koherensi", "Struktur", atau "Rewording".
+    2. **FORMAT SARAN ITALIC:** Gunakan tag HTML `<i>` agar langsung terlihat miring.
+    3. **FORMAT KHUSUS PROOFREADING (WAJIB):**
+       - Pada key "masalah": Tuliskan **KALIMAT LENGKAP** di mana kesalahan terjadi. 
+       - **APIT** kata yang salah/typo dengan simbol `||` (contoh: "Kami akan ||lakusanakan|| segera").
+       - Ini agar sistem bisa menghighlight kata tersebut.
+    4. **KATEGORI:** Wajib menggunakan salah satu dari string ini: "Proofreading", "Koherensi", "Struktur", atau "Rewording".
 
     Teks untuk dianalisis:
     ---
@@ -834,10 +835,7 @@ def review_document_comprehensive(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -4965,6 +4963,7 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
 
 
 
