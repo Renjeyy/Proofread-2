@@ -2334,4 +2334,5 @@ async function saveRowState(rowId, event) {
             saveButton.style.backgroundColor = ''; 
         }, 1500); 
     }
+
 }
