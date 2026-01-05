@@ -1103,6 +1103,105 @@ def _analyze_comparison(file1, file2):
                 })
     return comparison_results
 
+def _apply_universal_highlights(doc, analysis_data):
+    def process_paragraphs(paragraphs_list):
+        for item in analysis_data:
+            text_to_find = ""
+            highlight_color = WD_COLOR_INDEX.YELLOW 
+
+            kategori = item.get("kategori", "").lower()
+            
+            if not kategori and "masalah" in item:
+                highlight_color = WD_COLOR_INDEX.BRIGHT_GREEN
+            elif "rewording" in kategori:
+                highlight_color = WD_COLOR_INDEX.BRIGHT_GREEN
+            elif "koherensi" in kategori:
+                highlight_color = WD_COLOR_INDEX.TURQUOISE
+            elif "struktur" in kategori:
+                highlight_color = WD_COLOR_INDEX.TURQUOISE
+
+            if "Kata/Frasa Salah" in item:
+                text_to_find = item.get("Kata/Frasa Salah", "")
+            elif "masalah" in item:
+                raw_text = item.get("masalah", "")
+                
+                import re
+                match = re.search(r'\|\|(.*?)\|\|', raw_text)
+                if match:
+                    text_to_find = match.group(1) 
+                else:
+                    text_to_find = raw_text
+                    
+            elif "Kalimat Awal" in item: 
+                text_to_find = item.get("Kalimat Awal", "")
+                highlight_color = WD_COLOR_INDEX.PINK
+
+            if not text_to_find:
+                continue
+            
+            text_to_find = text_to_find.strip()
+
+            for para in paragraphs_list:
+                if text_to_find in para.text:
+                    parts = para.text.split(text_to_find)
+                    para.clear()
+                    
+                    for i, part in enumerate(parts):
+                        para.add_run(part)
+                        if i < len(parts) - 1:
+                            run = para.add_run(text_to_find)
+                            run.font.highlight_color = highlight_color
+
+    process_paragraphs(doc.paragraphs)
+
+    for table in doc.tables:
+        for row in table.rows:
+            for cell in row.cells:
+                process_paragraphs(cell.paragraphs)
+
+@app.route('/api/common/download_highlighted', methods=['POST'])
+@login_required 
+def api_download_highlighted_universal():
+    """Endpoint universal untuk download DOCX dengan highlight berdasarkan JSON hasil analisis."""
+    if 'file' not in request.files:
+        return jsonify({"error": "File asli tidak ditemukan"}), 400
+    
+    file = request.files['file']
+    results_json = request.form.get('results_data')
+    
+    if not results_json:
+        return jsonify({"error": "Data analisis tidak ditemukan"}), 400
+
+    try:
+        analysis_data = json.loads(results_json)
+        file_bytes = file.read()
+        
+        # Buka dokumen dengan python-docx
+        doc = docx.Document(io.BytesIO(file_bytes))
+        
+        # Terapkan Highlight
+        _apply_universal_highlights(doc, analysis_data)
+        
+        # Simpan ke buffer
+        output_buffer = io.BytesIO()
+        doc.save(output_buffer)
+        output_buffer.seek(0)
+        
+        filename = f"Highlight_{file.filename}"
+        if filename.endswith('.pdf'):
+            filename = filename.replace('.pdf', '.docx') # Konversi nama saja, konten tetap dari docx base (jika upload pdf, fitur ini butuh konversi pdf->docx dulu, asumsi input docx untuk simplifikasi)
+
+        return send_file(
+            output_buffer,
+            mimetype='application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+            as_attachment=True,
+            download_name=filename
+        )
+
+    except Exception as e:
+        print(f"Error generating highlight docx: {e}")
+        return jsonify({"error": str(e)}), 500
+
 @app.route('/api/rewording/analyze', methods=['POST'])
 @login_required 
 def api_rewording_analyze():
@@ -1130,7 +1229,7 @@ def api_rewording_analyze():
                 filename=file.filename,
                 feature_type='rewording',
                 status='done',
-                end_time=datetime.datetime.utcnow()
+                end_time=datetime.datetime.now(datetime.timezone.utc)
             )
             db.session.add(new_log)
             db.session.commit()
@@ -2081,7 +2180,7 @@ def api_proofread_analyze():
                 filename=file.filename,
                 feature_type='proofreading',
                 status='done',
-                end_time=datetime.datetime.utcnow()
+                end_time=datetime.datetime.now(datetime.timezone.utc)
             )
             db.session.add(new_log)
             db.session.commit()
@@ -2407,7 +2506,7 @@ def api_review_analyze():
                 filename=file.filename,
                 feature_type='review_dokumen',
                 status='done',
-                end_time=datetime.datetime.utcnow()
+                end_time=datetime.datetime.now(datetime.timezone.utc)
             )
             db.session.add(new_log)
             db.session.commit()
@@ -4966,6 +5065,7 @@ def api_generate_dashboard_insight():
 if __name__ == '__main__':
 
     app.run(debug=True, port=5000)
+
 
 
 
