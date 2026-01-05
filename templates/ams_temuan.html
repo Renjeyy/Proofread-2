@@ -28,6 +28,7 @@
             --secondary-color: green;
             --text-color: #333;
             --bg-light: #f8f9fa;
+            --danger: #dc3545;
         }
 
         * { box-sizing: border-box; }
@@ -215,7 +216,6 @@
         }
         .btn-pilih-pic:hover { background-color: #1565C0; }
 
-        /* Styles untuk Modal Pilih PIC dengan Tabel */
         .pic-table {
             width: 100%; border-collapse: collapse; margin-top: 10px;
         }
@@ -242,6 +242,149 @@
         .report-table th, .report-table td { border: 1px solid black; padding: 6px 10px; vertical-align: middle; }
         .report-table thead th, .report-table tfoot th, .report-table tfoot td { background-color: #C00000; color: white; font-weight: bold; text-align: center; }
         .no-transition { transition: none !important; }
+
+        .choose-data-btn {
+            background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .choose-data-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4);
+        }
+
+        .choose-data-btn i {
+            font-size: 20px;
+        }
+
+        .selection-modal-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .selection-modal-header {
+            margin-bottom: 25px;
+        }
+
+        .selection-modal-header h2 {
+            color: var(--text-dark);
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .selection-modal-header p {
+            color: var(--text-gray);
+            margin: 5px 0 0;
+            font-size: 14px;
+        }
+
+        .styled-select-container {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .styled-select-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .styled-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e5f2;
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background-color: #fff;
+            transition: border-color 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 12px auto;
+        }
+
+        .styled-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .styled-select:disabled {
+            background-color: #f4f7fe;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .action-btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: #f4f7fe;
+            color: var(--text-light-gray);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e5f2;
+            color: var(--text-dark);
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-confirm:hover {
+            background: var(--primary-hover);
+        }
+        
+        .selection-info-badge {
+            background-color: #43A047; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
     </style>
 
     <script>
@@ -330,11 +473,13 @@
 
         <section class="filter-section" style="margin-bottom: 1rem;">
             <div class="multi-select-container" style="display: flex; align-items: center; gap: 1rem;">
-                <label class="filter-label" style="font-weight: 600; margin: 0;">Pilih Sesi Temuan:</label>
-                <select id="temuan-session-select" style="height: 42px; padding: 0 10px; border-radius: 8px; border: 1px solid #ccc; min-width: 200px;">
-                    <option value="" disabled selected>-- Pilih Sesi --</option>
-                </select>
-                <button id="load-temuan-btn" class="analyze-btn" style="height: 42px; padding: 0 20px;">Tampilkan</button>
+                <button id="choose-data-btn" class="choose-data-btn">
+                    <i class='bx bxs-layer'></i> Choose Data Sesi
+                </button>
+                <div id="selection-info-display" class="selection-info-badge hidden">
+                    <i class='bx bxs-check-circle'></i>
+                    <span id="selection-info-text"></span>
+                </div>
                 <button id="delete-session-btn" class="analyze-btn" style="height: 42px; background-color: var(--danger); display: none;">Hapus Sesi</button>
             </div>
         </section>
@@ -422,6 +567,34 @@
             <p>2025 Dashboard CoE | Departemen Center of Excellence, Satuan Kerja Audit Internal | Indonesia Financial Group</p>
         </footer>
     </main>
+
+    <div id="selection-modal" class="modal hidden" style="display: flex; align-items: center; justify-content: center; z-index: 3100;">
+        <div class="selection-modal-content">
+            <div class="selection-modal-header">
+                <h2>Pilih Data Sesi</h2>
+                <p>Silakan pilih jenis audit dan nama sesi</p>
+            </div>
+            
+            <div class="styled-select-container">
+                <label class="styled-select-label">Jenis Audit</label>
+                <select id="modal-audit-type" class="styled-select">
+                    <option value="" disabled selected>-- Pilih Jenis Audit --</option>
+                </select>
+            </div>
+
+            <div class="styled-select-container">
+                <label class="styled-select-label">Nama Sesi</label>
+                <select id="modal-session-name" class="styled-select" disabled>
+                    <option value="" disabled selected>-- Pilih Sesi --</option>
+                </select>
+            </div>
+
+            <div class="action-btn-group">
+                <button id="modal-close-btn" class="btn-cancel">Batal</button>
+                <button id="modal-submit-btn" class="btn-confirm">Tampilkan</button>
+            </div>
+        </div>
+    </div>
 
     <div id="filter-value-modal" class="modal hidden" style="z-index: 2500;">
         <div class="modal-content" style="max-width: 500px; height: 600px; display: flex; flex-direction: column;">
@@ -689,12 +862,18 @@
     </div>
 
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='ams_temuan.js') }}?v=12"></script>
+    <script src="{{ url_for('static', filename='ams_temuan.js') }}?v=13"></script>
     
     <script>
         function openSessionInNewPage() {
-            const select = document.getElementById('temuan-session-select');
-            const sessionId = select.value;
+            let sessionId = null;
+            if (typeof currentSessionId !== 'undefined' && currentSessionId) {
+                sessionId = currentSessionId;
+            } else {
+                const savedId = localStorage.getItem('ams_active_temuan_id');
+                if (savedId) sessionId = savedId;
+            }
+
             if (!sessionId) {
                 if (typeof showCustomMessage === "function") {
                     showCustomMessage("Silakan pilih sesi terlebih dahulu.");
@@ -708,7 +887,6 @@
         }
         
         document.addEventListener('DOMContentLoaded', async () => {
-            // Note: Inisialisasi user untuk filter/share dilakukan di ams_temuan.js
         });
     </script>
 </body>

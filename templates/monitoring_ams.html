@@ -6,12 +6,10 @@
     <title>Monitoring Tindak Lanjut</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}" />
     <link rel="icon" href="{{ url_for('static', filename='favicon-32x32.png') }}" type="image/png"/>
-    <!-- Tambahkan Boxicons untuk icon sidebar -->
     <link href='https://unpkg.com/boxicons@2.1.4/css/boxicons.min.css' rel='stylesheet'>
     <script src="https://cdn.sheetjs.com/xlsx-0.20.1/package/dist/xlsx.full.min.js"></script>
 
     <style>
-        /* === SIDEBAR & LAYOUT STYLES (Diambil dari Log Analysis) === */
         :root {
             --primary-color: #C62828;
             --primary-hover: #B71C1C;
@@ -26,7 +24,7 @@
             --text-light-gray: #707EAE;
             --white: #FFFFFF;
             --border-color: #E0E5F2;
-            --danger: #dc3545; /* Tambahan untuk tombol hapus */
+            --danger: #dc3545;
         }
 
         * {
@@ -42,7 +40,6 @@
             min-height: 100vh;
         }
 
-        /* Sidebar Styling */
         .sidebar {
             width: var(--sidebar-width);
             background: var(--white);
@@ -296,7 +293,6 @@
             background: rgba(255,255,255,0.2);
         }
 
-        /* Main Content Adjustment */
         main {
             margin-left: var(--sidebar-width);
             flex: 1;
@@ -327,7 +323,6 @@
 
         .hidden { display: none !important; }
 
-        /* Utility classes from old file retained */
         .start-btn {
             background-color: var(--primary-color);
             color: white;
@@ -342,20 +337,16 @@
             background-color: var(--primary-hover);
         }
 
-        /* === PERBAIKAN SCROLL MODAL === */
-        /* Pastikan modal muncul di atas sidebar (Sidebar z-index: 1000) */
         .modal {
             z-index: 2005 !important;
         }
 
-        /* Styling konten modal agar bisa discroll */
         .modal-content {
-            max-height: 85vh; /* Membatasi tinggi modal maksimal 85% layar */
-            overflow-y: auto; /* Munculkan scrollbar jika konten melebihi batas */
+            max-height: 85vh;
+            overflow-y: auto;
             position: relative;
         }
 
-        /* Styling Scrollbar pada Modal agar terlihat rapi */
         .modal-content::-webkit-scrollbar {
             width: 8px;
         }
@@ -372,6 +363,149 @@
         }
         .no-transition {
             transition: none !important;
+        }
+
+        .choose-data-btn {
+            background: linear-gradient(135deg, #1e88e5 0%, #1565c0 100%);
+            color: white;
+            padding: 12px 24px;
+            border: none;
+            border-radius: 12px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 16px;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            box-shadow: 0 4px 15px rgba(21, 101, 192, 0.3);
+            transition: transform 0.2s, box-shadow 0.2s;
+        }
+
+        .choose-data-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 20px rgba(21, 101, 192, 0.4);
+        }
+
+        .choose-data-btn i {
+            font-size: 20px;
+        }
+
+        .selection-modal-content {
+            background: #fff;
+            padding: 30px;
+            border-radius: 20px;
+            width: 100%;
+            max-width: 450px;
+            box-shadow: 0 15px 50px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+
+        .selection-modal-header {
+            margin-bottom: 25px;
+        }
+
+        .selection-modal-header h2 {
+            color: var(--text-dark);
+            margin: 0;
+            font-size: 24px;
+        }
+
+        .selection-modal-header p {
+            color: var(--text-gray);
+            margin: 5px 0 0;
+            font-size: 14px;
+        }
+
+        .styled-select-container {
+            margin-bottom: 20px;
+            text-align: left;
+        }
+
+        .styled-select-label {
+            display: block;
+            margin-bottom: 8px;
+            color: var(--text-dark);
+            font-weight: 600;
+            font-size: 14px;
+        }
+
+        .styled-select {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e0e5f2;
+            border-radius: 10px;
+            font-size: 14px;
+            color: var(--text-dark);
+            background-color: #fff;
+            transition: border-color 0.3s;
+            appearance: none;
+            background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20width%3D%22292.4%22%20height%3D%22292.4%22%3E%3Cpath%20fill%3D%22%23007CB2%22%20d%3D%22M287%2069.4a17.6%2017.6%200%200%200-13-5.4H18.4c-5%200-9.3%201.8-12.9%205.4A17.6%2017.6%200%200%200%200%2082.2c0%205%201.8%209.3%205.4%2012.9l128%20127.9c3.6%203.6%207.8%205.4%2012.8%205.4s9.2-1.8%2012.8-5.4L287%2095c3.5-3.5%205.4-7.8%205.4-12.8%200-5-1.9-9.2-5.5-12.8z%22%2F%3E%3C%2Fsvg%3E");
+            background-repeat: no-repeat;
+            background-position: right 15px top 50%;
+            background-size: 12px auto;
+        }
+
+        .styled-select:focus {
+            outline: none;
+            border-color: var(--primary-color);
+        }
+
+        .styled-select:disabled {
+            background-color: #f4f7fe;
+            cursor: not-allowed;
+            opacity: 0.7;
+        }
+
+        .action-btn-group {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+
+        .btn-cancel {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: #f4f7fe;
+            color: var(--text-light-gray);
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-cancel:hover {
+            background: #e0e5f2;
+            color: var(--text-dark);
+        }
+
+        .btn-confirm {
+            flex: 1;
+            padding: 12px;
+            border-radius: 10px;
+            border: none;
+            background: var(--primary-color);
+            color: white;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s;
+        }
+
+        .btn-confirm:hover {
+            background: var(--primary-hover);
+        }
+        
+        .selection-info-badge {
+            background-color: #43A047; 
+            color: white; 
+            padding: 8px 16px; 
+            border-radius: 8px; 
+            font-size: 14px; 
+            font-weight: 600; 
+            box-shadow: 0 2px 5px rgba(0,0,0,0.1);
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
         }
     </style>
 
@@ -414,7 +548,6 @@
 </head>
 <body data-user-id="{{ current_user_id }}">
 
-    <!-- SIDEBAR NAVIGATION -->
     <nav class="sidebar">
         <div class="sidebar-toggle-btn" onclick="toggleSidebar()">
             <i class='bx bx-menu'></i>
@@ -458,7 +591,6 @@
             <span class="nav-section-label">Tindak Lanjut</span>
 
             <li>
-                <!-- MENU INI YANG AKTIF (Rekap Monitoring) -->
                 <a href="{{ url_for('monitoring_ams_page') }}" class="active">
                     <i class='bx bxs-bar-chart-alt-2'></i>
                     <span>Rekap Monitoring</span>
@@ -523,7 +655,6 @@
         </div>
     </nav>
 
-    <!-- MAIN CONTENT -->
     <main>
         <section class="monitoring-header" style="display: flex; justify-content: space-between; align-items: center;">
             <h1>Monitoring Tindak Lanjut</h1>
@@ -535,28 +666,20 @@
 
         <section class="filter-section" style="margin-bottom: 2rem;">
             <div class="multi-select-container" style="display: flex; align-items: center; gap: 1rem; flex-wrap: wrap;">
-                <label class="filter-label" style="font-weight: 600;">Pilih Tabel Sesi:</label>
-                <div class="custom-dropdown" id="custom-dropdown" style="position: relative; min-width: 300px;">
-                    <div class="dropdown-header" id="dropdown-header" style="padding: 10px; border: 1px solid #ccc; border-radius: 8px; background: #fff; cursor: pointer; display: flex; justify-content: space-between; align-items: center;">
-                        <span id="dropdown-selected-text">Pilih Sesi...</span>
-                        <span class="dropdown-arrow">&#9660;</span>
-                    </div>
-                    <div class="dropdown-list hidden" id="dropdown-list" style="position: absolute; top: 100%; left: 0; width: 100%; background: white; border: 1px solid #ccc; border-radius: 8px; margin-top: 5px; max-height: 300px; overflow-y: auto; z-index: 1000; box-shadow: 0 4px 6px rgba(0,0,0,0.1);"></div>
+                <button id="choose-data-btn" class="choose-data-btn">
+                    <i class='bx bxs-layer'></i> Choose Data Sesi
+                </button>
+                <div id="selection-info-display" class="selection-info-badge hidden">
+                    <i class='bx bxs-check-circle'></i>
+                    <span id="selection-info-text"></span>
                 </div>
-                <button id="apply-filter-btn" class="analyze-btn" style="padding: 10px 20px;">Tampilkan Data</button>
             </div>
         </section>
 
         <section id="data-table-container" class="data-table-container hidden">
-            <div class="list-header" style="margin-bottom: 1rem; flex-wrap: wrap; gap: 10px;">
-                <div style="display: flex; flex-direction: column; gap: 5px;">
+            <div class="list-header" style="margin-bottom: 1rem; flex-wrap: wrap; gap: 10px; display: flex; justify-content: space-between; align-items: flex-end;">
+                <div style="display: flex; flex-direction: column; gap: 10px;">
                     <h3 id="table-title" style="margin:0;">Data Monitoring</h3>
-                    <div style="display: flex; align-items: center; gap: 10px;">
-                        <label for="period-filter-select" style="font-size: 0.9rem; color: #666;">Filter Periode:</label>
-                        <select id="period-filter-select" style="padding: 5px 10px; border-radius: 4px; border: 1px solid #ccc; font-size: 0.9rem; cursor: pointer;">
-                            <option value="latest">Terbaru</option>
-                        </select>
-                    </div>
                 </div>
                 <div style="display: flex; gap: 5px; flex-wrap: wrap;">
                     <button id="rename-session-btn" class="rename-session-btn" style="background-color: #1976D2; color: white; border: none;">Edit Nama</button>
@@ -573,7 +696,34 @@
         </footer>
     </main>
 
-    <!-- MODALS (Tidak ada perubahan, tetap sama) -->
+    <div id="selection-modal" class="modal hidden" style="display: flex; align-items: center; justify-content: center;">
+        <div class="selection-modal-content">
+            <div class="selection-modal-header">
+                <h2>Pilih Data Sesi</h2>
+                <p>Silakan pilih jenis audit dan periode laporan</p>
+            </div>
+            
+            <div class="styled-select-container">
+                <label class="styled-select-label">Jenis Audit</label>
+                <select id="modal-audit-type" class="styled-select">
+                    <option value="" disabled selected>-- Pilih Jenis Audit --</option>
+                </select>
+            </div>
+
+            <div class="styled-select-container">
+                <label class="styled-select-label">Periode Laporan</label>
+                <select id="modal-audit-period" class="styled-select" disabled>
+                    <option value="" disabled selected>-- Pilih Periode --</option>
+                </select>
+            </div>
+
+            <div class="action-btn-group">
+                <button id="modal-close-btn" class="btn-cancel">Batal</button>
+                <button id="modal-submit-btn" class="btn-confirm">Tampilkan</button>
+            </div>
+        </div>
+    </div>
+
     <div id="create-session-modal" class="modal hidden">
         <div class="modal-content">
             <span class="modal-close-btn" id="create-session-modal-close-btn">&times;</span>
@@ -733,6 +883,6 @@
     </div>
     
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='monitoring_ams.js') }}?v=9"></script>
+    <script src="{{ url_for('static', filename='monitoring_ams.js') }}?v=11"></script>
 </body>
 </html>

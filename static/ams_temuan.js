@@ -1,12 +1,18 @@
 document.addEventListener('DOMContentLoaded', async () => {
-    // --- ELEMENT DEFINITIONS ---
     const addSessionBtn = document.getElementById('add-temuan-session-btn');
     const createModal = document.getElementById('create-temuan-modal');
     const closeCreateModal = document.getElementById('close-create-modal');
     const createForm = document.getElementById('create-temuan-form');
     
-    const sessionSelect = document.getElementById('temuan-session-select');
-    const loadBtn = document.getElementById('load-temuan-btn');
+    const chooseDataBtn = document.getElementById('choose-data-btn');
+    const selectionModal = document.getElementById('selection-modal');
+    const modalAuditTypeSelect = document.getElementById('modal-audit-type');
+    const modalSessionNameSelect = document.getElementById('modal-session-name');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalSubmitBtn = document.getElementById('modal-submit-btn');
+    const selectionInfoDisplay = document.getElementById('selection-info-display');
+    const selectionInfoText = document.getElementById('selection-info-text');
+
     const deleteSessionBtn = document.getElementById('delete-session-btn');
     
     const shareSessionBtn = document.getElementById('share-session-btn');
@@ -101,6 +107,9 @@ document.addEventListener('DOMContentLoaded', async () => {
     let lastPicSortDirection = 'asc';
     let dynamicCutoffPrev = new Date(); 
     let dynamicCutoffCurr = new Date();
+    
+    let allSessions = [];
+    let groupedSessions = {};
 
     const STORAGE_KEY_TEMUAN = 'ams_active_temuan_id';
 
@@ -160,19 +169,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         await loadSessions(); 
 
         const savedId = localStorage.getItem(STORAGE_KEY_TEMUAN);
-        if (savedId && sessionSelect) {
-            const optionExists = sessionSelect.querySelector(`option[value="${savedId}"]`);
-            if (optionExists) {
-                sessionSelect.value = savedId;
+        if (savedId && allSessions.length > 0) {
+            const session = allSessions.find(s => s.id == savedId);
+            if (session) {
                 currentSessionId = savedId;
-                updateOwnerButtons(optionExists);
+                currentSessionName = session.nama_sesi;
+                updateOwnerButtons(session);
                 loadTemuanData(savedId);
+                
+                if(selectionInfoText && selectionInfoDisplay) {
+                    selectionInfoText.textContent = `Anda telah memilih ${session.jenis_audit || 'Audit'} - ${session.nama_sesi}`;
+                    selectionInfoDisplay.classList.remove('hidden');
+                }
             }
         }
     }
 
-    function updateOwnerButtons(selectedOption) {
-        const isOwner = selectedOption.dataset.owner === 'true';
+    function updateOwnerButtons(session) {
+        const isOwner = session.is_owner;
         if(deleteSessionBtn) deleteSessionBtn.style.display = isOwner ? 'inline-block' : 'none';
         if(shareSessionBtn) shareSessionBtn.style.display = isOwner ? 'inline-block' : 'none';
     }
@@ -270,17 +284,66 @@ document.addEventListener('DOMContentLoaded', async () => {
     }
 
     function setupEventListeners() {
-        if (loadBtn) {
-            loadBtn.addEventListener('click', () => {
-                const select = document.getElementById('temuan-session-select');
-                if (select.value) {
-                    currentSessionId = select.value;
-                    localStorage.setItem(STORAGE_KEY_TEMUAN, currentSessionId);
-                    loadTemuanData(currentSessionId);
-                    const selectedOption = select.options[select.selectedIndex];
-                    updateOwnerButtons(selectedOption);
+        if(chooseDataBtn) {
+            chooseDataBtn.addEventListener('click', () => {
+                modalAuditTypeSelect.value = "";
+                modalSessionNameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Sesi --</option>';
+                modalSessionNameSelect.disabled = true;
+                toggleModal('selection-modal', true);
+            });
+        }
+
+        if(modalCloseBtn) {
+            modalCloseBtn.addEventListener('click', () => {
+                toggleModal('selection-modal', false);
+            });
+        }
+
+        if(modalAuditTypeSelect) {
+            modalAuditTypeSelect.addEventListener('change', () => {
+                const selectedType = modalAuditTypeSelect.value;
+                modalSessionNameSelect.innerHTML = '<option value="" disabled selected>-- Pilih Sesi --</option>';
+                
+                if (groupedSessions[selectedType] && groupedSessions[selectedType].length > 0) {
+                    groupedSessions[selectedType].forEach(session => {
+                        const option = document.createElement('option');
+                        option.value = session.id;
+                        option.textContent = session.nama_sesi;
+                        modalSessionNameSelect.appendChild(option);
+                    });
+                    modalSessionNameSelect.disabled = false;
                 } else {
-                    showCustomMessage("Silakan pilih sesi terlebih dahulu.");
+                    modalSessionNameSelect.disabled = true;
+                }
+            });
+        }
+
+        if(modalSubmitBtn) {
+            modalSubmitBtn.addEventListener('click', () => {
+                const type = modalAuditTypeSelect.value;
+                const sessionId = modalSessionNameSelect.value;
+
+                if(!type || !sessionId) {
+                    showCustomMessage("Mohon pilih Jenis Audit dan Nama Sesi.");
+                    return;
+                }
+
+                const selectedSession = allSessions.find(s => s.id == sessionId);
+
+                if(selectedSession) {
+                    currentSessionId = sessionId;
+                    localStorage.setItem(STORAGE_KEY_TEMUAN, currentSessionId);
+                    updateOwnerButtons(selectedSession);
+                    loadTemuanData(sessionId);
+                    
+                    if(selectionInfoText && selectionInfoDisplay) {
+                        selectionInfoText.textContent = `Anda telah memilih ${type} - ${selectedSession.nama_sesi}`;
+                        selectionInfoDisplay.classList.remove('hidden');
+                    }
+
+                    toggleModal('selection-modal', false);
+                } else {
+                    showCustomMessage("Data sesi tidak ditemukan.");
                 }
             });
         }
@@ -314,7 +377,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         document.querySelectorAll('.modal-close-btn, .cancel-btn').forEach(btn => {
-            if (btn.id !== 'cancel-data-btn' && btn.id !== 'btn-close-warning' && btn.id !== 'cancel-report-btn' && btn.id !== 'cancel-pic-btn') {
+            if (btn.id !== 'cancel-data-btn' && btn.id !== 'btn-close-warning' && btn.id !== 'cancel-report-btn' && btn.id !== 'cancel-pic-btn' && btn.id !== 'modal-close-btn') {
                 btn.addEventListener('click', (e) => {
                     const modal = e.target.closest('.modal');
                     if (modal) {
@@ -346,6 +409,7 @@ document.addEventListener('DOMContentLoaded', async () => {
 
                             if (temuanContainer) temuanContainer.classList.add('hidden');
                             if (searchFilterContainer) searchFilterContainer.classList.add('hidden');
+                            if (selectionInfoDisplay) selectionInfoDisplay.classList.add('hidden');
 
                             loadSessions();
                             currentSessionId = null;
@@ -540,16 +604,24 @@ document.addEventListener('DOMContentLoaded', async () => {
         try {
             const response = await fetch('/api/get_temuan_sessions');
             if(response.ok) {
-                const sessions = await response.json();
-                if(sessionSelect) {
-                    sessionSelect.innerHTML = '<option value="" disabled selected>-- Pilih Sesi --</option>';
-                    sessions.forEach(s => {
-                        const opt = document.createElement('option');
-                        opt.value = s.id;
-                        opt.dataset.name = s.nama_sesi;
-                        opt.dataset.owner = s.is_owner; 
-                        opt.textContent = s.nama_sesi; 
-                        sessionSelect.appendChild(opt);
+                allSessions = await response.json();
+                groupedSessions = {};
+                
+                allSessions.forEach(session => {
+                    const type = session.jenis_audit || 'Lainnya';
+                    if (!groupedSessions[type]) {
+                        groupedSessions[type] = [];
+                    }
+                    groupedSessions[type].push(session);
+                });
+
+                if(modalAuditTypeSelect) {
+                    modalAuditTypeSelect.innerHTML = '<option value="" disabled selected>-- Pilih Jenis Audit --</option>';
+                    Object.keys(groupedSessions).sort().forEach(type => {
+                        const option = document.createElement('option');
+                        option.value = type;
+                        option.textContent = type;
+                        modalAuditTypeSelect.appendChild(option);
                     });
                 }
             }
@@ -595,11 +667,12 @@ document.addEventListener('DOMContentLoaded', async () => {
         if (temuanContainer) temuanContainer.classList.remove('hidden');
         if (searchFilterContainer) searchFilterContainer.classList.remove('hidden');
 
-        const select = document.getElementById('temuan-session-select');
+        const session = allSessions.find(s => s.id == sessionId);
         let sName = "Sesi Tanpa Nama";
 
-        if (select.selectedIndex > -1) {
-            sName = select.options[select.selectedIndex].text;
+        if (session) {
+            sName = session.nama_sesi;
+            currentSessionName = sName;
             if (tableTitle) tableTitle.textContent = `Detail: ${sName}`;
         }
 
@@ -1110,8 +1183,7 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function openShareModal() {
         if (!currentSessionId) return showCustomMessage("Pilih sesi Temuan terlebih dahulu.");
         
-        document.getElementById('share-session-name-display').textContent = 
-            document.getElementById('temuan-session-select').selectedOptions[0].text;
+        document.getElementById('share-session-name-display').textContent = currentSessionName;
             
         const tbody = document.getElementById('user-table-body');
         const container = document.getElementById('user-list-container');

@@ -44,9 +44,7 @@ function showCustomMessage(data, type = 'success', callback = null) {
     const titleElem = document.getElementById("custom-message-title");
     const textElem = document.getElementById("custom-message-text");
     
-    // Perbaikan: Cari elemen details dan tombol secara aman
     const detailsElem = document.getElementById("custom-message-details"); 
-    // Perbaikan: Cari tombol di dalam modal karena di HTML tidak ada ID-nya
     const okBtn = modal.querySelector('button.login-btn') || modal.querySelector('button'); 
 
     let title, message, details;
@@ -63,7 +61,6 @@ function showCustomMessage(data, type = 'success', callback = null) {
 
     if (titleElem) titleElem.textContent = title;
 
-    // Logika aman untuk Details (Cek jika elemen ada)
     if (detailsElem) {
         if (details && typeof details === 'object') {
             let detailsHTML = '';
@@ -85,11 +82,9 @@ function showCustomMessage(data, type = 'success', callback = null) {
             }
         }
     } else {
-        // Fallback jika detailsElem tidak ada di HTML
         if (textElem) {
             textElem.innerHTML = message || ''; 
             if (details && typeof details === 'object') {
-                 // Gabungkan details ke textElem jika elemen details tidak ada
                  let extraText = '<br><br>';
                  for (const key in details) {
                     extraText += `<b>${key}:</b> ${details[key]}<br>`;
@@ -337,7 +332,11 @@ function createTable(data, headers, existingComments = [], actions = {}) {
             }
 
             if (header === "masalah") {
-                if (row['kategori'] === 'Proofreading' && cellData.includes('||')) {
+                if (row['kategori'] === 'Rewording') {
+                    const cleanText = cellData.replace(/\|\|/g, '');
+                    cellContent = cleanText;
+                } 
+                else if (row['kategori'] === 'Proofreading' && cellData.includes('||')) {
                     cellContent = cellData.replace(/\|\|(.*?)\|\|/g, '<span class="highlight-error" style="background-color: yellow; font-weight:bold;">$1</span>');
                 } else {
                     cellContent = cellData;
@@ -470,8 +469,6 @@ function openResultsInNewTab(featureId) {
                         font-size: 24px;
                     }
                     
-                    /* --- PERBAIKAN UTAMA DI SINI --- */
-                    /* Menghilangkan scrollbar internal agar tabel tampil penuh */
                     .results-table-wrapper {
                         max-height: none !important;
                         overflow: visible !important;
@@ -500,20 +497,17 @@ function openResultsInNewTab(featureId) {
                     td { 
                         border: 1px solid #ddd; 
                         padding: 15px; 
-                        vertical-align: top; /* Pastikan konten rata atas */
+                        vertical-align: top; 
                         font-size: 14px;
                     }
                     
-                    /* Styling khusus untuk highlight */
                     .highlight-error { background-color: #FFF9C4; padding: 2px 4px; border-radius: 3px; font-weight: bold; }
                     .diff-changed { background-color: #FFEBEE; color: #C62828; font-weight: bold; padding: 2px 4px; border-radius: 3px; }
                     
-                    /* Sembunyikan tombol aksi yang tidak perlu di print view */
                     .finalize-save-btn, .action-checkbox, .action-dropdown {
                         display: none !important; 
                     }
 
-                    /* Agar tampilan checkbox/select di tabel tidak rusak layoutnya */
                     .table-cell-apakah_ganti, .table-cell-pic_proofread, .table-cell-finalize {
                         display: none;
                     }
@@ -521,11 +515,10 @@ function openResultsInNewTab(featureId) {
                         display: none;
                     }
 
-                    /* Header Actions (Tombol Cetak & Tutup) */
                     .header-actions {
                         margin-bottom: 20px;
                         display: flex;
-                        justify-content: flex-end; /* Tombol ditaruh di kanan */
+                        justify-content: flex-end; 
                         gap: 10px; 
                         background: #f9f9f9;
                         padding: 15px;
@@ -558,12 +551,11 @@ function openResultsInNewTab(featureId) {
                     .btn-print:hover { background: #1a237e; }
                     .btn-close:hover { background: #f0f0f0; }
 
-                    /* Styling khusus saat Print (Ctrl+P) */
                     @media print {
                         .header-actions { display: none; }
                         body { padding: 0; }
                         table { box-shadow: none; }
-                        tr { page-break-inside: avoid; } /* Mencegah baris terpotong antar halaman */
+                        tr { page-break-inside: avoid; } 
                     }
 
                 </style>
@@ -1506,7 +1498,7 @@ function checkSessionStorage(pageId) {
         tableDiv = document.getElementById("proofread-results-table");
         containerDiv = document.getElementById("proofread-results-container");
         headers = ["Kata/Frasa Salah", "Perbaikan Sesuai KBBI", "Pada Kalimat", "Ditemukan di Halaman", "apakah_ganti", "pic_proofread", "finalize"];
-    
+        
     } else if (pageId === 'compare') {
         storageKey = 'compareResults';
         tableDiv = document.getElementById("compare-results-table");
@@ -1636,6 +1628,72 @@ document.addEventListener("DOMContentLoaded", () => {
     const rewordingResultsTableDiv = document.getElementById("rewording-results-table");
     const rewordingSaveBtn = document.getElementById("rewording-save-btn");
     const rewordingViewBtn = document.getElementById("rewording-view-new-tab-btn");
+
+    async function downloadHighlightedDocx(fileInputId, featureType) {
+        const fileInput = document.getElementById(fileInputId);
+        const file = fileInput.files[0];
+        
+        const resultsData = currentAnalysisResults; 
+
+        if (!file || !resultsData) {
+            showError("Data atau file tidak tersedia. Silakan lakukan analisis ulang.");
+            return;
+        }
+
+        const formData = new FormData();
+        formData.append("file", file);
+        formData.append("results_data", JSON.stringify(resultsData));
+
+        showCustomMessage("Sedang membuat dokumen highlight...", "info");
+
+        try {
+            const response = await fetch("/api/common/download_highlighted", {
+                method: "POST",
+                body: formData
+            });
+
+            if (!response.ok) {
+                const err = await response.json();
+                throw new Error(err.error || "Gagal download dokumen.");
+            }
+
+            const blob = await response.blob();
+            const url = window.URL.createObjectURL(blob);
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = `Highlighted_${featureType}_${file.name.replace('.pdf','.docx')}`; 
+            document.body.appendChild(a);
+            a.click();
+            window.URL.revokeObjectURL(url);
+            document.body.removeChild(a);
+            
+            document.getElementById("custom-message-modal").classList.add("hidden");
+
+        } catch (e) {
+            showError("Error Download: " + e.message);
+        }
+    }
+
+    const btnDownProof = document.getElementById("proofread-download-docx-btn");
+    if(btnDownProof) {
+        btnDownProof.addEventListener("click", () => {
+            downloadHighlightedDocx("proofread-file", "Proofread");
+        });
+    }
+
+    const btnDownReview = document.getElementById("review-download-docx-btn");
+    if(btnDownReview) {
+        btnDownReview.addEventListener("click", () => {
+            downloadHighlightedDocx("review-file", "Review");
+        });
+    }
+
+    const btnDownReword = document.getElementById("rewording-download-docx-btn");
+    if(btnDownReword) {
+        btnDownReword.addEventListener("click", () => {
+            downloadHighlightedDocx("rewording-file", "Rewording");
+        });
+    }
 
     if (proofreadViewBtn) {
         proofreadViewBtn.addEventListener("click", () => openResultsInNewTab('proofreading'));
@@ -1946,7 +2004,7 @@ document.addEventListener("DOMContentLoaded", () => {
         proofreadAnalyzeBtn.addEventListener("click", async () => {
             const file = proofreadFileInput.files[0];
             if (!file) { showError("Silakan pilih file terlebih dahulu."); return; }
-    
+        
             clearError();
             proofreadLoading.classList.remove("hidden");
             proofreadAnalyzeBtn.disabled = true;
@@ -1987,6 +2045,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     currentAnalysisFilename = file.name;
                     if(proofreadSaveBtn) proofreadSaveBtn.classList.remove("hidden");
                     if(proofreadViewBtn) proofreadViewBtn.classList.remove("hidden");
+                    const btnDown = document.getElementById("proofread-download-docx-btn");
+                    if(btnDown) btnDown.classList.remove("hidden");
                 }
                 proofreadResultsContainer.classList.remove("hidden");
                 await logAnalysisEnd(logId, 'done');
@@ -2114,6 +2174,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     if(reviewSaveBtn) reviewSaveBtn.classList.remove("hidden");
                     if(reviewViewBtn) reviewViewBtn.classList.remove("hidden");
+                    const btnDown = document.getElementById("review-download-docx-btn");
+                    if(btnDown) btnDown.classList.remove("hidden");
                 }
                 reviewResultsContainer.classList.remove("hidden");
 
@@ -2136,14 +2198,12 @@ document.addEventListener("DOMContentLoaded", () => {
             rewordingAnalyzeBtn.disabled = true;
             rewordingResultsContainer.classList.add("hidden");
             
-            // Bersihkan session storage lama
             sessionStorage.removeItem('rewordingResults');
             sessionStorage.removeItem('rewordingFilename');
 
             if(rewordingSaveBtn) rewordingSaveBtn.classList.add("hidden");
             if(rewordingViewBtn) rewordingViewBtn.classList.add("hidden");
 
-            // Log start task (Opsional, jika ingin dilacak di dashboard)
             let logId = await logAnalysisStart(file.name, 'rewording');
 
             const formData = new FormData();
@@ -2162,11 +2222,9 @@ document.addEventListener("DOMContentLoaded", () => {
                 if (data.length === 0) {
                     rewordingResultsTableDiv.innerHTML = "<p>Dokumen sudah efektif. Tidak ada saran rewording.</p>";
                 } else {
-                    // Header yang akan ditampilkan
                     const headers = ["masalah", "saran", "penjelasan", "lokasi", "apakah_ganti", "pic_proofread", "finalize"];
                     rewordingResultsTableDiv.innerHTML = createTable(data, headers, [], {});
                     
-                    // Simpan ke session storage
                     sessionStorage.setItem('rewordingResults', JSON.stringify(data));
                     sessionStorage.setItem('rewordingFilename', file.name);
                     
@@ -2176,6 +2234,8 @@ document.addEventListener("DOMContentLoaded", () => {
                     
                     if(rewordingSaveBtn) rewordingSaveBtn.classList.remove("hidden");
                     if(rewordingViewBtn) rewordingViewBtn.classList.remove("hidden");
+                    const btnDown = document.getElementById("rewording-download-docx-btn");
+                    if(btnDown) btnDown.classList.remove("hidden");
                 }
                 rewordingResultsContainer.classList.remove("hidden");
                 
@@ -2334,5 +2394,4 @@ async function saveRowState(rowId, event) {
             saveButton.style.backgroundColor = ''; 
         }, 1500); 
     }
-
 }

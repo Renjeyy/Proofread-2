@@ -2,12 +2,15 @@ document.addEventListener('DOMContentLoaded', async () => {
     const dataTableContainer = document.getElementById('data-table-container');
     const tableTitle = document.getElementById('table-title');
     const dynamicTablesWrapper = document.getElementById('dynamic-tables-wrapper');
-    const periodFilterSelect = document.getElementById('period-filter-select');
+    const selectionInfoDisplay = document.getElementById('selection-info-display');
+    const selectionInfoText = document.getElementById('selection-info-text');
     
-    const dropdownHeader = document.getElementById('dropdown-header');
-    const dropdownList = document.getElementById('dropdown-list');
-    const dropdownSelectedText = document.getElementById('dropdown-selected-text');
-    const applyFilterBtn = document.getElementById('apply-filter-btn');
+    const chooseDataBtn = document.getElementById('choose-data-btn');
+    const selectionModal = document.getElementById('selection-modal');
+    const modalAuditTypeSelect = document.getElementById('modal-audit-type');
+    const modalAuditPeriodSelect = document.getElementById('modal-audit-period');
+    const modalCloseBtn = document.getElementById('modal-close-btn');
+    const modalSubmitBtn = document.getElementById('modal-submit-btn');
     
     const addSessionBtn = document.getElementById('add-session-btn'); 
     const renameSessionBtn = document.getElementById('rename-session-btn');
@@ -49,6 +52,8 @@ document.addEventListener('DOMContentLoaded', async () => {
     let currentSessionName = null; 
     let allFetchedData = []; 
     let currentSelectedSessions = [];
+    let groupedSessions = {};
+    let finalSessionList = [];
 
     const calcPct = (val, total) => total > 0 ? Math.round((val / total) * 100) + '%' : '0%';
     function openModal(modal) { if(modal) modal.classList.remove('hidden'); }
@@ -76,20 +81,66 @@ document.addEventListener('DOMContentLoaded', async () => {
        openModal(modal);
     }
 
-    if(dropdownHeader) {
-        dropdownHeader.addEventListener('click', (e) => { e.stopPropagation(); dropdownList.classList.toggle('hidden'); });
+    if(chooseDataBtn) {
+        chooseDataBtn.addEventListener('click', () => {
+            modalAuditTypeSelect.value = "";
+            modalAuditPeriodSelect.innerHTML = '<option value="" disabled selected>-- Pilih Periode --</option>';
+            modalAuditPeriodSelect.disabled = true;
+            openModal(selectionModal);
+        });
     }
-    document.addEventListener('click', (e) => {
-        if (document.getElementById('custom-dropdown') && !document.getElementById('custom-dropdown').contains(e.target)) {
-            if(dropdownList) dropdownList.classList.add('hidden');
-        }
-    });
 
-    function updateDropdownLabel() {
-        const checkboxes = document.querySelectorAll('.session-checkbox:checked');
-        if (checkboxes.length === 0) dropdownSelectedText.textContent = "Pilih Sesi...";
-        else if (checkboxes.length === 1) dropdownSelectedText.textContent = checkboxes[0].value;
-        else dropdownSelectedText.textContent = `${checkboxes.length} Sesi Dipilih`;
+    if(modalCloseBtn) {
+        modalCloseBtn.addEventListener('click', () => {
+            closeModal(selectionModal);
+        });
+    }
+
+    if(modalAuditTypeSelect) {
+        modalAuditTypeSelect.addEventListener('change', () => {
+            const selectedType = modalAuditTypeSelect.value;
+            modalAuditPeriodSelect.innerHTML = '<option value="" disabled selected>-- Pilih Periode --</option>';
+            
+            if (groupedSessions[selectedType] && groupedSessions[selectedType].length > 0) {
+                groupedSessions[selectedType].forEach(period => {
+                    const option = document.createElement('option');
+                    option.value = period;
+                    option.textContent = period;
+                    modalAuditPeriodSelect.appendChild(option);
+                });
+                modalAuditPeriodSelect.disabled = false;
+            } else {
+                modalAuditPeriodSelect.disabled = true;
+            }
+        });
+    }
+
+    if(modalSubmitBtn) {
+        modalSubmitBtn.addEventListener('click', () => {
+            const type = modalAuditTypeSelect.value;
+            const period = modalAuditPeriodSelect.value;
+
+            if(!type || !period) {
+                showCustomMessage("Mohon pilih Jenis Audit dan Periode Laporan.", "info");
+                return;
+            }
+
+            const sessionName = `${type} - ${period}`;
+            const selectedSession = finalSessionList.find(s => s.name === sessionName);
+
+            if(selectedSession) {
+                loadMonitoringData([selectedSession]);
+                
+                if(selectionInfoText && selectionInfoDisplay) {
+                    selectionInfoText.textContent = `Anda telah memilih ${type} periode ${period}`;
+                    selectionInfoDisplay.classList.remove('hidden');
+                }
+
+                closeModal(selectionModal);
+            } else {
+                showCustomMessage("Data sesi tidak ditemukan.", "error");
+            }
+        });
     }
 
     function updateSessionName() {
@@ -110,17 +161,13 @@ document.addEventListener('DOMContentLoaded', async () => {
     async function loadMonitoringData(selectedSessions) {
         if (!selectedSessions || selectedSessions.length === 0) {
             dataTableContainer.classList.add('hidden');
+            if(selectionInfoDisplay) selectionInfoDisplay.classList.add('hidden');
             return;
         }
 
         currentSelectedSessions = selectedSessions;
-        // Simpan filter hanya yang valid
         localStorage.setItem(STORAGE_KEY_FILTERS, JSON.stringify(selectedSessions.map(s => s.name)));
         
-        const originalText = applyFilterBtn.textContent;
-        applyFilterBtn.textContent = "Memuat..."; 
-        applyFilterBtn.disabled = true;
-
         try {
             dataTableContainer.classList.remove('hidden');
             allFetchedData = [];
@@ -133,7 +180,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                     const response = await fetch(url);
                     if (!response.ok) {
                         console.warn(`Gagal memuat sesi: ${session.name} (Status: ${response.status})`);
-                        continue; // Skip sesi yang error, jangan stop semuanya
+                        continue; 
                     }
                     const data = await response.json();
                     
@@ -147,11 +194,9 @@ document.addEventListener('DOMContentLoaded', async () => {
                     console.error(`Error fetching specific session ${session.name}:`, innerErr);
                 }
             }
+            
+            renderDynamicTables(allFetchedData);
 
-            updatePeriodFilterDropdown();
-            filterDataByPeriod(); 
-
-            // Logika UI tombol (Edit/Hapus/Share)
             if (selectedSessions.length === 1) {
                 const session = selectedSessions[0];
                 tableTitle.textContent = session.name; 
@@ -176,46 +221,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             if (allFetchedData.length === 0 && selectedSessions.length > 0) {
                 showCustomMessage("Gagal memuat data. Mungkin sesi telah dihapus.", "error");
             }
-        } finally { 
-            applyFilterBtn.textContent = "Tampilkan Data"; 
-            applyFilterBtn.disabled = false; 
-        }
-    }
-
-    function updatePeriodFilterDropdown() {
-        const uniquePeriods = [...new Set(allFetchedData.map(item => item.periode))].filter(p => p).sort().reverse();
-        const displayMap = {};
-        allFetchedData.forEach(item => {
-            if(item.periode) displayMap[item.periode] = item.periode_display;
-        });
-
-        periodFilterSelect.innerHTML = '<option value="latest">Terbaru</option>';
-        if(uniquePeriods.length > 0) {
-            periodFilterSelect.innerHTML += '<option value="all">Semua Periode</option>';
-            uniquePeriods.forEach(p => {
-                periodFilterSelect.innerHTML += `<option value="${p}">${displayMap[p]}</option>`;
-            });
-        }
-        periodFilterSelect.value = 'latest';
-    }
-
-    function filterDataByPeriod() {
-        const selectedPeriod = periodFilterSelect.value;
-        let filteredData = [];
-
-        if (selectedPeriod === 'latest') {
-            if (allFetchedData.length > 0) {
-                const uniquePeriods = [...new Set(allFetchedData.map(item => item.periode))].filter(p => p).sort().reverse();
-                const latestPeriod = uniquePeriods[0];
-                filteredData = allFetchedData.filter(d => d.periode === latestPeriod);
-            }
-        } else if (selectedPeriod === 'all') {
-            filteredData = allFetchedData;
-        } else {
-            filteredData = allFetchedData.filter(d => d.periode === selectedPeriod);
-        }
-
-        renderDynamicTables(filteredData);
+        } 
     }
 
     function renderDynamicTables(data) {
@@ -237,7 +243,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             let apiSessions = [];
             if (response.ok) apiSessions = await response.json();
             
-            // Ambil Data Lokal (Sesi yang baru dibuat tapi belum ada data/upload gambar)
             let localCreatedSessions = [];
             try {
                 localCreatedSessions = JSON.parse(localStorage.getItem(STORAGE_KEY_LOCAL_SESSIONS) || '[]');
@@ -245,103 +250,71 @@ document.addEventListener('DOMContentLoaded', async () => {
                 console.error("Error reading local sessions", e);
             }
 
-            // --- 1. GABUNGKAN SESI API + SESI LOKAL ---
-            // Kita mulai dengan sesi dari API
-            let finalSessions = [...apiSessions];
-            
-            // List nama dari API untuk pengecekan duplikat
+            finalSessionList = [...apiSessions];
             const apiSessionNames = apiSessions.map(s => s.name);
 
-            // Masukkan sesi lokal JIKA belum ada di API
             localCreatedSessions.forEach(localObj => {
                 let sName = (typeof localObj === 'object') ? localObj.name : localObj;
                 let sType = (typeof localObj === 'object') ? localObj.type : 'standard';
                 
-                // Cek apakah nama ini SUDAH ADA di API?
                 if (!apiSessionNames.includes(sName)) {
-                    // Cek apakah nama ini SUDAH ADA di list final (biar gak dobel di dropdown)?
-                    if (!finalSessions.some(s => s.name === sName)) {
-                        // Taruh di paling atas (unshift) biar mudah dicari
-                        finalSessions.unshift({ 
+                    if (!finalSessionList.some(s => s.name === sName)) {
+                        finalSessionList.unshift({ 
                             name: sName, 
                             type: sType, 
                             owner: null, 
                             is_shared: false, 
-                            is_temp: true // Penanda ini sesi lokal
+                            is_temp: true 
                         });
                     }
                 }
             });
 
-            // --- 2. LOGIKA CHECKBOX TERPILIH (FILTER) ---
+            groupedSessions = {};
+            finalSessionList.forEach(session => {
+                const separatorIndex = session.name.indexOf(' - ');
+                if (separatorIndex !== -1) {
+                    const auditType = session.name.substring(0, separatorIndex);
+                    const period = session.name.substring(separatorIndex + 3);
+                    
+                    if (!groupedSessions[auditType]) {
+                        groupedSessions[auditType] = [];
+                    }
+                    if (!groupedSessions[auditType].includes(period)) {
+                        groupedSessions[auditType].push(period);
+                    }
+                } else {
+                    const auditType = "Lainnya";
+                    const period = session.name;
+                     if (!groupedSessions[auditType]) groupedSessions[auditType] = [];
+                     groupedSessions[auditType].push(period);
+                }
+            });
+
+            modalAuditTypeSelect.innerHTML = '<option value="" disabled selected>-- Pilih Jenis Audit --</option>';
+            Object.keys(groupedSessions).sort().forEach(type => {
+                const option = document.createElement('option');
+                option.value = type;
+                option.textContent = type;
+                modalAuditTypeSelect.appendChild(option);
+            });
+
+            populateSessionSelect(finalSessionList.filter(s => !s.is_shared));
+
             let savedFilters = [];
             try {
                 savedFilters = JSON.parse(localStorage.getItem(STORAGE_KEY_FILTERS) || '[]');
             } catch (e) { localStorage.removeItem(STORAGE_KEY_FILTERS); }
 
-            // --- 3. RENDER DROPDOWN ---
-            dropdownList.innerHTML = '';
-            
-            if (finalSessions.length === 0) {
-                dropdownList.innerHTML = '<div class="dropdown-item" style="color: #999;">Belum ada sesi.</div>';
-                populateSessionSelect([]);
-                return;
-            }
-
-            let sessionsToAutoLoad = [];
-            // Buat daftar nama valid dari GABUNGAN (bukan cuma API)
-            const allValidNames = finalSessions.map(s => s.name);
-
-            finalSessions.forEach(sessionObj => {
-                const itemDiv = document.createElement('div');
-                itemDiv.className = 'dropdown-item';
-                
-                const checkbox = document.createElement('input');
-                checkbox.type = 'checkbox';
-                checkbox.className = 'session-checkbox';
-                checkbox.value = sessionObj.name;
-                checkbox.dataset.type = sessionObj.type || 'standard';
-                if(sessionObj.is_shared) checkbox.dataset.ownerId = sessionObj.owner_id;
-                checkbox.id = `chk-${sessionObj.name.replace(/\s+/g, '_')}`;
-                
-                // Cek checkbox jika ada di savedFilters DAN namanya valid di daftar gabungan
-                if (savedFilters.includes(sessionObj.name) && allValidNames.includes(sessionObj.name)) {
-                    checkbox.checked = true;
-                    sessionsToAutoLoad.push({
-                        name: sessionObj.name,
-                        ownerId: sessionObj.is_shared ? sessionObj.owner_id : null,
-                        type: sessionObj.type || 'standard'
-                    });
-                }
-
-                const label = document.createElement('label');
-                label.htmlFor = checkbox.id;
-                label.style.width = '100%';
-                
-                let labelText = sessionObj.name;
-                if(sessionObj.is_shared) labelText += ` <small style="color:#666;">(Shared)</small>`;
-                if(sessionObj.is_temp) labelText += ` <small style="color:#2196F3;">(Baru)</small>`; // Penanda visual
-                
-                label.innerHTML = `<span>${labelText}</span>`;
-
-                itemDiv.addEventListener('click', (e) => {
-                    if (e.target !== checkbox) { checkbox.checked = !checkbox.checked; checkbox.dispatchEvent(new Event('change')); }
-                });
-                checkbox.addEventListener('change', updateDropdownLabel);
-                itemDiv.appendChild(checkbox); itemDiv.appendChild(label); dropdownList.appendChild(itemDiv);
-            });
-            
-            updateDropdownLabel();
-            // Isi dropdown di Modal "Tambah Data" juga
-            populateSessionSelect(finalSessions.filter(s => !s.is_shared));
-
-            // Load data jika ada yang tercentang
-            if (sessionsToAutoLoad.length > 0) {
-                setTimeout(() => {
-                    loadMonitoringData(sessionsToAutoLoad);
-                }, 100);
-            } else {
-                dataTableContainer.classList.add('hidden');
+            if(savedFilters.length > 0) {
+                 const sessionsToLoad = finalSessionList.filter(s => savedFilters.includes(s.name)).map(s => ({
+                     name: s.name,
+                     ownerId: s.is_shared ? s.owner_id : null,
+                     type: s.type || 'standard'
+                 }));
+                 if(sessionsToLoad.length > 0) {
+                     loadMonitoringData(sessionsToLoad);
+                 }
             }
 
         } catch (error) { console.warn(error); }
@@ -358,22 +331,6 @@ document.addEventListener('DOMContentLoaded', async () => {
             option.value = sess.name; option.textContent = sess.name; option.dataset.type = sess.type;
             auditeeSessionSelect.appendChild(option);
         });
-    }
-
-    if(applyFilterBtn) {
-        applyFilterBtn.addEventListener('click', () => {
-            const checkedBoxes = document.querySelectorAll('.session-checkbox:checked');
-            const selectedSessions = Array.from(checkedBoxes).map(cb => ({
-                name: cb.value, 
-                ownerId: cb.dataset.ownerId || null, 
-                type: cb.dataset.type || 'standard'
-            }));
-            loadMonitoringData(selectedSessions);
-        });
-    }
-    
-    if (periodFilterSelect) {
-        periodFilterSelect.addEventListener('change', filterDataByPeriod);
     }
 
     function createSessionTableHTML(sessionName, data, ownerId, showHeader, monitoringType) {
@@ -489,8 +446,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch('/api/add_auditee_data', { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) }); 
                 const r = await res.json(); if(!res.ok) throw new Error(r.error); 
                 showCustomMessage(r.message, 'success'); closeModal(addAuditeeModal); addAuditeeForm.reset(); 
-                const cb = document.getElementById(`chk-${d.session_name.replace(/\s+/g, '_')}`);
-                if(cb) { cb.checked = true; applyFilterBtn.click(); }
+                loadMonitoringData(finalSessionList.filter(s => s.name === d.session_name));
             } catch(err) { showCustomMessage(err.message, 'error'); } 
         });
     }
@@ -502,7 +458,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const res = await fetch(`/api/edit_auditee_data/${d.id}`, { method:'POST', headers:{'Content-Type':'application/json'}, body:JSON.stringify(d) }); 
                 const r = await res.json(); if(!res.ok) throw new Error(r.error); 
                 showCustomMessage(r.message, 'success'); closeModal(editAuditeeModal); 
-                applyFilterBtn.click(); 
+                if(currentSelectedSessions.length > 0) loadMonitoringData(currentSelectedSessions);
             } catch(err) { showCustomMessage(err.message, 'error'); } 
         });
     }
@@ -546,7 +502,7 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             if(event.target.classList.contains('delete-result-btn')) {
                 const id = event.target.dataset.id;
-                showCustomConfirm('Hapus?', async (y) => { if(y) { await fetch(`/api/delete_auditee/${id}`, {method:'DELETE'}); applyFilterBtn.click(); } });
+                showCustomConfirm('Hapus?', async (y) => { if(y) { await fetch(`/api/delete_auditee/${id}`, {method:'DELETE'}); if(currentSelectedSessions.length > 0) loadMonitoringData(currentSelectedSessions); } });
             }
         });
         
@@ -555,7 +511,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 const f = event.target.files[0]; if(!f) return;
                 showCustomMessage("Memproses gambar...", "info");
                 const fd = new FormData(); fd.append('file', f); fd.append('session_name', event.target.dataset.session);
-                try { await fetch('/api/upload_ams_image', {method:'POST', body:fd}); showCustomMessage("Sukses!", "success"); applyFilterBtn.click(); }
+                try { await fetch('/api/upload_ams_image', {method:'POST', body:fd}); showCustomMessage("Sukses!", "success"); if(currentSelectedSessions.length > 0) loadMonitoringData(currentSelectedSessions); }
                 catch(err) { showCustomMessage("Gagal: " + err, "error"); }
                 event.target.value = '';
             }
@@ -593,6 +549,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 showCustomMessage("Sesi dihapus.", "success"); 
                 
                 dataTableContainer.classList.add('hidden'); 
+                if(selectionInfoDisplay) selectionInfoDisplay.classList.add('hidden');
 
                 currentSessionName = null;
 
