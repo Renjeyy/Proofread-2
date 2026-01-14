@@ -541,7 +541,8 @@
                             <th class="th-rencana col-medium">Perubahan Target</th>
                             <th class="th-status col-wide">Tindak Lanjut</th>
                             <th class="th-status col-medium">Signifikansi</th>
-                            <th class="th-status col-medium" id="header-status-prev">Status Akhir (Bulan Lalu)</th>
+                            <th class="th-status col-wide">Status Update</th>
+                            <th class="th-status col-medium" id="header-status-prev">Status Akhir (Excel)</th>
                             <th class="th-status col-medium" id="header-status-curr">Status Akhir (Bulan Ini)</th>
                             <th class="th-status col-narrow">Jml Rekomendasi</th>
                             <th class="th-status col-narrow">Selesai</th>
@@ -861,8 +862,29 @@
         </div>
     </div>
 
+    <div id="status-update-modal" class="modal hidden" style="z-index: 3200;">
+        <div class="modal-content" style="max-width: 500px; padding: 25px; border-radius: 12px;">
+            <span class="modal-close-btn" onclick="document.getElementById('status-update-modal').classList.add('hidden')">&times;</span>
+            <h3 style="color: #C62828; margin-bottom: 10px;">Update Status</h3>
+            <p id="modal-update-period-label" style="font-weight: bold; margin-bottom: 15px; color: #555;"></p>
+            
+            <form id="status-update-form">
+                <input type="hidden" id="update-row-id">
+                <input type="hidden" id="update-period-key">
+                <div class="form-group">
+                    <label>Isi Update (Setiap baris baru akan jadi poin nomor):</label>
+                    <textarea id="update-content-input" rows="6" style="width:100%; padding:10px; border:1px solid #ccc; border-radius:6px;" placeholder="Contoh:\nMelakukan konfirmasi ke Auditee\nMenunggu dokumen pendukung"></textarea>
+                </div>
+                <div class="modal-actions" style="margin-top: 20px;">
+                    <button type="button" class="cancel-btn" onclick="document.getElementById('status-update-modal').classList.add('hidden')">Batal</button>
+                    <button type="submit" class="login-btn">Simpan Update</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
     <script src="{{ url_for('static', filename='script.js') }}"></script>
-    <script src="{{ url_for('static', filename='ams_temuan.js') }}?v=13"></script>
+    <script src="{{ url_for('static', filename='ams_temuan.js') }}?v=14"></script>
     
     <script>
         function openSessionInNewPage() {
