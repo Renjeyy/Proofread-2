@@ -2688,7 +2688,7 @@ def api_upload_ams_image():
         3. Jika kolom berupa persentase (%), AMBIL ANGKA JUMLAHNYA SAJA yang ada di sebelahnya.
         """
 
-        model = genai.GenerativeModel('gemini-3-flash-preview') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         track_gemini_usage()
         
         print("[DEBUG] Mengirim ke Gemini...")
@@ -3566,7 +3566,7 @@ def api_upload_tl_image():
         PENTING: Output HANYA JSON Array. Jangan pakai markdown.
         """
         
-        model = genai.GenerativeModel('gemini-3-flash-preview')
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         track_gemini_usage()
         response = model.generate_content([prompt, img])
         cleaned = response.text.replace('```json', '').replace('```', '').strip()
@@ -4491,7 +4491,7 @@ def api_generate_email_body():
     """
     
     try:
-        ai_model = genai.GenerativeModel('gemini-3-flash-preview') 
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt) 
         track_gemini_usage()
         response = ai_model.generate_content(full_prompt)
         clean_body = response.text.strip().replace('**', '').replace('*', '')
@@ -5029,7 +5029,7 @@ def api_generate_dashboard_insight():
     """
 
     try:
-        model = genai.GenerativeModel('gemini-3.0-flash') 
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         track_gemini_usage()
         response = model.generate_content(prompt)
         
@@ -5042,3 +5042,4 @@ def api_generate_dashboard_insight():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
