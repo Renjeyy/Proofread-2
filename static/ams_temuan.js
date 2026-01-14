@@ -114,17 +114,16 @@ document.addEventListener('DOMContentLoaded', async () => {
     const STORAGE_KEY_TEMUAN = 'ams_active_temuan_id';
 
     function updateDynamicHeaders(sessionName) {
-        if (!sessionName) return;
-
         const months = {
             'januari': 0, 'februari': 1, 'maret': 2, 'april': 3, 'mei': 4, 'juni': 5,
             'juli': 6, 'agustus': 7, 'september': 8, 'oktober': 9, 'november': 10, 'desember': 11,
             'jan': 0, 'feb': 1, 'mar': 2, 'apr': 3, 'jun': 5, 'jul': 6, 'agu': 7, 'agt': 7, 'sep': 8, 'okt': 9, 'nov': 10, 'dec': 11, 'des': 11
         };
 
-        const lowerName = sessionName.toLowerCase();
+        const lowerName = sessionName ? sessionName.toLowerCase() : "";
         let detectedMonth = -1;
         let detectedYear = new Date().getFullYear(); 
+
         const yearMatch = lowerName.match(/20\d{2}/);
         if (yearMatch) {
             detectedYear = parseInt(yearMatch[0]);
@@ -138,17 +137,15 @@ document.addEventListener('DOMContentLoaded', async () => {
         }
 
         if (detectedMonth === -1) {
-            const today = new Date();
-            detectedMonth = today.getMonth() - 1; 
-            if (detectedMonth < 0) {
-                detectedMonth = 11;
-                detectedYear = today.getFullYear() - 1;
-            }
+            detectedMonth = 0; 
         }
-        const dateCurr = new Date(detectedYear, detectedMonth + 1, 0); 
-        const datePrev = new Date(detectedYear, detectedMonth, 0); 
-        dynamicCutoffCurr = dateCurr;
-        dynamicCutoffPrev = datePrev;
+        
+        const dateBaseExcel = new Date(detectedYear, detectedMonth + 1, 0); 
+        dynamicCutoffPrev = dateBaseExcel; 
+
+        const today = new Date();
+        const dateCurrentRealtime = new Date(today.getFullYear(), today.getMonth() + 1, 0);
+        dynamicCutoffCurr = dateCurrentRealtime; 
 
         const headerPrev = document.getElementById('header-status-prev');
         const headerCurr = document.getElementById('header-status-curr');
@@ -156,11 +153,20 @@ document.addEventListener('DOMContentLoaded', async () => {
         const formatHeader = (d) => {
             const m = d.toLocaleDateString('id-ID', { month: 'short' });
             const y = d.getFullYear().toString().slice(-2);
-            return `Status Akhir ${m} ${y}`;
+            return `Status Akhir ${m} ${y}`; 
         };
 
-        if (headerPrev) headerPrev.innerText = formatHeader(datePrev);
-        if (headerCurr) headerCurr.innerText = formatHeader(dateCurr);
+        if (headerPrev) {
+            if (detectedMonth === 0 && !lowerName.includes('jan')) {
+                 headerPrev.innerText = "Status Akhir (Excel)";
+            } else {
+                 headerPrev.innerText = formatHeader(dateBaseExcel);
+            }
+        }
+        
+        if (headerCurr) {
+            headerCurr.innerText = formatHeader(dateCurrentRealtime);
+        }
     }
 
     async function initApp() {
@@ -541,6 +547,40 @@ document.addEventListener('DOMContentLoaded', async () => {
                 sortPicTable(key);
             });
         });
+        
+        const updateForm = document.getElementById('status-update-form');
+        if (updateForm) {
+            updateForm.addEventListener('submit', async (e) => {
+                e.preventDefault();
+                const rowId = document.getElementById('update-row-id').value;
+                const periodKey = document.getElementById('update-period-key').value;
+                const content = document.getElementById('update-content-input').value;
+                const btn = updateForm.querySelector('button[type="submit"]');
+                
+                btn.disabled = true;
+                btn.textContent = "Menyimpan...";
+                
+                try {
+                    const res = await fetch('/api/save_status_update', {
+                        method: 'POST',
+                        headers: {'Content-Type': 'application/json'},
+                        body: JSON.stringify({ row_id: rowId, period_key: periodKey, content: content })
+                    });
+                    
+                    if (res.ok) {
+                        toggleModal('status-update-modal', false);
+                        loadTemuanData(currentSessionId);
+                    } else {
+                        alert("Gagal menyimpan update.");
+                    }
+                } catch (err) {
+                    alert("Error koneksi.");
+                } finally {
+                    btn.disabled = false;
+                    btn.textContent = "Simpan Update";
+                }
+            });
+        }
     }
 
     function toggleModal(modalId, show) {
@@ -746,23 +786,119 @@ document.addEventListener('DOMContentLoaded', async () => {
         renderTable(filtered);
     }
 
+    function renderStatusUpdateCell(row) {
+        let startDate = new Date();
+        if (row.created_at) {
+            startDate = new Date(row.created_at);
+        } else {
+            startDate = new Date(); 
+        }
+
+        const now = new Date();
+        const startYear = startDate.getFullYear();
+        const startMonth = startDate.getMonth(); 
+        const currentYear = now.getFullYear();
+        const currentMonth = now.getMonth();
+
+        let history = {};
+        try {
+            history = JSON.parse(row.update_history || "{}");
+        } catch (e) { history = {}; }
+
+        let html = '<div style="display:flex; flex-direction:column; gap:10px;">';
+
+        let loopDate = new Date(startYear, startMonth, 1);
+        
+        while (loopDate <= now || (loopDate.getMonth() === currentMonth && loopDate.getFullYear() === currentYear)) {
+            const y = loopDate.getFullYear();
+            const m = loopDate.getMonth();
+            const periodKey = `${y}-${String(m + 1).padStart(2, '0')}`; 
+            
+            const monthName = loopDate.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+            
+            const content = history[periodKey];
+            const isCurrentMonth = (y === currentYear && m === currentMonth);
+            
+            html += `<div style="border:1px solid #eee; border-radius:6px; overflow:hidden;">`;
+            
+            html += `<div style="background:#f5f5f5; padding:5px 10px; font-weight:bold; font-size:0.85em; color:#333; border-bottom:1px solid #eee;">${monthName}</div>`;
+            
+            html += `<div style="padding:8px 10px; font-size:0.9em;">`;
+            
+            if (content && content.trim() !== "") {
+                const lines = content.split('\n').filter(l => l.trim() !== '');
+                html += `<ol style="margin:0; padding-left:20px; text-align:justify;">`;
+                lines.forEach(line => {
+                    html += `<li style="margin-bottom:2px;">${line}</li>`;
+                });
+                html += `</ol>`;
+                if (isCurrentMonth) {
+                    html += `<div style="text-align:right; margin-top:5px;"><small><a href="#" onclick="openUpdateModal(${row.id}, '${periodKey}', '${monthName}'); return false;" style="color:#1976d2;">Edit</a></small></div>`;
+                }
+            } else {
+                if (isCurrentMonth) {
+                    html += `<div style="text-align:center; cursor:pointer; color:#d32f2f; font-style:italic;" onclick="openUpdateModal(${row.id}, '${periodKey}', '${monthName}')">
+                                Belum ada update <i class='bx bx-edit-alt'></i>
+                             </div>`;
+                } else {
+                    html += `<div style="text-align:center; color:#999;">Tidak ada update pada bulan ini</div>`;
+                }
+            }
+            
+            html += `</div></div>`; 
+
+            loopDate.setMonth(loopDate.getMonth() + 1);
+            
+            if (loopDate > now && loopDate.getMonth() !== currentMonth) break;
+        }
+
+        html += '</div>';
+        return html;
+    }
+
+    window.openUpdateModal = function(rowId, periodKey, periodLabel) {
+        document.getElementById('update-row-id').value = rowId;
+        document.getElementById('update-period-key').value = periodKey;
+        document.getElementById('modal-update-period-label').textContent = periodLabel;
+        
+        const row = allData.find(r => r.id === rowId);
+        let currentContent = "";
+        if (row && row.update_history) {
+            try {
+                const h = JSON.parse(row.update_history);
+                currentContent = h[periodKey] || "";
+            } catch(e) {}
+        }
+        document.getElementById('update-content-input').value = currentContent;
+        
+        toggleModal('status-update-modal', true);
+    }
+
     function renderTable(dataList) {
         if (!temuanTbody) return;
         temuanTbody.innerHTML = '';
 
-        const getStatus = (tDateStr, cutoffDate, forceSelesai) => {
-            if (forceSelesai) {
+        const renderStatusBadge = (statusText) => {
+            const lower = String(statusText).toLowerCase();
+            if (lower.includes('selesai') || lower.includes('done')) {
                 return '<span class="status-bjt" style="background-color: #d4edda; color: #155724; border-color: #c3e6cb;">Selesai</span>';
             }
+            if (lower.includes('belum jatuh') || lower.includes('bjt')) {
+                return '<span class="status-bjt">Belum Jatuh Tempo</span>';
+            }
+            if (lower.includes('os') || lower.includes('outstanding')) {
+                return '<span class="status-os">OS</span>';
+            }
+            return `<span style="background:#eee; padding:4px 10px; border-radius:20px; font-size:0.85em;">${statusText}</span>`;
+        };
 
+        const getStatus = (tDateStr, cutoffDate, forceSelesai) => {
+            if (forceSelesai) return renderStatusBadge('Selesai');
             if (!tDateStr) return '-';
             const tDate = new Date(tDateStr);
             tDate.setHours(0, 0, 0, 0);
             cutoffDate.setHours(0, 0, 0, 0);
-
-            return tDate > cutoffDate ?
-                '<span class="status-bjt">Belum Jatuh Tempo</span>' :
-                '<span class="status-os">OS</span>';
+            return tDate > cutoffDate ? renderStatusBadge('Belum Jatuh Tempo') : renderStatusBadge('OS');
         };
 
         const formatPICCell = (picString) => {
@@ -774,6 +910,9 @@ document.addEventListener('DOMContentLoaded', async () => {
             }
             return userMap[picString] || picString;
         };
+        
+        const val = (v) => (v === null || v === undefined) ? '' : v;
+        const num = (v) => (v === null || v === undefined) ? 0 : v;
 
         if (dataList.length === 0) {
             temuanTbody.innerHTML = '<tr><td colspan="26" class="text-center" style="padding: 40px; color: #666;">Tidak ada data ditemukan.</td></tr>';
@@ -785,19 +924,31 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             let rawControl = row.control || "";
             let isSelesaiExcel = false;
-            
+            let forcedStatusExcel = null;
+
             if (rawControl.includes('$$FORCE_SELESAI$$')) {
                 isSelesaiExcel = true;
-                rawControl = rawControl.replace('$$FORCE_SELESAI$$', '').trim();
             }
+            
+            if (rawControl.includes('$$STAT_EXCEL:')) {
+                const match = rawControl.match(/\$\$STAT_EXCEL:(.*?)\$\$/);
+                if (match && match[1]) {
+                    forcedStatusExcel = match[1];
+                }
+            }
+            
+            let displayControl = rawControl.replace('$$FORCE_SELESAI$$', '').replace(/\$\$STAT_EXCEL:.*?\$\$/g, '').trim();
 
             const targetDate = row.perubahan_target || row.target_penyelesaian;
 
-            const statusPrevHtml = getStatus(targetDate, dynamicCutoffPrev, isSelesaiExcel);
-            const statusCurrHtml = getStatus(targetDate, dynamicCutoffCurr, isSelesaiExcel);
+            let statusPrevHtml;
+            if (forcedStatusExcel) {
+                statusPrevHtml = renderStatusBadge(forcedStatusExcel);
+            } else {
+                statusPrevHtml = getStatus(targetDate, dynamicCutoffPrev, isSelesaiExcel);
+            }
 
-            const val = (v) => (v === null || v === undefined) ? '' : v;
-            const num = (v) => (v === null || v === undefined) ? 0 : v;
+            const statusCurrHtml = getStatus(targetDate, dynamicCutoffCurr, isSelesaiExcel);
 
             tr.innerHTML = `
                 <td class="text-center">${val(row.no_aoi)}</td>
@@ -817,6 +968,8 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td class="col-wide" style="text-align: justify; vertical-align: middle;">${formatListText(row.tindak_lanjut)}</td>
                 <td class="text-center">${val(row.signifikansi)}</td>
                 
+                <td class="col-wide" style="vertical-align:top !important;">${renderStatusUpdateCell(row)}</td>
+
                 <td class="text-center">${statusPrevHtml}</td>
                 <td class="text-center">${statusCurrHtml}</td>
                 
@@ -826,7 +979,7 @@ document.addEventListener('DOMContentLoaded', async () => {
                 <td class="text-center">${num(row.os_bd)}</td>
                 <td class="text-center">${num(row.tdd)}</td>
                 
-                <td class="text-center">${val(rawControl)}</td>
+                <td class="text-center">${val(displayControl)}</td>
                 
                 <td class="col-wide text-left" style="background-color: #fffde7; min-width: 320px;">
                     <div class="comment-list">${renderCommentsHTML(row.comments)}</div>
@@ -1358,6 +1511,8 @@ document.addEventListener('DOMContentLoaded', async () => {
         let lastNoAoi = "", lastAuditee = "", lastKlasifikasi = "", lastJenisAoi = "", lastNoLha = "", lastNamaPenugasan = "";
         let lastTindakLanjut = ""; 
 
+        const hasCol = (key) => mapConfig[key] !== undefined;
+
         for (let i = headerRowIndex + 1; i < rawData.length; i++) {
             const row = rawData[i];
             if (!row || row.length === 0) continue;
@@ -1370,6 +1525,8 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
 
             const getNum = (key) => {
+                if (!hasCol(key)) return 0;
+                
                 const val = getVal(key);
                 if (val === "") return "0"; 
                 const clean = val.replace(/[^0-9\.\-]/g, '');
@@ -1377,9 +1534,11 @@ document.addEventListener('DOMContentLoaded', async () => {
             };
             
             let isExcelSelesai = false;
-            const valSelesai = parseInt(getNum('selesai'));
-            const valJml = parseInt(getNum('jml_rekomendasi'));
-            if(valJml > 0 && valSelesai === valJml) isExcelSelesai = true;
+            if (hasCol('selesai') && hasCol('jml_rekomendasi')) {
+                const valSelesai = parseInt(getNum('selesai'));
+                const valJml = parseInt(getNum('jml_rekomendasi'));
+                if(valJml > 0 && valSelesai === valJml) isExcelSelesai = true;
+            }
 
             const statusIndices = [];
             headers.forEach((h, idx) => {
@@ -1392,10 +1551,18 @@ document.addEventListener('DOMContentLoaded', async () => {
                 }
             });
 
-            let rawControl = getVal('control');
+            let rawControl = hasCol('control') ? getVal('control') : "";
+            
             if (isExcelSelesai) {
                 if(!rawControl.includes('$$FORCE_SELESAI$$')) {
                     rawControl = rawControl + " $$FORCE_SELESAI$$";
+                }
+            }
+
+            if (hasCol('status_excel')) {
+                const statExcel = getVal('status_excel');
+                if (statExcel) {
+                    rawControl += ` $$STAT_EXCEL:${statExcel}$$`;
                 }
             }
 
@@ -1405,15 +1572,29 @@ document.addEventListener('DOMContentLoaded', async () => {
             
             if (rawNoAoi) lastNoAoi = rawNoAoi;
             if (rawAuditee) lastAuditee = rawAuditee;
-            if (getVal('klasifikasi')) lastKlasifikasi = getVal('klasifikasi');
-            if (getVal('jenis_aoi')) lastJenisAoi = getVal('jenis_aoi');
-            if (getVal('no_lha')) lastNoLha = getVal('no_lha');
-            if (getVal('nama_penugasan')) lastNamaPenugasan = getVal('nama_penugasan');
+            
+            if (hasCol('klasifikasi')) {
+                let val = getVal('klasifikasi');
+                if (val) lastKlasifikasi = val;
+            }
+            if (hasCol('jenis_aoi')) {
+                let val = getVal('jenis_aoi');
+                if (val) lastJenisAoi = val;
+            }
+            if (hasCol('no_lha')) {
+                let val = getVal('no_lha');
+                if (val) lastNoLha = val;
+            }
+            if (hasCol('nama_penugasan')) {
+                let val = getVal('nama_penugasan');
+                if (val) lastNamaPenugasan = val;
+            }
             
             if (rawTindakLanjut) lastTindakLanjut = rawTindakLanjut;
             const finalTindakLanjut = rawTindakLanjut || lastTindakLanjut;
 
             const hasContent = (getVal('rekomendasi') || getVal('rencana_tl') || finalTindakLanjut || getVal('aoi'));
+            
             const finalNoAoi = rawNoAoi || (hasContent ? lastNoAoi : "");
             const finalAuditee = rawAuditee || (hasContent ? lastAuditee : "");
 
@@ -1421,26 +1602,32 @@ document.addEventListener('DOMContentLoaded', async () => {
 
             const item = {
                 no_aoi: finalNoAoi,
-                pic_skai: "",
-                jenis_aoi: getVal('jenis_aoi') || (hasContent ? lastJenisAoi : ""),
-                klasifikasi: getVal('klasifikasi') || (hasContent ? lastKlasifikasi : ""),
-                no_lha: getVal('no_lha') || (hasContent ? lastNoLha : ""),
-                nama_penugasan: getVal('nama_penugasan') || (hasContent ? lastNamaPenugasan : ""),
-                aoi: getVal('aoi'),
-                rekomendasi: getVal('rekomendasi'),
-                rencana_tl: getVal('rencana_tl'),
-                rencana_evidence: getVal('rencana_evidence'),
+                pic_skai: "", 
+                
+                jenis_aoi: hasCol('jenis_aoi') ? (getVal('jenis_aoi') || (hasContent ? lastJenisAoi : "")) : "",
+                klasifikasi: hasCol('klasifikasi') ? (getVal('klasifikasi') || (hasContent ? lastKlasifikasi : "")) : "",
+                no_lha: hasCol('no_lha') ? (getVal('no_lha') || (hasContent ? lastNoLha : "")) : "",
+                nama_penugasan: hasCol('nama_penugasan') ? (getVal('nama_penugasan') || (hasContent ? lastNamaPenugasan : "")) : "",
+                
+                aoi: hasCol('aoi') ? getVal('aoi') : "",
+                rekomendasi: hasCol('rekomendasi') ? getVal('rekomendasi') : "",
+                rencana_tl: hasCol('rencana_tl') ? getVal('rencana_tl') : "",
+                rencana_evidence: hasCol('rencana_evidence') ? getVal('rencana_evidence') : "",
+                
                 auditee: finalAuditee,
-                pic_auditee: getVal('pic_auditee'),
-                target_penyelesaian: getVal('target_penyelesaian'),
-                perubahan_target: getVal('perubahan_target'),
-                tindak_lanjut: finalTindakLanjut,
-                signifikansi: getVal('signifikansi'),
+                pic_auditee: hasCol('pic_auditee') ? getVal('pic_auditee') : "",
+                
+                target_penyelesaian: hasCol('target_penyelesaian') ? getVal('target_penyelesaian') : "",
+                perubahan_target: hasCol('perubahan_target') ? getVal('perubahan_target') : "",
+                tindak_lanjut: hasCol('tindak_lanjut') ? finalTindakLanjut : "", 
+                signifikansi: hasCol('signifikansi') ? getVal('signifikansi') : "",
+                
                 jml_rekomendasi: getNum('jml_rekomendasi'),
                 selesai: getNum('selesai'),
                 belum_jt_bs: getNum('belum_jt_bs'),
                 os_bd: getNum('os_bd'),
                 tdd: getNum('tdd'),
+                
                 control: rawControl
             };
             mappedData.push(item);
