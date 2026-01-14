@@ -609,7 +609,7 @@ def analyze_document_by_section(original_text, revised_text):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         response_text = response.text.strip()
         response_text = re.sub(r'```json\s*|\s*```', '', response_text)
         analysis_result = json.loads(response_text)
@@ -660,7 +660,7 @@ def analyze_context_difference(original_sentence, revised_sentence):
 
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         response_text = response.text.strip()
         try:
             analysis_result = json.loads(response_text)
@@ -821,7 +821,7 @@ def review_document_comprehensive(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -883,7 +883,7 @@ def analyze_rewording_only(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -5042,4 +5042,5 @@ def api_generate_dashboard_insight():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
