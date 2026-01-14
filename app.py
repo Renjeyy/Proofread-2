@@ -271,8 +271,6 @@ class AmsTemuanRow(db.Model):
     auditor_notes = db.Column(db.Text, nullable=True)
     last_modified_by = db.Column(db.String(100), nullable=True)
     last_modified_at = db.Column(db.DateTime, nullable=True)
-    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
-    update_history = db.Column(db.Text, default="{}")
 
 class AmsTemuanComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -542,10 +540,7 @@ def proofread_with_gemini(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         pattern = re.compile(r"\[SALAH\]\s*(.*?)\s*->\s*\[BENAR\]\s*(.*?)\s*->\s*\[KALIMAT\]\s*(.*?)\s*(\n|$)", re.IGNORECASE | re.DOTALL)
         found_errors = pattern.findall(response.text)
         return [{"salah": salah.strip(), "benar": benar.strip(), "kalimat": kalimat.strip()} for salah, benar, kalimat, _ in found_errors]
@@ -612,10 +607,7 @@ def analyze_document_by_section(original_text, revised_text):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         response_text = response.text.strip()
         response_text = re.sub(r'```json\s*|\s*```', '', response_text)
         analysis_result = json.loads(response_text)
@@ -625,7 +617,6 @@ def analyze_document_by_section(original_text, revised_text):
     except Exception as e:
         print(f"Error analysis: {e}")
         return [{"sub_bab_asal": "Error", "sub_bab_referensi": "-", "kalimat_menyimpang": "Gagal memproses respons AI.", "alasan": str(e)}]
-
 
 def analyze_context_difference(original_sentence, revised_sentence):
     """
@@ -667,10 +658,7 @@ def analyze_context_difference(original_sentence, revised_sentence):
 
     try:
         track_gemini_usage()
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         response_text = response.text.strip()
         try:
             analysis_result = json.loads(response_text)
@@ -733,10 +721,7 @@ def analyze_document_coherence(full_text):
     {full_text}
     """
     try:
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         pattern = re.compile(
             r"\[TOPIK UTAMA\]\s*(.*?)\s*->\s*\[TEKS ASLI\]\s*(.*?)\s*->\s*\[SARAN REVISI\]\s*(.*?)\s*(?:->\s*\[CATATAN\]\s*(.*?)\s*)?(\n|$)", 
             re.IGNORECASE | re.DOTALL
@@ -789,10 +774,7 @@ def get_structural_recommendations(full_text):
     {full_text}
     """
     try:
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         cleaned_response = re.sub(r'[—–]', '-', response.text.strip()) 
         cleaned_response = re.sub(r'```json\s*|\s*```', '', cleaned_response)
         return json.loads(cleaned_response)
@@ -837,10 +819,7 @@ def review_document_comprehensive(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -861,23 +840,6 @@ def review_document_comprehensive(text_to_check):
     except Exception as e:
         print(f"Error Reviu Dokumen: {e}")
         return [{"kategori": "Error", "masalah": "Gagal analisis", "saran": "-", "penjelasan": f"Sistem: {str(e)}", "lokasi": "-"}]
-
-def generate_revised_docx(file_bytes, errors):
-    doc = docx.Document(io.BytesIO(file_bytes))
-    
-    for error in reversed(errors):
-        salah = error.get("salah") or error.get("Kata/Frasa Salah")
-        benar = error.get("benar") or error.get("Perbaikan Sesuai KBBI")
-        
-        if not salah or not benar:
-            continue
-            
-        for para in doc.paragraphs:
-            if salah in para.text:
-                para.text = para.text.replace(salah, benar) 
-    output_buffer = io.BytesIO()
-    doc.save(output_buffer)
-    return output_buffer.getvalue()
 
 def analyze_rewording_only(text_to_check):
     if not text_to_check or text_to_check.isspace():
@@ -919,10 +881,7 @@ def analyze_rewording_only(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -938,6 +897,23 @@ def analyze_rewording_only(text_to_check):
     except Exception as e:
         print(f"Error Rewording: {e}")
         return [{"masalah": "Gagal analisis", "saran": "-", "penjelasan": str(e), "lokasi": "-"}]
+
+def generate_revised_docx(file_bytes, errors):
+    doc = docx.Document(io.BytesIO(file_bytes))
+    
+    for error in reversed(errors):
+        salah = error.get("salah") or error.get("Kata/Frasa Salah")
+        benar = error.get("benar") or error.get("Perbaikan Sesuai KBBI")
+        
+        if not salah or not benar:
+            continue
+            
+        for para in doc.paragraphs:
+            if salah in para.text:
+                para.text = para.text.replace(salah, benar) 
+    output_buffer = io.BytesIO()
+    doc.save(output_buffer)
+    return output_buffer.getvalue()
 
 def generate_highlighted_docx(file_bytes, errors):
     doc = docx.Document(io.BytesIO(file_bytes))
@@ -1160,31 +1136,6 @@ def _apply_universal_highlights(doc, analysis_data):
         for row in table.rows:
             for cell in row.cells:
                 process_paragraphs(cell.paragraphs)
-
-@app.route('/api/save_status_update', methods=['POST'])
-@login_required
-def api_save_status_update():
-    data = request.json
-    row_id = data.get('row_id')
-    period_key = data.get('period_key') 
-    content = data.get('content')
-
-    row = AmsTemuanRow.query.get(row_id)
-    if not row:
-        return jsonify({"error": "Data tidak ditemukan"}), 404
-    if row.user_id != current_user.id:
-        pass 
-
-    try:
-        history = json.loads(row.update_history) if row.update_history else {}
-        history[period_key] = content
-        row.update_history = json.dumps(history)
-        
-        db.session.commit()
-        return jsonify({"status": "success"}), 200
-    except Exception as e:
-        db.session.rollback()
-        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/common/download_highlighted', methods=['POST'])
 @login_required 
@@ -1442,7 +1393,6 @@ def register():
 @app.route('/laporan_bulanan/<int:session_id>')
 @login_required
 def laporan_bulanan_page(session_id):
-    """Halaman khusus Laporan Bulanan dengan logika perhitungan ganda (Prev + Curr)"""
     session = AmsTemuanSession.query.get_or_404(session_id)
     is_owner = (session.user_id == current_user.id)
     is_shared = False
@@ -1457,7 +1407,12 @@ def laporan_bulanan_page(session_id):
     if not is_owner and not is_shared:
         return "Akses Ditolak", 403
 
-    return render_template('laporan_bulanan.html', session=session, current_user=current_user)
+    auditees_param = request.args.get('auditees')
+    selected_auditees = None
+    if auditees_param:
+        selected_auditees = auditees_param.split(',')
+
+    return render_template('laporan_bulanan.html', session=session, current_user=current_user, selected_auditees=selected_auditees)
 
 @app.route('/ams_auditors')
 @login_required
@@ -1596,38 +1551,23 @@ def library_page():
 @login_required
 def api_library_list():
     try:
-        shelf_id = request.args.get('shelf_id')
-
-        query = LibraryFile.query.filter_by(user_id=current_user.id)
-
-        if shelf_id:
-            query = query.filter_by(shelf_id=shelf_id)
-
-        files = query.order_by(LibraryFile.upload_date.desc()).all()
-        
+        files = LibraryFile.query.filter_by(user_id=current_user.id).order_by(LibraryFile.upload_date.desc()).all()
         data = []
         for f in files:
-            tgl = f.upload_date.strftime('%d %b %Y') if f.upload_date else "Baru"
-            
             data.append({
-                'id': f.id,
-                'title': f.title or "Tanpa Judul",
-                'category': f.category or "-",
-                'summary': f.summary or "-",
-                'cluster': f.cluster or "-",
-                "url": url_for('api_library_view', file_id=f.id, filename=f.filename),
-                'upload_date': tgl,
-                'type': f.file_type or "FILE",
-                'shelf_id': f.shelf_id
+                "id": f.id,
+                "title": f.title,
+                "cluster": f.cluster,
+                "shelf_id": f.shelf_id,
+                "summary": f.summary,
+                "category": f.category,
+                "size": f.file_size,
+                "type": f.file_type,
+                "url": url_for('api_library_view', file_id=f.id, filename=f.filename)
             })
-            
         return jsonify(data), 200
-
     except Exception as e:
-        print(f"[CRITICAL ERROR LIBRARY LIST] {str(e)}")
-        import traceback
-        traceback.print_exc()
-        return jsonify({"error": "Terjadi kesalahan server saat memuat data."}), 500
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/library/upload', methods=['POST'])
 @login_required
@@ -2696,8 +2636,6 @@ def api_upload_ams_image():
 
     try:
         # 2. Proses Gambar ke Gemini
-        # Pastikan pointer file ada di awal sebelum dibaca PIL
-        file.seek(0)
         img = PIL.Image.open(file)
         
         # Tentukan Mode Prompt
@@ -2723,23 +2661,20 @@ def api_upload_ams_image():
         3. Jika kolom berupa persentase (%), AMBIL ANGKA JUMLAHNYA SAJA yang ada di sebelahnya.
         """
 
-        # --- UPDATE BAGIAN INI UNTUK GOOGLE GENAI ---
-        # Inisialisasi Client (Pastikan 'from google import genai' ada di atas file)
-        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-        
+        model = genai.GenerativeModel('gemini-3-flash-preview') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
         track_gemini_usage()
         
         print("[DEBUG] Mengirim ke Gemini...")
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=[prompt, img]
-        )
-        
+        response = model.generate_content([prompt, img])
         raw_text = response.text
-        # ---------------------------------------------
         
         print(f"[DEBUG] Raw Response dari AI:\n{raw_text}\n-------------------")
+
+        # 3. Pembersihan JSON (Cleaning)
+        # Hapus markdown ```json dan ```
         clean_json = raw_text.replace('```json', '').replace('```', '').strip()
+        
+        # Cari kurung siku pertama '[' dan terakhir ']' untuk isolasi array
         start_idx = clean_json.find('[')
         end_idx = clean_json.rfind(']')
         
@@ -2757,8 +2692,10 @@ def api_upload_ams_image():
         if not extracted_data:
             raise ValueError("Hasil ekstraksi kosong (array []). Coba gambar yang lebih jelas.")
 
-        # Helper Functions
+        # 4. Helper Function: Normalisasi Key & Angka
+        # Fungsi ini mencari value meskipun AI salah ketik huruf besar/kecil
         def get_val(item, keys_list):
+            # Buat dict lowercase
             item_lower = {k.lower(): v for k, v in item.items()}
             for k in keys_list:
                 if k.lower() in item_lower:
@@ -2776,6 +2713,7 @@ def api_upload_ams_image():
         # 5. Looping Simpan ke DB
         count = 0
         for item in extracted_data:
+            # Ambil Data dengan aman (Key Insensitive)
             auditee_val = get_val(item, ['auditee', 'nama_auditee', 'unit']) or 'Unknown'
             tahun_val = clean_int(get_val(item, ['tahun', 'tahun_audit']))
             if tahun_val < 2000: tahun_val = datetime.date.today().year # Fallback tahun
@@ -2783,7 +2721,8 @@ def api_upload_ams_image():
             total_rek = clean_int(get_val(item, ['total', 'total_rekomendasi', 'jumlah']))
             
             selesai_val = clean_int(get_val(item, ['selesai', 'done']))
-
+            
+            # Variabel Khusus BPK / Standard
             tidak_selesai_val = clean_int(get_val(item, ['tidak_selesai', 'bjt', 'belum_jatuh_tempo']))
             todo_val = clean_int(get_val(item, ['todo', 'outstanding', 'out']))
             
@@ -2811,6 +2750,7 @@ def api_upload_ams_image():
             count += 1
             print(f"[DEBUG] Menyiapkan data: {auditee_val} - Total: {total_rek}")
 
+        # 6. Commit Database
         db.session.commit()
         print(f"[SUCCESS] Berhasil menyimpan {count} data ke database.")
         
@@ -3415,9 +3355,7 @@ def api_get_temuan_data(session_id):
             "history_logs": history_list,
             "comments": comments_data,
             "last_modified_by": r.last_modified_by,
-            "last_modified_at": r.last_modified_at.strftime("%d-%m-%Y %H:%M") if r.last_modified_at else "-",
-            "created_at": r.created_at.isoformat() if r.created_at else None,
-            "update_history": r.update_history
+            "last_modified_at": r.last_modified_at.strftime("%d-%m-%Y %H:%M") if r.last_modified_at else "-"
         })
 
     return jsonify(data_list), 200
@@ -3580,10 +3518,7 @@ def api_upload_tl_image():
     file = request.files['file']
     
     try:
-        # Pastikan pointer file di awal
-        file.seek(0)
         img = PIL.Image.open(file)
-        
         prompt = """
         Analisis gambar tabel ini. Ekstrak datanya baris per baris.
         Abaikan header. Petakan ke format JSON object dengan key berikut:
@@ -3601,20 +3536,11 @@ def api_upload_tl_image():
 
         PENTING: Output HANYA JSON Array. Jangan pakai markdown.
         """
-        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
-        track_gemini_usage()
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview', 
-            contents=[prompt, img]
-        )
         
-        raw_text = response.text
-        cleaned = raw_text.replace('```json', '').replace('```', '').strip()
-        start_idx = cleaned.find('[')
-        end_idx = cleaned.rfind(']')
-        if start_idx != -1 and end_idx != -1:
-            cleaned = cleaned[start_idx:end_idx+1]
-            
+        model = genai.GenerativeModel('gemini-3-flash-preview')
+        track_gemini_usage()
+        response = model.generate_content([prompt, img])
+        cleaned = response.text.replace('```json', '').replace('```', '').strip()
         data_list = json.loads(cleaned)
 
         count = 0
@@ -3654,7 +3580,6 @@ def api_upload_tl_image():
 
     except Exception as e:
         db.session.rollback()
-        print(f"[ERROR UPLOAD TL] {str(e)}") # Log error ke terminal
         return jsonify({"error": f"Gagal proses gambar: {str(e)}"}), 500
 
 @app.route('/api/tl_tidak_setuju/upload_excel', methods=['POST'])
@@ -4109,7 +4034,7 @@ def api_get_reminders():
     except Exception as e:
         print(f"Error getting reminders: {e}")
         return jsonify({"error": str(e)}), 500
-
+    
 @app.route('/api/get_dashboard_logs', methods=['GET'])
 @login_required
 def api_get_dashboard_logs():
@@ -4504,9 +4429,10 @@ def api_delete_message():
         print(f"Error deleting message: {e}")
         return jsonify({"error": "Terjadi kesalahan saat menghapus pesan di database."}), 500
 
-@app.route('/api/generate_email_body', methods=['POST'])
+@app.route('/api/generate_email_body', methods=['POST']) 
 @login_required
 def api_generate_email_body():
+    """Menggunakan AI untuk menghasilkan draf isi email dari prompt."""
     data = request.json
     prompt = data.get('prompt')
 
@@ -4536,14 +4462,9 @@ def api_generate_email_body():
     """
     
     try:
-        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+        ai_model = genai.GenerativeModel('gemini-3-flash-preview') 
         track_gemini_usage()
-        
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview',
-            contents=full_prompt
-        )
-        
+        response = ai_model.generate_content(full_prompt)
         clean_body = response.text.strip().replace('**', '').replace('*', '')
 
         return jsonify({"status": "success", "body": clean_body}), 200
@@ -4857,6 +4778,7 @@ def view_linked_temuan(reminder_id):
 
     return render_template('view_linked_temuan.html', reminder=reminder, rows=linked_data, username=current_user.username)
 
+
 @app.route('/view_session_full/<int:session_id>')
 @login_required
 def view_session_full(session_id):
@@ -5029,9 +4951,11 @@ def api_generate_dashboard_insight():
     audit_category = data.get('category', 'Audit Umum')
     chart_data = data.get('chart_data', {})
     
+    # Validasi data
     if not chart_data or not chart_data.get('labels'):
         return jsonify({"error": "Data grafik tidak tersedia untuk dianalisis."}), 400
 
+    # Susun prompt yang TERSTRUKTUR PER SECTION
     prompt = f"""
     Anda adalah Chief Audit Executive (CAE) yang ahli dalam menyajikan data.
     Tugas Anda adalah memberikan interpretasi data audit yang **singkat, padat, dan estetik** berdasarkan data berikut:
@@ -5076,13 +5000,9 @@ def api_generate_dashboard_insight():
     """
 
     try:
-        client = genai.Client(api_key=os.getenv("GOOGLE_API_KEY"))
+        model = genai.GenerativeModel('gemini-3.0-flash') 
         track_gemini_usage()
-        
-        response = client.models.generate_content(
-            model='gemini-3-flash-preview',
-            contents=prompt
-        )
+        response = model.generate_content(prompt)
         
         clean_text = response.text.replace('```html', '').replace('```', '')
         
@@ -5090,16 +5010,6 @@ def api_generate_dashboard_insight():
     except Exception as e:
         print(f"Error AI Insight: {e}")
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
-    
+
 if __name__ == '__main__':
-
     app.run(debug=True, port=5000)
-
-
-
-
-
-
-
-
-
