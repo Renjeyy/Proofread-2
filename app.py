@@ -271,6 +271,8 @@ class AmsTemuanRow(db.Model):
     auditor_notes = db.Column(db.Text, nullable=True)
     last_modified_by = db.Column(db.String(100), nullable=True)
     last_modified_at = db.Column(db.DateTime, nullable=True)
+    created_at = db.Column(db.DateTime, default=datetime.datetime.now)
+    update_history = db.Column(db.Text, default="{}")
 
 class AmsTemuanComment(db.Model):
     id = db.Column(db.Integer, primary_key=True)
@@ -1136,6 +1138,31 @@ def _apply_universal_highlights(doc, analysis_data):
         for row in table.rows:
             for cell in row.cells:
                 process_paragraphs(cell.paragraphs)
+
+@app.route('/api/save_status_update', methods=['POST'])
+@login_required
+def api_save_status_update():
+    data = request.json
+    row_id = data.get('row_id')
+    period_key = data.get('period_key') 
+    content = data.get('content')
+
+    row = AmsTemuanRow.query.get(row_id)
+    if not row:
+        return jsonify({"error": "Data tidak ditemukan"}), 404
+    if row.user_id != current_user.id:
+        pass 
+
+    try:
+        history = json.loads(row.update_history) if row.update_history else {}
+        history[period_key] = content
+        row.update_history = json.dumps(history)
+        
+        db.session.commit()
+        return jsonify({"status": "success"}), 200
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({"error": str(e)}), 500
 
 @app.route('/api/common/download_highlighted', methods=['POST'])
 @login_required 
@@ -3355,7 +3382,9 @@ def api_get_temuan_data(session_id):
             "history_logs": history_list,
             "comments": comments_data,
             "last_modified_by": r.last_modified_by,
-            "last_modified_at": r.last_modified_at.strftime("%d-%m-%Y %H:%M") if r.last_modified_at else "-"
+            "last_modified_at": r.last_modified_at.strftime("%d-%m-%Y %H:%M") if r.last_modified_at else "-",
+            "created_at": r.created_at.isoformat() if r.created_at else None,
+            "update_history": r.update_history
         })
 
     return jsonify(data_list), 200
