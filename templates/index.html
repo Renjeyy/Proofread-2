@@ -1170,16 +1170,20 @@
                     <input type="file" id="proofread-file" accept=".docx, .pdf" />
                     <button id="proofread-analyze-btn" class="analyze-btn" style="margin-top: 15px;">Mulai Analisis</button>
                 </div>
-                <div id="proofread-loading" class="loading hidden"><div class="spinner"></div> Sedang menganalisis dokumen...</div>
+                <div id="proofread-loading" class="loading hidden"><div class="spinner"></div> Your document is being processed</div>
                 <div id="proofread-results-container" class="results-container hidden">
                     <h4 style="display:flex; align-items:center; gap:10px;"><i class='bx bx-check-circle'></i> Hasil Analisis</h4>
                     
                     <div id="proofread-save-to-folder-bar" class="results-action-bar" style="display: flex; gap: 15px;">
+                        <button id="proofread-view-interactive-btn" class="login-btn hidden" style="background-color: #2196F3; width: auto; min-width: 180px; white-space: nowrap; justify-content: center;">
+                            <i class='bx bxs-file-doc'></i> View Full Document
+                        </button>
+
                         <button id="proofread-download-docx-btn" class="login-btn hidden" style="background-color: #FF9800; width: auto; min-width: 180px; white-space: nowrap; justify-content: center;">
                             <i class='bx bxs-download'></i> Highlight Docx
                         </button>
                         <button id="proofread-save-btn" class="save-btn hidden login-btn" style="width: auto; min-width: 180px; white-space: nowrap; justify-content: center;">Simpan ke Folder</button>
-                        <button id="proofread-view-new-tab-btn" class="view-new-tab-btn hidden login-btn" style="width: auto; min-width: 180px; white-space: nowrap; justify-content: center;">View Full</button>
+                        <button id="proofread-view-new-tab-btn" class="view-new-tab-btn hidden login-btn" style="width: auto; min-width: 180px; white-space: nowrap; justify-content: center;">View Table</button>
                     </div>
 
                     <div id="proofread-results-table"></div>
@@ -1206,7 +1210,7 @@
                     </div>
                 </div>
                 <button id="compare-analyze-btn" class="analyze-btn full-width">Bandingkan Sekarang</button>
-                <div id="compare-loading" class="loading hidden"><div class="spinner"></div> Membandingkan dokumen...</div>
+                <div id="compare-loading" class="loading hidden"><div class="spinner"></div>Your document is being processed</div>
                 <div id="compare-results-container" class="results-container hidden">
                     
                     <div id="compare-save-to-folder-bar" class="results-action-bar" style="display: flex; gap: 15px;">
@@ -1229,7 +1233,7 @@
                     <button id="review-analyze-btn" class="analyze-btn" style="margin-top:15px;">Mulai Reviu</button>
                 </div>
                 <div id="review-loading" class="loading hidden">
-                    <div class="spinner"></div> AI sedang membaca dokumen...
+                    <div class="spinner"></div>Your document is being processed
                 </div>
                 <div id="review-results-container" class="hidden">
                     
@@ -1249,14 +1253,14 @@
         <section id="rewording" class="feature-section hidden">
             <div class="feature-card">
                 <h3>Rewording (Kalimat Efektif)</h3>
-                <p>Mendeteksi kalimat yang berbelit-belit atau kurang profesional dan memberikan saran penulisan ulang yang lebih ringkas.</p>
+                <p>Mendeteksi kalimat kurang sempurna dan memberikan saran penulisan ulang yang lebih ringkas.</p>
                 <div class="upload-box">
                     <i class='bx bx-revision' style="font-size: 48px; color: #ccc; margin-bottom: 10px;"></i>
                     <input type="file" id="rewording-file" accept=".docx, .pdf" style="margin-top:10px;">
                     <button id="rewording-analyze-btn" class="analyze-btn" style="margin-top:15px;">Mulai Analisis Rewording</button>
                 </div>
                 <div id="rewording-loading" class="loading hidden">
-                    <div class="spinner"></div> Sedang menganalisis struktur kalimat...
+                    <div class="spinner"></div> Your document is being processed
                 </div>
                 <div id="rewording-results-container" class="hidden">
                     <div id="rewording-save-to-folder-bar" class="results-action-bar" style="display: flex; gap: 15px;">

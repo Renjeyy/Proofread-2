@@ -1577,6 +1577,7 @@ document.addEventListener("DOMContentLoaded", () => {
     const shareModal = document.getElementById("share-modal");
     const folderSelectDropdown = document.getElementById("folder-select-dropdown");
     const folderHistoryDetail = document.getElementById("folder-history-detail");
+    const viewInteractiveBtn = document.getElementById("proofread-view-interactive-btn");
 
     loadUsersForDropdown();
     loadAMSDashboardWidget();
@@ -1999,6 +2000,18 @@ document.addEventListener("DOMContentLoaded", () => {
     setupSaveButton("review-save-btn", "review", "review-file");
     setupSaveButton("rewording-save-btn", "rewording", "rewording-file");
 
+    if (viewInteractiveBtn) {
+        viewInteractiveBtn.addEventListener("click", () => {
+            const pages = sessionStorage.getItem('proofreadPages'); // Cek pages
+            
+            if (!pages) {
+                alert("Data dokumen belum tersedia. Silakan klik 'Mulai Analisis' ulang.");
+                return;
+            }
+
+            window.open("/view_interactive_proofread", "_blank");
+        });
+    }
 
     if (proofreadAnalyzeBtn) {
         proofreadAnalyzeBtn.addEventListener("click", async () => {
@@ -2009,10 +2022,16 @@ document.addEventListener("DOMContentLoaded", () => {
             proofreadLoading.classList.remove("hidden");
             proofreadAnalyzeBtn.disabled = true;
             let logId = await logAnalysisStart(file.name, 'proofreading');
+
             proofreadResultsContainer.classList.add("hidden");
             if(proofreadSaveBtn) proofreadSaveBtn.classList.add("hidden");
             if(proofreadViewBtn) proofreadViewBtn.classList.add("hidden");
+
+            const viewInteractiveBtn = document.getElementById("proofread-view-interactive-btn");
+            if(viewInteractiveBtn) viewInteractiveBtn.classList.add("hidden");
+
             sessionStorage.removeItem('proofreadResults');
+            sessionStorage.removeItem('proofreadFullText'); // Hapus data lama
             sessionStorage.removeItem('proofreadingFilename');
 
             const formData = new FormData();
@@ -2030,7 +2049,10 @@ document.addEventListener("DOMContentLoaded", () => {
                     }
                     throw new Error(errMessage);
                 }
-                const data = await response.json();
+
+                const resultData = await response.json(); 
+                const data = resultData.errors;      // Array error
+                const fullText = resultData.full_text; // String full text dokumen
 
                 if (data.length === 0) {
                     proofreadResultsTableDiv.innerHTML = "<p>Tidak ada kesalahan yang ditemukan.</p>";
@@ -2039,12 +2061,19 @@ document.addEventListener("DOMContentLoaded", () => {
                     proofreadResultsTableDiv.innerHTML = createTable(data, headers, [], {});
     
                     sessionStorage.setItem('proofreadResults', JSON.stringify(data));
+                    sessionStorage.setItem('proofreadPages', JSON.stringify(resultData.pages)); 
+                    
                     sessionStorage.setItem('proofreadingFilename', file.name);
+                    
                     currentAnalysisResults = data;
                     currentAnalysisFeature = 'proofreading';
                     currentAnalysisFilename = file.name;
+                    
                     if(proofreadSaveBtn) proofreadSaveBtn.classList.remove("hidden");
                     if(proofreadViewBtn) proofreadViewBtn.classList.remove("hidden");
+                    
+                    if(viewInteractiveBtn) viewInteractiveBtn.classList.remove("hidden");
+
                     const btnDown = document.getElementById("proofread-download-docx-btn");
                     if(btnDown) btnDown.classList.remove("hidden");
                 }
