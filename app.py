@@ -632,7 +632,7 @@ def proofread_with_gemini(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         pattern = re.compile(r"\[SALAH\]\s*(.*?)\s*->\s*\[BENAR\]\s*(.*?)\s*->\s*\[KALIMAT\]\s*(.*?)\s*(\n|$)", re.IGNORECASE | re.DOTALL)
         found_errors = pattern.findall(response.text)
         return [{"salah": salah.strip(), "benar": benar.strip(), "kalimat": kalimat.strip()} for salah, benar, kalimat, _ in found_errors]
@@ -813,7 +813,7 @@ def analyze_document_coherence(full_text):
     {full_text}
     """
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         pattern = re.compile(
             r"\[TOPIK UTAMA\]\s*(.*?)\s*->\s*\[TEKS ASLI\]\s*(.*?)\s*->\s*\[SARAN REVISI\]\s*(.*?)\s*(?:->\s*\[CATATAN\]\s*(.*?)\s*)?(\n|$)", 
             re.IGNORECASE | re.DOTALL
@@ -866,7 +866,7 @@ def get_structural_recommendations(full_text):
     {full_text}
     """
     try:
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
         cleaned_response = re.sub(r'[—–]', '-', response.text.strip()) 
         cleaned_response = re.sub(r'```json\s*|\s*```', '', cleaned_response)
         return json.loads(cleaned_response)
@@ -5233,6 +5233,7 @@ def api_generate_dashboard_insight():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
 
