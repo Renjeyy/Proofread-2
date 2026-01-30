@@ -9,7 +9,6 @@
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;500;600;700&display=swap" rel="stylesheet">
     <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
-    <!-- Tambahkan FontAwesome untuk ikon CAPTCHA -->
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     
     <style>
@@ -23,7 +22,7 @@
         body {
             height: 100vh;
             display: flex;
-            overflow: hidden; /* Mencegah scroll pada body utama */
+            overflow: hidden;
             background-color: #f5f5f5;
         }
 
@@ -38,20 +37,17 @@
             background-color: #2c2c2c;
             display: flex;
             flex-direction: column;
-            justify-content: center; /* Tetap berusaha center */
+            justify-content: center;
             align-items: center;
-            /* REVISI: Padding dibuat responsif terhadap tinggi layar */
             padding: 4vh 40px; 
             color: #fff;
             position: relative;
             box-shadow: 10px 0 30px rgba(0,0,0,0.2);
             z-index: 10;
-            /* REVISI: Mengizinkan scroll vertikal jika konten terlalu tinggi saat zoom 100% */
             overflow-y: auto; 
             height: 100vh;
         }
 
-        /* Scrollbar custom agar rapi */
         .login-left::-webkit-scrollbar { width: 6px; }
         .login-left::-webkit-scrollbar-track { background: #2c2c2c; }
         .login-left::-webkit-scrollbar-thumb { background: #444; border-radius: 3px; }
@@ -111,7 +107,6 @@
             text-align: center;
         }
 
-        /* REVISI: Font size responsif */
         .brand-title {
             font-size: clamp(2.5rem, 4vw, 3.5rem); 
             font-weight: 800;
@@ -131,12 +126,11 @@
         .login-form-wrapper {
             width: 100%;
             max-width: 450px; 
-            /* REVISI: Margin otomatis agar ada jarak aman saat di-scroll */
             margin: auto 0; 
         }
 
         .welcome-text {
-            margin-bottom: 3vh; /* Jarak fleksibel */
+            margin-bottom: 3vh;
             text-align: center;
         }
 
@@ -386,6 +380,107 @@
         .language-option:hover { background: #444; border-color: #FFC107; }
         .language-option.selected { background: rgba(255, 193, 7, 0.1); border-color: #FFC107; color: #FFC107; font-weight: 600; }
         .check-icon { color: #FFC107; font-size: 1.2rem; }
+
+        .migration-card {
+            position: absolute;
+            top: 40px;
+            right: 40px;
+            width: 550px;
+            max-width: 90%;
+            background: rgba(30, 30, 30, 0.85);
+            backdrop-filter: blur(12px);
+            -webkit-backdrop-filter: blur(12px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            border-left: 5px solid #FFC107;
+            padding: 25px;
+            border-radius: 8px;
+            color: #fff;
+            box-shadow: 0 15px 40px rgba(0,0,0,0.6);
+            z-index: 100;
+            opacity: 0;
+            transform: translateY(-20px);
+            animation: slideInFade 0.8s cubic-bezier(0.2, 0.8, 0.2, 1) forwards;
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        .migration-card:hover {
+            transform: translateY(0) scale(1.02);
+            box-shadow: 0 20px 50px rgba(0,0,0,0.7);
+            border-color: rgba(255, 193, 7, 0.3);
+        }
+
+        .migration-header {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            margin-bottom: 12px;
+        }
+
+        .migration-icon {
+            color: #FFC107;
+            font-size: 1.5rem;
+            animation: pulseIcon 2s infinite;
+        }
+
+        .migration-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            color: #fff;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+
+        .migration-desc {
+            font-size: 0.95rem;
+            color: #ccc;
+            line-height: 1.6;
+            margin-bottom: 20px;
+            font-weight: 300;
+            text-align: justify;
+        }
+
+        .migration-btn {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: linear-gradient(90deg, #FFC107 0%, #FFD54F 100%);
+            color: #222;
+            text-decoration: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            font-weight: 700;
+            font-size: 0.9rem;
+            transition: all 0.3s ease;
+            box-shadow: 0 5px 15px rgba(255, 193, 7, 0.2);
+        }
+
+        .migration-btn:hover {
+            padding-right: 25px;
+            background: #fff;
+            box-shadow: 0 0 20px rgba(255, 255, 255, 0.4);
+        }
+
+        .migration-btn i {
+            transition: transform 0.3s;
+        }
+
+        .migration-btn:hover i {
+            transform: translateX(5px);
+        }
+
+        @keyframes slideInFade {
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        @keyframes pulseIcon {
+            0% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.7; transform: scale(0.9); }
+            100% { opacity: 1; transform: scale(1); }
+        }
+
         @media (max-width: 1366px), (max-height: 800px) {
             .login-left { padding: 20px 30px; }
             .brand-header { margin-bottom: 20px; gap: 15px; }
@@ -419,6 +514,12 @@
             .login-right { display: none; } 
             .login-form-wrapper { max-width: 400px; margin: 0; }
             .footer-links { margin-top: 30px; padding-bottom: 0; }
+            .migration-card {
+                top: 20px;
+                right: 20px;
+                left: 20px;
+                width: auto;
+            }
         }
     </style>
 </head>
@@ -473,6 +574,22 @@
         <aside class="login-right">
             <div class="building-outline"></div> 
             
+            <div class="migration-card">
+                <div class="migration-header">
+                    <i class="fas fa-server migration-icon"></i>
+                    <div class="migration-title">System Migration</div>
+                </div>
+                
+                <div class="migration-desc">
+                    Sistem ini akan dinonaktifkan untuk migrasi ke web baru, silakan kunjungi tautan di bawah untuk mengakses web dengan link terbaru.
+                </div>
+
+                <a href="http://typo.gcsi-consulting.id" class="migration-btn">
+                    <span>Kunjungi typo.gcsi-consulting.id</span>
+                    <i class="fas fa-arrow-right"></i>
+                </a>
+            </div>
+
             <div class="hero-text">
                 <h3 data-i18n="hero_title">Satuan Kerja Audit Internal</h3>
                 <p data-i18n="hero_subtitle">Indonesia Financial Group</p>
