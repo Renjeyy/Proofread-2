@@ -501,96 +501,13 @@ def _get_full_text_from_file(file):
     pages = _extract_text_with_pages(file_bytes, file_extension)
     return "\n".join([page['teks'] for page in pages])
 
-def docx_to_html(file_bytes):
-    doc = docx.Document(io.BytesIO(file_bytes))
-    pages_list = []
-    current_page_html = '<div class="document-page">'
-    char_count = 0
-    CHAR_LIMIT_PER_PAGE = 3000 
-
-    for para in doc.paragraphs:
-        align = "left"
-        if para.alignment == 1: align = "center"
-        elif para.alignment == 2: align = "right"
-        elif para.alignment == 3: align = "justify"
-        
-        style = f'text-align: {align}; margin-bottom: 1em;'
-        p_html = f'<p style="{style}">'
-        
-        para_text = ""
-        if not para.runs:
-            para_text = para.text
-            p_html += para.text
-        else:
-            for run in para.runs:
-                text = run.text
-                if not text: continue
-                para_text += text
-                if run.bold: text = f'<b>{text}</b>'
-                if run.italic: text = f'<i>{text}</i>'
-                if run.underline: text = f'<u>{text}</u>'
-                p_html += text
-        
-        p_html += '</p>'
-        
-        current_page_html += p_html
-        char_count += len(para_text)
-
-        if char_count >= CHAR_LIMIT_PER_PAGE:
-            current_page_html += '</div>'
-            pages_list.append(current_page_html)
-            
-            current_page_html = '<div class="document-page">'
-            char_count = 0
-
-    if char_count > 0:
-        current_page_html += '</div>'
-        pages_list.append(current_page_html)
-    
-    if not pages_list:
-        pages_list.append('<div class="document-page"><p></p></div>')
-
-    return pages_list
-
-def replace_text_in_docx(file_path, old_text, new_text):
-    doc = docx.Document(file_path)
-    replaced_count = 0
-
-    def process_runs(paragraphs):
-        count = 0
-        for p in paragraphs:
-            if old_text in p.text:
-                for run in p.runs:
-                    if old_text in run.text:
-                        run.text = run.text.replace(old_text, new_text)
-                        count += 1
-        return count
-
-    replaced_count += process_runs(doc.paragraphs)
-
-    for table in doc.tables:
-        for row in table.rows:
-            for cell in row.cells:
-                replaced_count += process_runs(cell.paragraphs)
-            
-    doc.save(file_path)
-    return replaced_count > 0
-
 def proofread_with_gemini(text_to_check):
     if not text_to_check or text_to_check.isspace():
         return []
-    
     prompt = f"""
-    Anda adalah seorang auditor dan ahli bahasa Indonesia yang sangat teliti. Anda diberikan dokumen dan tugas Anda adalah melakukan proofread pada teks berikut.
-    
-    ### INSTRUKSI PENTING (Agar tidak over-flagging):
-    1. HANYA laporkan kesalahan EJAAN (Typo) yang fatal dan PUEBI yang jelas salah.
-    2. JANGAN mengubah gaya bahasa, preferensi kata, atau istilah teknis/umum (seperti 'yang', 'dan', 'di', 'adalah') KECUALI memang typo (misal: 'yanng', 'dii').
-    3. Jika kata tersebut benar secara kamus, JANGAN dilaporkan.
-
-    ### ATURAN KHUSUS:
+    Anda adalah seorang auditor dan ahli bahasa Indonesia yang sangat teliti. Anda diberikan dokumen dan tugas Anda adalah melakukan proofread pada teks berikut. Fokus pada:
     1. Memperbaiki kesalahan ketik (typo) agar semuanya sesuai dengan standar KBBI dan PUEBI.
-    2. Kalau ada kata-kata yang tidak sesuai KBBI dan PUEBI, tolong jangan highlight semua kalimatnya, tapi cukup highlight kata-kata yang salah serta perbaiki kata-kata itu aja, jangan perbaiki semua kalimatnya
+    1. Kalau ada kata-kata yang tidak sesuai KBBI dan PUEBI, tolong jangan highlight semua kalimatnya, tapi cukup highlight kata-kata yang salah serta perbaiki kata-kata itu aja, jangan perbaiki semua kalimatnya
     3. Jika ada kata yang diitalic, biarkan saja
     4. Nama-nama yang diberi ini pastikan benar juga "Yullyan, I Made Suandi Putra, Laila Fajriani, Hari Sundoro, Bakhas Nasrani Diso, Rizky Ananda Putra, Wirawan Arief Nugroho, Lelya Novita Kusumawati, Ryani Ariesti Syafitri, Darmo Saputro Wibowo, Lucky Parwitasari, Handarudigdaya Jalanidhi Kuncaratrah, Fajar Setianto, Jaka Tirtana Hanafiah, tMuhammad Rosyid Ridho Muttaqien, Octovian Abrianto, Deny Sjahbani, Jihan Abigail, Winda Anggraini, Fadian Dwiantara, Aliya Anindhita Rachman"
     5. Fontnya arial dan jangan diganti. Khusus untuk judul paling atas, itu font sizenya 12 dan bodynya selalu 11
@@ -611,18 +528,11 @@ def proofread_with_gemini(text_to_check):
     20. Kalau ada bahasa inggris yang belum diitalic, tolong diitalic
     21. Kata Internal Memorandum itu tidak perlu diitalic karena itu nama dari sebuah dokumen
 
-    ### FORMAT OUTPUT (WAJIB DIIKUTI):
-    Agar perbaikan akurat, Anda WAJIB menyertakan 1-2 kata sebelum atau sesudah kata yang salah sebagai KONTEKS UNIK di kolom [SALAH] dan [BENAR].
+    PENTING: Berikan hasil dalam format yang SANGAT KETAT. Untuk setiap kesalahan, gunakan format:
+    [SALAH] kata atau frasa yang salah -> [BENAR] kata atau frasa perbaikan -> [KALIMAT] kalimat lengkap asli tempat kesalahan ditemukan
 
-    Format:
-    [SALAH] teks salah beserta konteks -> [BENAR] perbaikan konteks -> [KALIMAT] kalimat lengkap asli tempat kesalahan ditemukan
-
-    Contoh Benar:
-    [SALAH] tidak memeberikan opini -> [BENAR] tidak memberikan opini -> [KALIMAT] Auditor tidak memberikan opini wajar.
-    [SALAH] dikarenakan oleh -> [BENAR] karena -> [KALIMAT] Hal itu terjadi dikarenakan oleh kelalaian.
-
-    Contoh Salah (JANGAN DILAKUKAN):
-    [SALAH] yang -> [BENAR] yang -> ... (Ini salah karena akan mengganti semua kata 'yang')
+    Contoh:
+    [SALAH] dikarenakan -> [BENAR] karena -> [KALIMAT] Hal itu terjadi dikarenakan kelalaian petugas.
 
     Jika tidak ada kesalahan sama sekali, kembalikan teks: "TIDAK ADA KESALAHAN"
 
@@ -632,7 +542,7 @@ def proofread_with_gemini(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        response = model.generate_content(prompt)
         pattern = re.compile(r"\[SALAH\]\s*(.*?)\s*->\s*\[BENAR\]\s*(.*?)\s*->\s*\[KALIMAT\]\s*(.*?)\s*(\n|$)", re.IGNORECASE | re.DOTALL)
         found_errors = pattern.findall(response.text)
         return [{"salah": salah.strip(), "benar": benar.strip(), "kalimat": kalimat.strip()} for salah, benar, kalimat, _ in found_errors]
@@ -699,7 +609,7 @@ def analyze_document_by_section(original_text, revised_text):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        response = model.generate_content(prompt)
         response_text = response.text.strip()
         response_text = re.sub(r'```json\s*|\s*```', '', response_text)
         analysis_result = json.loads(response_text)
@@ -750,7 +660,7 @@ def analyze_context_difference(original_sentence, revised_sentence):
 
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        response = model.generate_content(prompt)
         response_text = response.text.strip()
         try:
             analysis_result = json.loads(response_text)
@@ -813,7 +723,7 @@ def analyze_document_coherence(full_text):
     {full_text}
     """
     try:
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        response = model.generate_content(prompt)
         pattern = re.compile(
             r"\[TOPIK UTAMA\]\s*(.*?)\s*->\s*\[TEKS ASLI\]\s*(.*?)\s*->\s*\[SARAN REVISI\]\s*(.*?)\s*(?:->\s*\[CATATAN\]\s*(.*?)\s*)?(\n|$)", 
             re.IGNORECASE | re.DOTALL
@@ -866,7 +776,7 @@ def get_structural_recommendations(full_text):
     {full_text}
     """
     try:
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        response = model.generate_content(prompt)
         cleaned_response = re.sub(r'[—–]', '-', response.text.strip()) 
         cleaned_response = re.sub(r'```json\s*|\s*```', '', cleaned_response)
         return json.loads(cleaned_response)
@@ -911,7 +821,7 @@ def review_document_comprehensive(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        response = model.generate_content(prompt)
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -973,7 +883,7 @@ def analyze_rewording_only(text_to_check):
     """
     try:
         track_gemini_usage()
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        response = model.generate_content(prompt)
         raw_response = response.text.strip()
 
         start_idx = raw_response.find('[')
@@ -2221,13 +2131,8 @@ def api_get_result_file():
         print(f"[ERROR GET] {e}")
         return jsonify({"error": f"Server Error: {str(e)}"}), 500
 
-@app.route('/view_interactive_proofread')
-@login_required
-def view_interactive_proofread():
-    return render_template('view_interactive.html')
-
 @app.route('/api/proofread/analyze', methods=['POST'])
-@login_required
+@login_required 
 def api_proofread_analyze():
     if 'file' not in request.files:
         return jsonify({"error": "Tidak ada file yang diunggah"}), 400
@@ -2237,56 +2142,32 @@ def api_proofread_analyze():
         return jsonify({"error": "Nama file kosong"}), 400
 
     try:
-        save_path = os.path.join(app.config['UPLOAD_FOLDER'], secure_filename(file.filename))
-        file.save(save_path)
-
-        with open(save_path, 'rb') as f:
-            file_bytes = f.read()
-
+        file_bytes = file.read()
+        file.seek(0)
         file_extension = file.filename.split('.')[-1].lower()
         
-        pages_html_list = []
-        plain_text_for_ai = ""
-        
-        if file_extension == 'docx':
-            pages_html_list = docx_to_html(file_bytes)
-            
-            doc = docx.Document(io.BytesIO(file_bytes))
-            plain_text_for_ai = "\n".join([p.text for p in doc.paragraphs])
-            
-        elif file_extension == 'pdf':
-            try:
-                pdf_document = fitz.open(stream=file_bytes, filetype="pdf")
-                for page in pdf_document:
-                    page_text = page.get_text()
-                    plain_text_for_ai += page_text + "\n"
-                    html_page = f'<div class="document-page" style="white-space: pre-wrap;">{page_text}</div>'
-                    pages_html_list.append(html_page)
-                pdf_document.close()
-            except Exception as e:
-                return jsonify({"error": f"Gagal baca PDF: {e}"}), 400
-        else:
-            return jsonify({"error": "Format tidak didukung"}), 400
+        try:
+            pages_content = _extract_text_with_pages(file_bytes, file_extension)
+        except ValueError as ve:
+            return jsonify({"error": str(ve)}), 400
 
-        all_errors = proofread_with_gemini(plain_text_for_ai)
-        
-        formatted_errors = []
-        for error in all_errors:
-            found_page = "Halaman 1"
+        all_errors = []
+        for page in pages_content:
+            page_text = page['teks']
+            page_num = page['halaman']
             
-            if file_extension == 'pdf' and len(pages_html_list) > 1:
-                for idx, html in enumerate(pages_html_list):
-                    if error.get('salah', '') in html:
-                        found_page = f"Halaman {idx + 1}"
-                        break
-
-            formatted_errors.append({
-                "Kata/Frasa Salah": error.get('salah', ''),
-                "Perbaikan Sesuai KBBI": error.get('benar', ''),
-                "Pada Kalimat": error.get('kalimat', ''),
-                "Ditemukan di Halaman": found_page,
-                "apakah_ganti": False
-            })
+            page_errors = proofread_with_gemini(page_text)
+            for error in page_errors:
+                formatted_error = {
+                    "Kata/Frasa Salah": error.get('salah', ''),
+                    "Perbaikan Sesuai KBBI": error.get('benar', ''),
+                    "Pada Kalimat": error.get('kalimat', ''),
+                    "Ditemukan di Halaman": f"Halaman {page_num}",
+                    "apakah_ganti": False, 
+                    "salah": error.get('salah', ''),
+                    "benar": error.get('benar', '')
+                }
+                all_errors.append(formatted_error)
 
         try:
             new_log = AnalysisLog(
@@ -2299,84 +2180,19 @@ def api_proofread_analyze():
             db.session.add(new_log)
             db.session.commit()
         except Exception as e:
-            print(f"Log error: {e}")
+            print(f"Gagal menyimpan log: {e}")
+
+        full_text_response = "\n".join([page['teks'] for page in pages_content])
 
         return jsonify({
-            "errors": formatted_errors, 
-            "pages": pages_html_list
+            "errors": all_errors,
+            "full_text": full_text_response,
+            "pages": pages_content
         })
 
     except Exception as e:
         print(f"[ERROR PROOFREAD] {e}") 
         return jsonify({"error": f"Terjadi kesalahan server: {str(e)}"}), 500
-
-@app.route('/api/apply_fix', methods=['POST'])
-@login_required
-def api_apply_fix():
-    data = request.json
-    filename = data.get('filename')
-    old_text = data.get('old_text')
-    new_text = data.get('new_text')
-    
-    if not filename or not old_text:
-        return jsonify({"status": "error", "message": "Data tidak lengkap"}), 400
-        
-    safe_filename = secure_filename(filename)
-    
-    # Cari file di folder Data atau User
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
-    
-    if not os.path.exists(file_path):
-        user_folder = get_user_root_folder()
-        if user_folder:
-            file_path = os.path.join(user_folder, safe_filename)
-    
-    if not os.path.exists(file_path):
-        return jsonify({"status": "error", "message": "File asli tidak ditemukan di server"}), 404
-        
-    try:
-        success = replace_text_in_docx(file_path, old_text, new_text)
-        
-        if success:
-            return jsonify({"status": "success", "message": "Perubahan diterapkan (Format terjaga)"}), 200
-        else:
-            # Fallback message jika teks terpecah antar style (Jarang terjadi untuk typo satu kata)
-            return jsonify({
-                "status": "warning", 
-                "message": "Teks tidak ditemukan secara utuh dalam satu format. Mungkin terpotong style (Bold/Italic separuh)."
-            }), 200
-            
-    except Exception as e:
-        print(f"Error saving docx: {e}")
-        return jsonify({"status": "error", "message": str(e)}), 500
-
-@app.route('/api/download_current_doc', methods=['GET'])
-@login_required
-def api_download_current_doc():
-    filename = request.args.get('filename')
-    
-    if not filename:
-        return jsonify({"error": "Nama file tidak ditemukan"}), 400
-        
-    safe_filename = secure_filename(filename)
-    
-    file_path = os.path.join(app.config['UPLOAD_FOLDER'], safe_filename)
-    
-    if not os.path.exists(file_path):
-        user_folder = get_user_root_folder()
-        if user_folder:
-            file_path = os.path.join(user_folder, safe_filename)
-        
-    if not os.path.exists(file_path):
-        return jsonify({"error": "File tidak ditemukan di server"}), 404
-        
-    download_name = f"Revisi_{safe_filename}"
-    
-    return send_file(
-        file_path, 
-        as_attachment=True, 
-        download_name=download_name
-    )
 
 @app.route('/api/delete_result', methods=['POST'])
 @login_required
@@ -2879,7 +2695,7 @@ def api_upload_ams_image():
         3. Jika kolom berupa persentase (%), AMBIL ANGKA JUMLAHNYA SAJA yang ada di sebelahnya.
         """
 
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        model = genai.GenerativeModel('gemini-3-flash-preview') # Gunakan Flash agar cepat, atau Pro jika butuh akurasi tinggi
         track_gemini_usage()
         
         print("[DEBUG] Mengirim ke Gemini...")
@@ -3757,7 +3573,7 @@ def api_upload_tl_image():
         PENTING: Output HANYA JSON Array. Jangan pakai markdown.
         """
         
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        model = genai.GenerativeModel('gemini-3-flash-preview')
         track_gemini_usage()
         response = model.generate_content([prompt, img])
         cleaned = response.text.replace('```json', '').replace('```', '').strip()
@@ -4682,7 +4498,7 @@ def api_generate_email_body():
     """
     
     try:
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt) 
+        ai_model = genai.GenerativeModel('gemini-3-flash-preview') 
         track_gemini_usage()
         response = ai_model.generate_content(full_prompt)
         clean_body = response.text.strip().replace('**', '').replace('*', '')
@@ -5220,7 +5036,7 @@ def api_generate_dashboard_insight():
     """
 
     try:
-        response = client.models.generate_content(model='gemini-3-flash-preview', contents=prompt)
+        model = genai.GenerativeModel('gemini-3.0-flash') 
         track_gemini_usage()
         response = model.generate_content(prompt)
         
@@ -5233,7 +5049,3 @@ def api_generate_dashboard_insight():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
-
-
-
-
