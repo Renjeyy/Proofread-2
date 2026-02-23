@@ -5048,8 +5048,5 @@ def api_generate_dashboard_insight():
         return jsonify({"error": "Gagal menghasilkan analisis AI."}), 500
 
 if __name__ == '__main__':
-    app.run(debug=True, port=5000)
-
-
-
-
+    port = int(os.environ.get("PORT", 8080)) 
+    app.run(host='0.0.0.0', port=port)
