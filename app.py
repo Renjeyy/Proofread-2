@@ -85,8 +85,8 @@ try:
     if not api_key:
         raise ValueError("GOOGLE_API_KEY tidak ditemukan di file .env")
     
-    client = genai.Client(api_key=api_key)
-    model = genai.GenerativeModel('gemini-3-flash-preview')
+    genai.configure(api_key=api_key)
+    model = genai.GenerativeModel('gemini-2.5-flash') 
 except Exception as e:
     print(f"Error saat mengkonfigurasi Google AI: {e}")
 
@@ -5049,5 +5049,6 @@ def api_generate_dashboard_insight():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
 
