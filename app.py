@@ -7,8 +7,7 @@ import difflib
 import fitz
 import docx
 import pandas as pd
-from google import genai
-from google.genai import types
+import google.generativeai as genai
 import shutil 
 from docx.shared import RGBColor
 import PIL.Image
@@ -5050,4 +5049,5 @@ def api_generate_dashboard_insight():
 
 if __name__ == '__main__':
     app.run(debug=True, port=5000)
+
 
